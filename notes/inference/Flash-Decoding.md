@@ -1,5 +1,7 @@
 # Flash-Decoding for long-context inference
 
+中文 | [English](./Flash-Decoding_en.md)
+
 - **原文链接**: [Flash-Decoding for long-context inference](https://crfm.stanford.edu/2023/10/12/flashdecoding.html)
 - **发布日期**: 2023-10-12
 

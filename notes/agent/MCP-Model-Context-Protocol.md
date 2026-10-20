@@ -1,5 +1,7 @@
 # MCP (Model Context Protocol) 入门整理
 
+中文 | [English](./MCP-Model-Context-Protocol_en.md)
+
 - **整理日期**: 2026-10-20
 - **官方资料**: [modelcontextprotocol.io](https://modelcontextprotocol.io/) · [Anthropic 发布公告 (2024-11-25)](https://www.anthropic.com/news/model-context-protocol)
 - **实测环境**: Python SDK `mcp` 2.3.0 与 1.30.0，Python 3.12，macOS
