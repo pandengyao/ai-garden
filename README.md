@@ -26,6 +26,11 @@
 - 🌳 [Flash-Decoding: 长上下文推理加速](./notes/inference/Flash-Decoding.md) · 2023-10-12
   - 推理时 Query Length 只有 1，Batch 维度并行不起来；那就去并行 KV Cache 的序列长度维度，长序列解码最高快 8 倍。
 
+### 模型 API (LLM APIs)
+
+- 🌿 [免费与低价大模型 API 调研：额度、价格、套餐与接入](./notes/llm_api/Free-and-Low-Cost-LLM-APIs.md) · 2026-10-20
+  - 长期免费能用的主要是 NVIDIA build、智谱 glm-4.7-flash，以及 Kilo 和 OpenRouter 的免费模型；国内按量最便宜的一档每百万输入 0.15–1 元，编程包月套餐大多只许在工具里交互使用。附 23 家平台的官网、Key 入口、base_url 和调用示例。
+
 ### 多模态 (Multimodal)
 
 - 🌿 [Gemini 3 Pro Image Preview: 图片生成的 ChatGPT 时刻](./notes/multimodal/Gemini-3-Pro-Image-Preview.md) · 2025-11-20
