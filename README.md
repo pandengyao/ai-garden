@@ -16,6 +16,11 @@
 
 ## 🌳 笔记 notes
 
+### 智能体 (Agents)
+
+- 🌿 [MCP (Model Context Protocol) 入门整理](./notes/agent/MCP-Model-Context-Protocol.md) · 2026-10-20
+  - 给 AI 装的「万能接口」：工具方按标准做一次服务器，所有支持 MCP 的 AI 都能用。含待办事项服务器完整示例与新旧 SDK 的改名坑。
+
 ### 推理优化 (Inference)
 
 - 🌳 [Flash-Decoding: 长上下文推理加速](./notes/inference/Flash-Decoding.md) · 2023-10-12
