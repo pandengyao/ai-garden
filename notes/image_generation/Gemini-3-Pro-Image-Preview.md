@@ -1,8 +1,8 @@
 # Gemini 3 Pro Image Preview 跟踪分析：图片生成的ChatGPT时刻
 
 > 本文基于 Nano Banana Pro（即 Gemini 3 Pro Image Preview）发布情况与模型实际体验进行的分析与思考。
-> **发布时间**: 2024-11-20 (与 Gemini 3 同期发布)
-> **原始文件**: [Gemini-3-Pro-Image-Preview.html](https://html-preview.github.io/?url=https://github.com/pandengyao/Awesome-LLM-Dev-Notes/blob/main/notes/image_generation/Gemini-3-Pro-Image-Preview.html)
+> **发布时间**: 2025-11-20 (与 Gemini 3 同期发布)
+> **官方发布**: [Introducing Nano Banana Pro](https://blog.google/innovation-and-ai/products/nano-banana-pro/)
 
 ## 核心观点 (Key Takeaways)
 

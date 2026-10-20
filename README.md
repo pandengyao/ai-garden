@@ -11,5 +11,5 @@
 
 ### 图像生成 (Image Generation)
 
-- [Gemini 3 Pro Image Preview: 图片生成的 ChatGPT 时刻](./notes/image_generation/Gemini-3-Pro-Image-Preview.md) (2024-11-20)
+- [Gemini 3 Pro Image Preview: 图片生成的 ChatGPT 时刻](./notes/image_generation/Gemini-3-Pro-Image-Preview.md) (2025-11-20)
   - 跟踪分析 Google 最新多模态生图模型，探讨其在文本渲染、信息图表生成及生产力场景下的突破。
