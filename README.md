@@ -1,15 +1,38 @@
-# ai-garden
+# 🌱 ai-garden
 
-🚀 精选大模型 (LLM) 开发领域的高质量技术文章、实战经验与学习笔记。/ Curated list of high-quality LLM development articles, practical experiences, and notes.
+> 我的 AI 数字花园：对 AI 的调研、阅读与思考，都慢慢记录在这里。
 
-## 目录 / Contents
+这不是一份收藏夹，而是一座花园。每篇笔记都是一株植物：读到的文章在这里被消化成自己的语言，想法从一句话的种子开始，随着调研和实践慢慢长大。有的会长成大树，有的停在半路——都留着，因为思考的痕迹本身也值得保留。
 
-### 推理优化 (Inference Optimization)
+## 怎么逛这座花园
 
-- [Flash-Decoding: 长上下文推理加速](./notes/inference/Flash-Decoding.md) (2023-10-12)
-  - 针对长 Context 推理场景，通过并行化 KV Cache 维度提升 Attention 计算效率。
+| 分区 | 里面是什么 |
+| --- | --- |
+| [🌳 笔记 notes](#-笔记-notes) | 读过的文章、论文、报告，消化后的中文笔记 |
+| [🌱 想法 ideas](./ideas/) | 自己的思考与猜想，从一句话开始 |
+| [📰 速递 news](./news/) | 按月记录的 AI 动态，一句话一条 |
 
-### 图像生成 (Image Generation)
+**成熟度**：每篇笔记标了它长到哪一步。🌱 种子（刚记下，待展开） · 🌿 生长（已消化，还会补） · 🌳 成型（想清楚了）
 
-- [Gemini 3 Pro Image Preview: 图片生成的 ChatGPT 时刻](./notes/image_generation/Gemini-3-Pro-Image-Preview.md) (2025-11-20)
-  - 跟踪分析 Google 最新多模态生图模型，探讨其在文本渲染、信息图表生成及生产力场景下的突破。
+## 🌳 笔记 notes
+
+### 推理优化 (Inference)
+
+- 🌳 [Flash-Decoding: 长上下文推理加速](./notes/inference/Flash-Decoding.md) · 2023-10-12
+  - 推理时 Query Length 只有 1，Batch 维度并行不起来；那就去并行 KV Cache 的序列长度维度，长序列解码最高快 8 倍。
+
+### 多模态 (Multimodal)
+
+- 🌿 [Gemini 3 Pro Image Preview: 图片生成的 ChatGPT 时刻](./notes/multimodal/Gemini-3-Pro-Image-Preview.md) · 2025-11-20
+  - 生图模型从“画得好看”转向“把信息讲清楚”，原生多模态让理解能力正向迁移到生成上。
+
+## 这座花园怎么打理
+
+- 每篇笔记开头记来源链接、发布日期、作者，方便回溯。
+- 用自己的话复述，不搬运原文；图表只留撑得起论点的那几张。
+- 笔记统一用 Markdown，图片放在各分区的 `img/` 下。
+- 内容只在这里慢慢生长，不追求写完就定稿。
+
+## License
+
+笔记内容采用 [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)，仓库内代码采用 [MIT](./LICENSE)。引用的原文版权归原作者所有。
