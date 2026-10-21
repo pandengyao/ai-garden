@@ -1,0 +1,7 @@
+# Local-only private markers for scripts/check.py (see its docstring)
+scripts/private-patterns.txt
+# Python bytecode
+__pycache__/
+*.pyc
+# macOS
+.DS_Store

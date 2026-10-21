@@ -1,0 +1,13 @@
+// markdownlint-cli2 options for this repo, used by scripts/check.py.
+// Manual run:  npx --yes markdownlint-cli2 :<file.md> ...   (picked up automatically from the repo root)
+{
+  "config": {
+    "default": true,
+    // Prose is one paragraph per line, with no hard wrapping.
+    "MD013": false,
+    // Repeated headings such as "### 1. ..." are fine under different parents.
+    "MD024": { "siblings_only": true },
+    // Notes are pure Markdown: no raw HTML tags.
+    "MD033": true
+  }
+}
