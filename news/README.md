@@ -1,9 +1,9 @@
-# 📰 速递 News
+# 📰 News
 
-中文 | [English](./README_en.md)
+[中文](./README_zh.md) | English
 
-按月记录的 AI 动态，一条一句话，附来源链接。只记得上的，不求全。
+AI news, logged by month: one line per item, with a source link. Only what I can keep up with, not everything.
 
-还没有开始记。
+Nothing logged yet.
 
-命名：`YYYY-MM.md`，每月一个文件，最新的条目放在最上面。
+Naming: `YYYY-MM.md`, one file per month, newest entry on top.

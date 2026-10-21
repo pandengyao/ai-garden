@@ -1,9 +1,9 @@
-# 🌱 想法 Ideas
+# 🌱 Ideas
 
-中文 | [English](./README_en.md)
+[中文](./README_zh.md) | English
 
-自己的思考、猜想和待验证的问题，从一句话的种子开始。
+My own thoughts, guesses and open questions, each starting as a one-line seed.
 
-还没有种下第一颗。
+No seed planted yet.
 
-命名：`YYYY-MM-DD-<slug>.md`，日期是想法冒出来的那天。
+Naming: `YYYY-MM-DD-<slug>.md`, dated the day the idea came up.

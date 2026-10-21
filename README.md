@@ -1,48 +1,48 @@
 # 🌱 ai-garden
 
-中文 | [English](./README_en.md)
+[中文](./README_zh.md) | English
 
-> 我的 AI 数字花园：对 AI 的调研、阅读与思考，都慢慢记录在这里。
+> My AI digital garden: research, reading and thinking about AI, recorded here bit by bit.
 
-这不是一份收藏夹，而是一座花园。每篇笔记都是一株植物：读到的文章在这里被消化成自己的语言，想法从一句话的种子开始，随着调研和实践慢慢长大。有的会长成大树，有的停在半路——都留着，因为思考的痕迹本身也值得保留。
+This is not a bookmark list but a garden. Each note is a plant: articles I read get digested into my own words here, and ideas start as one-line seeds that grow with research and practice. Some become trees, some stop halfway, and they all stay, because the trace of thinking is worth keeping too.
 
-## 怎么逛这座花园
+## Getting around the garden
 
-| 分区 | 里面是什么 |
+| Section | What's inside |
 | --- | --- |
-| [🌳 笔记 notes](#-笔记-notes) | 读过的文章、论文、报告，消化后的中文笔记（附英文版） |
-| [🌱 想法 ideas](./ideas/) | 自己的思考与猜想，从一句话开始 |
-| [📰 速递 news](./news/) | 按月记录的 AI 动态，一句话一条 |
+| [🌳 Notes](#-notes) | Articles, papers and reports I've read, digested into notes (Chinese originals, English versions alongside) |
+| [🌱 Ideas](./ideas/) | My own thoughts and guesses, starting from a single line |
+| [📰 News](./news/) | AI news logged by month, one line per item |
 
-## 🌳 笔记 notes
+## 🌳 Notes
 
-### 智能体 (Agents)
+### Agents
 
-- [MCP (Model Context Protocol) 入门整理](./notes/agent/MCP-Model-Context-Protocol.md) · 2026-10-20
-  - 给 AI 装的「万能接口」：工具方按标准做一次服务器，所有支持 MCP 的 AI 都能用。含待办事项服务器完整示例与新旧 SDK 的改名坑。
+- [MCP (Model Context Protocol): A Primer](./notes/agent/MCP-Model-Context-Protocol_en.md) · 2026-10-20
+  - A "universal port" for AI: a tool vendor builds one server to the standard, and every MCP-capable AI can use it. Includes a complete to-do server example and the renaming pitfall between SDK versions.
 
-### 推理优化 (Inference)
+### Inference
 
-- [Flash-Decoding: 长上下文推理加速](./notes/inference/Flash-Decoding.md) · 2023-10-12
-  - 推理时 Query Length 只有 1，Batch 维度并行不起来；那就去并行 KV Cache 的序列长度维度，长序列解码最高快 8 倍。
+- [Flash-Decoding: Faster Long-Context Inference](./notes/inference/Flash-Decoding_en.md) · 2023-10-12
+  - During inference the query length is just 1, so parallelizing over the batch doesn't fill the GPU; parallelize over the KV cache's sequence length instead, and long-sequence decoding gets up to 8x faster.
 
-### 模型 API (LLM APIs)
+### LLM APIs
 
-- [免费与低价大模型 API 调研：额度、价格、套餐与接入](./notes/llm_api/Free-and-Low-Cost-LLM-APIs.md) · 2026-10-20
-  - 长期免费能用的主要是 NVIDIA build、智谱 glm-4.7-flash，以及 Kilo 和 OpenRouter 的免费模型；国内按量最便宜的一档每百万输入 0.15–1 元，编程包月套餐大多只许在工具里交互使用。附 23 家平台的官网、Key 入口、base_url 和调用示例。
+- [Free and Low-Cost LLM APIs: Quotas, Prices, Plans and Access](./notes/llm_api/Free-and-Low-Cost-LLM-APIs_en.md) · 2026-10-20
+  - The main long-term free options are NVIDIA build, Zhipu's glm-4.7-flash, and the free models on Kilo and OpenRouter; the cheapest Chinese pay-as-you-go tier costs 0.15–1 yuan per million input tokens, and most monthly coding plans only allow interactive use inside tools. Includes the website, key page, base_url and a call example for 23 platforms.
 
-### 多模态 (Multimodal)
+### Multimodal
 
-- [Gemini 3 Pro Image Preview: 图片生成的 ChatGPT 时刻](./notes/multimodal/Gemini-3-Pro-Image-Preview.md) · 2025-11-20
-  - 生图模型从“画得好看”转向“把信息讲清楚”，原生多模态让理解能力正向迁移到生成上。
+- [Gemini 3 Pro Image Preview: The ChatGPT Moment for Image Generation](./notes/multimodal/Gemini-3-Pro-Image-Preview_en.md) · 2025-11-20
+  - Image models are shifting from "drawing pretty pictures" to "explaining information clearly"; native multimodality lets understanding carry over into generation.
 
-## 这座花园怎么打理
+## How this garden is tended
 
-- 每篇笔记开头记来源链接和日期，方便回溯。
-- 用自己的话复述，不搬运原文；图表只留撑得起论点的那几张。
-- 笔记统一用 Markdown，先写中文，每篇配一份英文版（`_en.md`）；图片放在各分区的 `img/` 下。
-- 内容只在这里慢慢生长，不追求写完就定稿。
+- Each note opens with its source link and date, so it can be traced back.
+- Retold in my own words, not copied from the source; only the figures that carry the argument are kept.
+- Notes are all Markdown, written in Chinese first, each with an English version (`_en.md`); images live in each section's `img/` folder.
+- Content grows here slowly, with no rush to call a note finished.
 
 ## License
 
-笔记内容采用 [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)，仓库内代码采用 [MIT](./LICENSE)。引用的原文版权归原作者所有。
+Note content is licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), and code in this repo under [MIT](./LICENSE). Copyright of the cited originals stays with their authors.
