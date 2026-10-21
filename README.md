@@ -48,6 +48,11 @@ This is not a bookmark list but a garden. Each note is a plant: articles I read 
 - [Gemini 3 Pro Image Preview: The ChatGPT Moment for Image Generation](./notes/multimodal/Gemini-3-Pro-Image-Preview_en.md) · 2025-11-20
   - Image models are shifting from "drawing pretty pictures" to "explaining information clearly"; native multimodality lets understanding carry over into generation.
 
+### Training
+
+- [OpenThoughts: Data Recipes for Reasoning Models (full paper, with a Chinese translation)](./notes/training/OpenThoughts-Data-Recipes-for-Reasoning-Models_en.md) · 2025-06-04
+  - Over 1,000 controlled experiments optimize a reasoning SFT data pipeline step by step, yielding OpenThoughts3-1.2M; the OpenThinker3-7B model trained on it reaches 53%, 51% and 54% on AIME 2025, LiveCodeBench 06/24-01/25 and GPQA Diamond. Main findings: having the teacher sample several answers per question grows the data by 16× or more; QwQ-32B, despite lower benchmark scores, is a better teacher than DeepSeek-R1; answer verification and filtering bring no clear gain; using one or two high-quality question sources beats chasing source diversity; and filtering questions by LLM-labeled difficulty or response length works better than pre-training data filters such as fastText and embeddings.
+
 ## How this garden is tended
 
 - Each note opens with its source link and date, so it can be traced back.

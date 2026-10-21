@@ -48,6 +48,11 @@
 - [Gemini 3 Pro Image Preview: 图片生成的 ChatGPT 时刻](./notes/multimodal/Gemini-3-Pro-Image-Preview.md) · 2025-11-20
   - 生图模型从“画得好看”转向“把信息讲清楚”，原生多模态让理解能力正向迁移到生成上。
 
+### 训练 (Training)
+
+- [OpenThoughts：推理模型的数据配方（论文全文翻译）](./notes/training/OpenThoughts-Data-Recipes-for-Reasoning-Models.md) · 2025-06-04
+  - 用 1,000 多次受控实验逐步优化推理 SFT 数据流水线，得到 OpenThoughts3-1.2M；用它训练的 OpenThinker3-7B 在 AIME 2025、LiveCodeBench 06/24-01/25 和 GPQA Diamond 上分别达到 53%、51% 和 54%。主要发现：让教师模型给每个问题采样多个答案，能把数据扩大 16 倍以上；基准分数更低的 QwQ-32B 反而是比 DeepSeek-R1 更好的教师；答案验证与过滤没有带来明显收益；只用一两个高质量问题来源，好过追求来源多样；按 LLM 标注的难度或回答长度筛选问题，效果好于 fastText、embedding 这类预训练数据过滤方法。
+
 ## 这座花园怎么打理
 
 - 每篇笔记开头记来源链接和日期，方便回溯。
