@@ -39,6 +39,9 @@ This is not a bookmark list but a garden. Each note is a plant: articles I read 
 
 ### Multimodal
 
+- [Free and Low-Cost Text-to-Image: Web Apps, APIs, Local Software and Compliance](./notes/multimodal/Free-and-Low-Cost-Text-to-Image_en.md) · 2026-10-21
+  - Without writing code, Chinese websites such as Tongyi Wanxiang, Jimeng, Doubao, Yuanbao and Wenxin generate images for free; free APIs include Zhipu CogView-3-Flash, SiliconFlow Kolors, ModelScope, SenseTime's public beta and Cloudflare's daily quota; the cheapest paid API in China costs about 0.025 yuan per image (MiniMax), and abroad FLUX.2 Klein 4B costs about $0.0005 per image. Includes call examples for 6 free APIs, a compute-unit table for the Draw Things cloud free tier, open-model licenses, and the labeling and filing needed to launch in China.
+
 - [Gemini 3 Pro Image Preview: The ChatGPT Moment for Image Generation](./notes/multimodal/Gemini-3-Pro-Image-Preview_en.md) · 2025-11-20
   - Image models are shifting from "drawing pretty pictures" to "explaining information clearly"; native multimodality lets understanding carry over into generation.
 

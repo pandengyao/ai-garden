@@ -39,6 +39,9 @@
 
 ### 多模态 (Multimodal)
 
+- [免费与低价文生图调研：网页 App、API、本地软件与合规](./notes/multimodal/Free-and-Low-Cost-Text-to-Image.md) · 2026-10-21
+  - 不写代码，国内用通义万相、即梦、豆包、元宝、文心等网页就能免费出图；免费 API 有智谱 CogView-3-Flash、硅基流动 Kolors、魔搭、商汤公测和 Cloudflare 每日额度；付费 API 国内最低约 0.025 元/张（MiniMax），海外 FLUX.2 Klein 4B 约 $0.0005/张。附 6 个免费 API 的调用示例、Draw Things 云端免费档的算力单元表、开源模型许可证，以及在国内上线要做的标识和备案。
+
 - [Gemini 3 Pro Image Preview: 图片生成的 ChatGPT 时刻](./notes/multimodal/Gemini-3-Pro-Image-Preview.md) · 2025-11-20
   - 生图模型从“画得好看”转向“把信息讲清楚”，原生多模态让理解能力正向迁移到生成上。
 
