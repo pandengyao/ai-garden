@@ -161,9 +161,21 @@ def read(rel):
         return f.read()
 
 
+def strip_code(body):
+    """Drop fenced code blocks and inline code spans: GitHub renders no links inside them."""
+    out, fence = [], False
+    for line in body.split("\n"):
+        if line.lstrip().startswith("```"):
+            fence = not fence
+            continue
+        if not fence:
+            out.append(re.sub(r"`[^`\n]+`", "", line))
+    return "\n".join(out)
+
+
 def local_links(rel, body):
     base = os.path.dirname(os.path.join(ROOT, rel))
-    return [(t, resolve(base, t)) for t in LINK_RE.findall(body) if is_local(t)]
+    return [(t, resolve(base, t)) for t in LINK_RE.findall(strip_code(body)) if is_local(t)]
 
 
 def run_checks(scan_all, staged):
