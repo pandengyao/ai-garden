@@ -45,7 +45,6 @@ This is not a bookmark list but a garden. Each note is a plant: articles I read 
 ## How this garden is tended
 
 - Each note opens with its source link and date, so it can be traced back.
-- Retold in my own words, not copied from the source; only the figures that carry the argument are kept.
 - Notes are all Markdown, written in Chinese first, each with an English version (`_en.md`); images live in each section's `img/` folder.
 - Content grows here slowly, with no rush to call a note finished.
 

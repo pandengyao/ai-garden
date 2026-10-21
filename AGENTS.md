@@ -41,7 +41,7 @@ Every note and index exists in Chinese and in English.
 - Notes are Markdown only. Turn an HTML, PDF, Word or slide source into a Markdown note, and link the original instead of committing it.
 - Under the switcher line, start with a metadata list: the source (`原文链接` / `Source`, or `官方发布` / `Official announcement`) and one date (`发布日期` / `Published` for a source; `调研日期` / `Research date` or `整理日期` / `Compiled` for original work). `论文` / `Paper`, `官方资料` / `Official resources`, `实测环境` / `Test environment` and `范围` / `Scope` are optional.
 - Never add a `成熟度`, `类型` or `作者` (Maturity, Type, Author) line, and never start an index entry with 🌱, 🌿 or 🌳. The checker rejects both.
-- Explain in your own words and quote only short passages. Never paste a source wholesale.
+- Explain in your own words and quote only short passages. Copy or translate a source in full only when the owner asks for it and the source's license allows it, such as Apache-2.0, MIT or CC BY. Then add a `译注` / `Translator's note` line to the metadata that links the exact version used and states its license and every change you made.
 - Every number, name and date comes from the source. Check release dates against the vendor's own announcement, and run every code example before you publish it.
 - Index entries go newest first within their section, as `- [Title: subtitle](./notes/<topic>/<File>.md) · YYYY-MM-DD` followed by an indented one-line summary of the conclusion. The date is the source's publication date. Sections are sorted by their English names.
 
