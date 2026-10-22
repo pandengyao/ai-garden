@@ -53,6 +53,9 @@
 - [面向高效多轮智能体微调的依赖感知轨迹精炼（论文全文翻译）](./notes/training/Dependency-Aware-Trajectory-Refinement.md) · 2026-09-16
   - 把多轮智能体轨迹看成轮次级依赖 DAG，再在图上做确定性的编辑：L1 剪掉出度为 0 的死胡同轮次，L2 合并父节点和子节点都相同的兄弟轮次，L3 只要求父节点相同并迭代合并，L2a/L3a 再让 LLM 把合并后的 `<think>` 改写成一段连贯的推理。用 6196 条轨迹对 Qwen3-VL-30B-A3B-Thinking 做 SFT，在四个多模态 QA 基准上，L1 平均准确率 50.04%，比 Vanilla SFT 高 1.7 个百分点；L2a 与 Vanilla SFT 准确率相当，推理 token 却从 20.9K 降到 11.0K。L3 打破了推理时每回合一次工具调用的格式，卡死率是 L2 的 2–3 倍；让 LLM 直接删除轮次的 Critical-Path 基线反而比 Vanilla SFT 掉点。
 
+- [MMAT-1M：百万级多模态 Agent 微调数据集](./notes/training/MMAT-1M-Multimodal-Agent-Tuning.md) · 2025-07-29
+  - 用 GPT-4o 给 5 个公开视觉问答数据集补上推理过程、工具调用（图片描述、OCR、检测、搜索）和反思，得到 902,965 条多轮对话（RR），另有一份压成单轮的版本（ORR）。用它 LoRA 微调 1 个 epoch 后，InternVL2.5-8B 的 8 项基准平均分从 60.7 涨到 63.4，Dyn-VQA 从 35.2 涨到 44.0；不微调、只靠提示词套用这种格式反而掉分。实测数据还发现：ORR 比 RR 少 16% 的样本，通用反思只指出“作弊”、不重新推理，不少样本的图片描述里已经写着答案；原图的下载地址已失效，图片要到各个原始数据集里找。
+
 - [OpenThoughts：推理模型的数据配方（论文全文翻译）](./notes/training/OpenThoughts-Data-Recipes-for-Reasoning-Models.md) · 2025-06-04
   - 用 1,000 多次受控实验逐步优化推理 SFT 数据流水线，得到 OpenThoughts3-1.2M；用它训练的 OpenThinker3-7B 在 AIME 2025、LiveCodeBench 06/24-01/25 和 GPQA Diamond 上分别达到 53%、51% 和 54%。主要发现：让教师模型给每个问题采样多个答案，能把数据扩大 16 倍以上；基准分数更低的 QwQ-32B 反而是比 DeepSeek-R1 更好的教师；答案验证与过滤没有带来明显收益；只用一两个高质量问题来源，好过追求来源多样；按 LLM 标注的难度或回答长度筛选问题，效果好于 fastText、embedding 这类预训练数据过滤方法。
 
