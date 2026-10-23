@@ -4,7 +4,7 @@
 
 - **Research date**: 2026-10-21 (evidence cutoff: first arXiv version no later than 2026-10-21)
 - **Scope**: the academic literature on recursive self-improvement in AI up to October 2026, mainly arXiv. Keyword search and citation-graph expansion produced 5,784 candidate papers; 3,065 were screened on title and abstract, 1,977 were included, and 365 were read in full (our count). Chapter 3 describes the search and screening method.
-- **Structure**: the review is split into three pages. This page holds the abstract, Chapters 1–3 (introduction, related work, search method) and Chapter 14 (synthesis); Chapters 4–8 are in [Part 1](./RSI-Literature-Review-Part1_en.md) and Chapters 9–13 are in [Part 2](./RSI-Literature-Review-Part2_en.md).
+- **Structure**: the review spans 11 pages. This page holds the abstract, Chapters 1–3 (introduction, related work, search method) and Chapter 14 (synthesis); Chapters 4–13 each have their own page, listed in the "Chapters 4–13" section of this page.
 - **Basis**: superscript numbers at the end of a sentence are citations to the papers read in full, listed under References at the end; every citation is backed by verbatim text excerpted from the full paper and checked against it by script. Content marked (our assessment), (our inference), (our count) or (our estimate) is this review's own synthesis or counting, not the sources' words.
 
 ## Abstract
@@ -247,7 +247,18 @@ In the chapters that follow, this review therefore asks three questions of every
 
 ## Chapters 4–13
 
-Chapters 4–8 are in [Part 1: theoretical foundations, and self-improvement at three levels: weights, context and harness](./RSI-Literature-Review-Part1_en.md); Chapters 9–13 are in [Part 2: AI-designed AI components, automated AI research, measurement, limits and safety](./RSI-Literature-Review-Part2_en.md).
+Chapters 4–13 each have their own page:
+
+- [4. Theoretical Foundations: Formal Models, Definitions and Limit Theorems](./RSI-Literature-Review-Ch04_en.md)
+- [5. Weight-Level Self-Improvement (Part I): From Bootstrapping to Self-Rewarding (2017–2024)](./RSI-Literature-Review-Ch05_en.md)
+- [6. Weight-Level Self-Improvement (Part II): Zero-Data Self-Play and Self-Editing (2025–2026)](./RSI-Literature-Review-Ch06_en.md)
+- [7. Self-Improvement with Frozen Weights: Prompts, Context, Memory and Skills](./RSI-Literature-Review-Ch07_en.md)
+- [8. Rewriting Their Own Code: Self-Modification of Agents, Harnesses and Workflows](./RSI-Literature-Review-Ch08_en.md)
+- [9. AI Designing AI Components: Algorithms, Optimizers, Architectures, Kernels and Chips](./RSI-Literature-Review-Ch09_en.md)
+- [10. Automated AI Research: AI Scientists and Research Agents](./RSI-Literature-Review-Ch10_en.md)
+- [11. Measurement and Evaluation: How to Know Whether a System Is Really Improving Itself](./RSI-Literature-Review-Ch11_en.md)
+- [12. Limits and Failure Modes: Collapse, Sharpening and Self-Confirmation](./RSI-Literature-Review-Ch12_en.md)
+- [13. Safety and Control: Risks, Unverifiability and Mitigations for Self-Modifying Systems](./RSI-Literature-Review-Ch13_en.md)
 
 ## 14. Synthesis and Discussion
 
