@@ -5,7 +5,24 @@
 - **Source**: [Dependency-Aware Trajectory Refinement for Efficient Multi-Turn Agent Fine-Tuning](https://arxiv.org/abs/2609.18417v1)
 - **Paper**: [arXiv:2609.18417](https://arxiv.org/abs/2609.18417) (AACL 2026 Findings)
 - **Published**: 2026-09-16
-- **Translator's note**: The Chinese version is an unofficial full translation of arXiv v1, including the main text, appendices, all figures and tables, and the references. The original is released under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), and the translation carries the same license. Formatting changes: Figures 1, 3, 4 and 6 come from the vector figures in the arXiv source, rendered to PNG; Figure 2 and the two DAG sketches in Appendix I, drawn in TikZ, are cropped from the arXiv PDF; Figure 5, the round boxes in Appendix I and the prompt boxes in Appendix J became text code blocks (box colors and the bold and italics inside them are not kept), with each box title as the block's first line or as a caption above it; the two arrow legends in the Figure 2 caption are written as ⇢ and →; multi-row headers and merged cells became plain Markdown tables, and the colored deltas in Tables 9 and 10 became plain text; the link text "here" in the abstract was replaced by the repository name; the Humanity’s Last Exam reference lists only the first 19 authors, as the arXiv PDF does; the references follow the arXiv HTML entries, with DOI links written in doi.org form; and cross-references became plain text. The prompts, the trajectory content in Appendix I, the references, and model and dataset names stay in English. The English version is the original converted to Markdown, with the same formatting changes.
+- **Translator's note**: The Key Findings are a summary written for this note, not part of the paper, and every number in them comes from the paper; the Full Paper section of the Chinese version is an unofficial full translation of arXiv v1, including the main text, appendices, all figures and tables, and the references. The original is released under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), the translation carries the same license, and the formatting changes are listed at the start of the Full Paper section. In this English version, the Key Findings translate the Chinese summary, and the Full Paper section is the original converted to Markdown.
+
+## Key Findings
+
+- **Problem**: Multi-turn tool-use trajectories often contain rounds that contribute nothing to the final answer, such as failed retrievals, re-checks of facts already confirmed, and parallel sub-queries whose results never reach the answer. They inflate both training and inference cost.
+- **Method**: GPT-5.4 first annotates each trajectory with a round-level dependency DAG, adding an edge only when a later round uses a concrete artifact (a number, entity, URL or intermediate conclusion) produced by an earlier one; merely mentioning an earlier round does not count. Every edit after that is a deterministic graph operation: L1 iteratively prunes rounds with out-degree 0 (except the user question in the first round and the final answer); L2 merges sibling rounds that share both parents and children; L3 requires only shared parents and merges iteratively until convergence (L2 and L3 both run after L1); L2a and L3a then have an LLM rewrite the concatenated `<think>` of a merged round into one coherent passage, leaving tool calls and tool responses unchanged.
+- **L1 gives the highest accuracy**: after full-parameter SFT of Qwen3-VL-30B-A3B-Thinking on 6196 multi-modal tool-use trajectories, L1 averages 50.04% across the four benchmarks SimpleVQA, LiveVQA, HLE and MMSearch, 1.7 pp above vanilla SFT (48.35%) and 5.7 pp above the Critical-Path baseline (44.32%); it beats vanilla SFT on all four benchmarks, and inference tokens per sample fall from 20,940 to 14,657.
+- **L2a is the most cost-effective**: its average accuracy of 48.10% matches vanilla SFT, while inference messages per sample drop from 23.94 to 14.30 (about 40% fewer) and tokens from 20,940 to 10,977 (about 48% fewer). Among all SFT systems, it uses the fewest messages and the fewest tokens on every benchmark.
+- **Merges must keep the interaction format used at inference**: at inference, each assistant turn makes one tool call. L3 also merges siblings whose downstream consumers differ (3,234 fusions, about 3× as many as L2), and the merged turns pack several tool results into one `<tool_response>` that no longer feeds a single next `<think>`, which does not match the interaction pattern at inference. As a result, L3 hits the 128-round ceiling and gets stuck 2–3× as often as L2, and its average inference tokens even rise to 31,779. LLM rephrasing (L3a) cuts messages by 45% and tokens by 57% and closes most of that gap, but the rest of the gap is structural. The paper therefore gives a design rule: require merges to match on both parents and children, and prefer pruning over merging when downstream consumers differ.
+- **Blunt deletion and prompt-only compression both fail**: the Critical-Path baseline has an LLM mark each round as keep or remove and deletes the most from the training data (29.46% fewer messages and 24.65% fewer tokens on the fair-comparison subset), yet its average accuracy is only 44.32%, below vanilla SFT's 48.35% and even slightly below the untuned zero-shot model (44.68%). Chain-of-Draft, which compresses chain of thought through prompting alone, lands about 22 pp below zero-shot on SimpleVQA while tokens rise to 6–8×.
+- **Swapping the annotator keeps the core**: re-annotating the DAG with claude-sonnet-4-6 or deepseek-v4-pro recovers the same core rounds as GPT-5.4 (Kept-F1 0.865 and 0.727); the annotators differ mainly in how aggressively they prune.
+- **Refined trajectories also feed DPO**: refined and raw trajectories form preference pairs for free. Running DPO from vanilla SFT cuts inference tokens per sample from 20.9K to 4.0K–4.8K, but most settings lose 1.2–2.3 pp of average accuracy, only the L2 pairs gain 0.5 pp, and the Critical-Path pairs make training diverge.
+- **Pick checkpoints by downstream metrics**: when training on merged trajectories, eval-loss bottoms out near step 600 and then rises, while the downstream accuracy of L2a and L3a keeps climbing from step 600 until step 1396, so eval-loss alone is not enough.
+- **Limitations**: the experiments use a single base model family (Qwen3-VL-30B-A3B-Thinking); dependency annotation and think rephrasing each add one annotator pass at data preparation time, a one-time cost the authors expect the inference savings to amortize quickly.
+
+## Full Paper
+
+**Formatting changes**: every heading of the paper moved down one level, under this section; Figures 1, 3, 4 and 6 come from the vector figures in the arXiv source, rendered to PNG; Figure 2 and the two DAG sketches in Appendix I, drawn in TikZ, are cropped from the arXiv PDF; Figure 5, the round boxes in Appendix I and the prompt boxes in Appendix J became text code blocks (box colors and the bold and italics inside them are not kept), with each box title as the block's first line or as a caption above it; the two arrow legends in the Figure 2 caption are written as ⇢ and →; multi-row headers and merged cells became plain Markdown tables, and the colored deltas in Tables 9 and 10 became plain text; the link text "here" in the abstract was replaced by the repository name; the Humanity’s Last Exam reference lists only the first 19 authors, as the arXiv PDF does; the references follow the arXiv HTML entries, with DOI links written in doi.org form; and cross-references became plain text. The Chinese version also translates the prompts and trajectory examples in code blocks line for line, keeping their tool calls, JSON keys, tags, template variables, grade labels and the fixed string "Previous tool call results:" in English; this English version has the originals. Prompt B is itself the authors' English translation of their production prompt, so its Chinese is translated from that English, not taken from the original prompt. The references, and model and dataset names stay in English.
 
 Zhuo Chen$`^{1}`$, Zhen Zhang, Xinyu Wang, Kewei Tu$`^{1}`$\*
 
@@ -13,11 +30,11 @@ $`^{1}`$School of Information Science and Technology, ShanghaiTech University; $
 
 \* Corresponding author.
 
-## Abstract
+### Abstract
 
 Multi-turn agent trajectories often contain redundant rounds (failed tool calls, parallel sub-queries, verification-only steps) that inflate both training and inference cost. We propose viewing each trajectory as a *round-level dependency DAG* that exposes which rounds are globally load-bearing for the final answer, and fine-tune agents on trajectories refined through this DAG. Given an LLM-annotated DAG, these edits are deterministic and interpretable, with optional rephrasing. Models trained on these refined trajectories consistently outperform those trained on the original trajectories at lower inference cost. Specifically, across four multi-modal QA benchmarks, our refinements improve downstream accuracy by up to 1.7 pp over vanilla SFT (and 5.7 pp over an LLM-deletion baseline) while reducing per-sample inference messages by up to approximately 40% and inference tokens by up to approximately 48%, translating to substantial savings in compute and serving cost. Code is available at [Chord-Chen-30/LLaMA-Factory-lite](https://github.com/Chord-Chen-30/LLaMA-Factory-lite).
 
-## 1 Introduction
+### 1 Introduction
 
 Tool-augmented multi-modal agents that interleave reasoning with retrieval calls now define the state of the art for visual question answering (Yao et al., 2023; Schick et al., 2023; Qin et al., 2023; Deng et al., 2023; Xie et al., 2024). Training such agents from a pretrained model typically needs high-quality multi-turn trajectories that demonstrate how to use tools to solve complex problems. These trajectories are valuable but not always information-dense. While synthesizing these trajectories, the source model inevitably runs failed searches, double-checks already confirmed facts, or branches into parallel sub-queries whose results never enter the final answer. Cost then compounds at both training and inference stages.
 
@@ -35,17 +52,17 @@ Once a trajectory is recast as a round-level dependency DAG, edits become *deter
 
 **Contributions.** (1) A dependency-DAG view of agent trajectories that turns trajectory refinement into a transparent, deterministic graph-editing problem, with three concrete levels of structural edit. (2) Across four multi-modal QA benchmarks, our refined trajectories train models that surpass vanilla-SFT accuracy at substantially lower inference cost. (3) An LLM-rephrasing extension that closes the training/inference format gap from round merging, together with an analysis linking each edit level’s behaviour to that gap.
 
-## 2 Method
+### 2 Method
 
-### 2.1 Preliminary
+#### 2.1 Preliminary
 
 We discuss agent trajectories in the ReAct paradigm (Yao et al., 2023), where an agent interleaves reasoning and acting to solve tasks. An agent trajectory $`\mathcal{T}`$ is a sequence of *rounds*. Round 1 is the user’s question. Rounds $`2..N-1`$ each consist of an assistant turn (`<think>`+`<tool_call>`) followed by a user turn (`<tool_response>`). Round $`N`$ is the final assistant answer (`<think>`+`<answer>`). We refine $`\mathcal{T}`$ into a $`\mathcal{T}'`$ that preserves the final answer while containing no more rounds than $`\mathcal{T}`$.
 
-### 2.2 Round-Level Dependency DAG
+#### 2.2 Round-Level Dependency DAG
 
 For each trajectory $`\mathcal{T}`$ we extract a DAG $`G(\mathcal{T})`$ whose edges $`i \to j`$ record *globally load-bearing* dependencies. Round $`i`$ produced a concrete artefact (number, named entity, URL, intermediate conclusion) that Round $`j`$ uses to reach the final answer. Edges encoding mere narrative reference (“… was unhelpful, let me try …”) are excluded. After parsing, any cycles are removed by depth-first traversal. We obtain these edges by querying GPT-5.4 with the prompt shown in Sec. J.
 
-### 2.3 Three Levels of Structural Edit
+#### 2.3 Three Levels of Structural Edit
 
 We apply three edits of increasing aggressiveness, illustrated in Fig. 2:
 
@@ -57,13 +74,13 @@ We apply three edits of increasing aggressiveness, illustrated in Fig. 2:
 
 **Canonical Format.** All edits keep one outer tag per turn (`<think>` + `<tool_call>`/`<answer>` on the assistant, `<tool_response>` on the user). Merged bodies are concatenated inside the tag.
 
-### 2.4 LLM-Rephrased Merge (L2a, L3a)
+#### 2.4 LLM-Rephrased Merge (L2a, L3a)
 
 A merged round’s `<think>` is a concatenation of several disjoint trains of thought, a pattern absent in original trajectories. **L2a** and **L3a** apply an LLM rewrite to the merged `<think>` of **L2** and **L3** that produces a single coherent passage while preserving every sub-task transition and tool-call reference (prompt in Sec. J). The `<tool_call>` and `<tool_response>` bodies are kept verbatim.
 
-## 3 Experiments
+### 3 Experiments
 
-### 3.1 Setup
+#### 3.1 Setup
 
 **Training Data.** We use 6196 multi-modal, tool-using trajectories extended from Geng et al. (2025). Table 1 reports message and token reductions for each edit on a *fair-comparison subset*, 1334 trajectories that at least one edit modifies. **Critical-Path** is the most aggressive, and **L1** is the most conservative. **L2** and **L3** fall in between where **L3** removes more rounds but fewer tokens than **L2**.
 
@@ -83,7 +100,7 @@ A merged round’s `<think>` is a concatenation of several disjoint trains of th
 
 *Table 1: Training-set message and token reduction.*
 
-### 3.2 Main Results
+#### 3.2 Main Results
 
 Table 2 reports task accuracy, average message and token counts, and derived cost-effectiveness ratios across the four benchmarks. Overall, Leaf Prune (**L1**) achieves the highest accuracy, while the rephrased strict merge (**L2a**) emerges as the most cost-effective variant. Three key observations follow from these results:
 
@@ -107,7 +124,7 @@ Table 2 reports task accuracy, average message and token counts, and derived cos
 
 (iii) Boundary exploration and specialized strengths. Relaxed merging (**L3**) increases token costs on standard tasks but achieves a peak accuracy of 11.52% on the challenging HLE dataset, showing promise for complex reasoning. In contrast, the **Critical-Path** baseline drops sharply, confirming that bluntly deleting intermediate rounds hurts generalization.
 
-## 4 Analysis
+### 4 Analysis
 
 In this section, first we analyse why relaxed merge raises stuck rates and how LLM rephrasing mitigates that gap. Second, we compare against Chain-of-Draft as an inference-time baseline. Third, we test whether L1’s kept-node set is stable under alternative annotators.
 
@@ -115,7 +132,7 @@ In this section, first we analyse why relaxed merge raises stuck rates and how L
 
 *Figure 3: Stuck rate (%), the fraction of samples that hit the 128-round agent-loop ceiling.*
 
-### 4.1 Trajectory Merging and Rephrasing
+#### 4.1 Trajectory Merging and Rephrasing
 
 When a merge group contains sibling nodes with divergent children, the training turn aggregates multiple tool responses into one `<tool_response>` block. This format departs from typical multi-turn interactions and creates a shift that can disrupt the model’s behavior during inference. As a result, samples hit the 128-round agent-loop ceiling 2–3× as often under **L3** as under **L2** across all four benchmarks (Fig. 3). Excluding these stuck samples nearly aligns **L3**’s median message count with **L2**’s. **L2** avoids this distribution shift by restricting merges to interchangeable siblings.
 
@@ -125,11 +142,11 @@ When a merge group contains sibling nodes with divergent children, the training 
 
 *Figure 4: Chain-of-Draft sweep on SimpleVQA versus Zero-shot, Vanilla SFT, **L1**, and **L2a**.*
 
-### 4.2 Comparison with Chain-of-Draft
+#### 4.2 Comparison with Chain-of-Draft
 
 We also test Chain of Draft (Xu et al., 2025), a prompting-only method that compresses single-response chain of thought, as an inference-time baseline on the unmodified Zero-shot model with same agent loop and judge. Sweeping the per-step budget from 5 words to 5000 tokens on SimpleVQA (Fig. 4), accuracy falls about 22 pp below Zero-shot while tokens rise to 6–8× the Zero-shot average. CoD targets short single-turn reasoning; tightening per-round `<think>` in a multi-turn tool loop makes the agent fire tools before framing the sub-problem, so it becomes more wasteful. We therefore omit CoD from Table 2. Prompting-only compression for single-response tasks does not transfer here, which supports editing trajectories before training rather than constraining generation at inference.
 
-### 4.3 Annotator Agreement
+#### 4.3 Annotator Agreement
 
 We re-annotate training trajectories with two alternative annotators and compare the kept-node set that L1 consumes against the GPT-5.4 reference (Table 3). Kept-P is the fraction of an alternative’s kept rounds that GPT-5.4 also keeps. Kept-R is the fraction of GPT-5.4’s kept rounds that the alternative retains. Both recover the same load-bearing core and differ mainly in how aggressively they prune.
 
@@ -140,11 +157,11 @@ We re-annotate training trajectories with two alternative annotators and compare
 
 *Table 3: Kept-node agreement vs. GPT-5.4.*
 
-### 4.4 Additional Experiments
+#### 4.4 Additional Experiments
 
 Appendix material covers training and inference settings (Secs. A–B), per-benchmark cost breakdowns (Sec. C), stuck-rate notes (Sec. D), merge-format alignment (Sec. E), DPO results and setting (Secs. F–G), checkpoint selection (Sec. H), a qualitative DAG example (Sec. I), and prompt templates (Sec. J).
 
-## 5 Related Work
+### 5 Related Work
 
 Tool-using LLM agents that interleave reasoning with search, visit, or system-level actions are now a mainstream recipe (Yao et al., 2023; Schick et al., 2023; Qin et al., 2023; Deng et al., 2023; Xie et al., 2024; Yao et al., 2024), and SFT on multi-turn trajectories from a stronger LLM is the prevailing fine-tuning route (Zeng et al., 2024).
 
@@ -152,19 +169,19 @@ Closer in spirit, three lines of work pursue better SFT *data*. The “less-is-m
 
 These approaches operate across whole samples, inside a single response, or by generating new data, leaving the internal structure of an agent trajectory untouched. We recast each trajectory as a round-level dependency DAG and apply deterministic edits inside it, turning trajectory refinement into a transparent graph-editing problem.
 
-## 6 Conclusion
+### 6 Conclusion
 
 We recast each multi-turn agent trajectory as a round-level dependency DAG and apply three deterministic structural edits, with an optional LLM rephrasing variant. Across four multi-modal QA benchmarks, leaf prune (**L1**) anchors the high-accuracy end at +1.7 pp over vanilla SFT, while strict merge with rephrasing (**L2a**) anchors the cost-efficient end by halving per-sample inference tokens at vanilla-SFT accuracy. The graph-editing view makes the structural assumptions behind each edit explicit and offers a general handle for refining multi-turn agent trajectories.
 
-## Limitations
+### Limitations
 
 Our study is scoped to one base model family (`Qwen3-VL-30B-A3B-Thinking`). The proposed edits act on training data rather than model weights, but the combined training and per-checkpoint evaluation already approaches our compute budget, so transfer across base models and modalities is left to follow-up work. Dependency annotation and merge-think rephrasing each add one annotator pass at data preparation time, and these one-time costs amortise quickly against the inference-time savings in Sec. 3.2.
 
-## Acknowledgments
+### Acknowledgments
 
 This work was supported by the Core Facility Platform of Computer Science and Communication, SIST, ShanghaiTech University.
 
-## References
+### References
 
 - S. Bai, Y. Cai, R. Chen, K. Chen, X. Chen, Z. Cheng, L. Deng, W. Ding, C. Gao, C. Ge, W. Ge, Z. Guo, Q. Huang, J. Huang, F. Huang, B. Hui, S. Jiang, Z. Li, M. Li, M. Li, K. Li, Z. Lin, J. Lin, X. Liu, J. Liu, C. Liu, Y. Liu, D. Liu, S. Liu, D. Lu, R. Luo, C. Lv, R. Men, L. Meng, X. Ren, X. Ren, S. Song, Y. Sun, J. Tang, J. Tu, J. Wan, P. Wang, P. Wang, Q. Wang, Y. Wang, T. Xie, Y. Xu, H. Xu, J. Xu, Z. Yang, M. Yang, J. Yang, A. Yang, B. Yu, F. Zhang, H. Zhang, X. Zhang, B. Zheng, H. Zhong, J. Zhou, F. Zhou, J. Zhou, Y. Zhu, and K. Zhu (2025). Qwen3-vl technical report. arXiv:2511.21631, <https://arxiv.org/abs/2511.21631>
 - Y. Cao, Y. Kang, C. Wang, and L. Sun (2024). Instruction mining: instruction data selection for tuning large language models. arXiv:2307.06290, <https://arxiv.org/abs/2307.06290>
@@ -189,7 +206,7 @@ This work was supported by the Core Facility Platform of Computer Science and Co
 - Y. Zheng, R. Zhang, J. Zhang, Y. Ye, and Z. Luo (2024). LlamaFactory: unified efficient fine-tuning of 100+ language models. In Proceedings of the 62nd Annual Meeting of the Association for Computational Linguistics (Volume 3: System Demonstrations), Y. Cao, Y. Feng, and D. Xiong (Eds.), Bangkok, Thailand, pp. 400–410. <https://aclanthology.org/2024.acl-demos.38/>, <https://doi.org/10.18653/v1/2024.acl-demos.38>
 - C. Zhou, P. Liu, P. Xu, S. Iyer, J. Sun, Y. Mao, X. Ma, A. Efrat, P. Yu, L. YU, S. Zhang, G. Ghosh, M. Lewis, L. Zettlemoyer, and O. Levy (2023). LIMA: less is more for alignment. In Advances in Neural Information Processing Systems, A. Oh, T. Naumann, A. Globerson, K. Saenko, M. Hardt, and S. Levine (Eds.), Vol. 36, pp. 55006–55021. <https://proceedings.neurips.cc/paper_files/paper/2023/file/ac662d74829e4407ce1d126477f4a03a-Paper-Conference.pdf>
 
-## Appendix A Training Setting
+### Appendix A Training Setting
 
 All SFT systems (Vanilla SFT, Critical-Path, **L1**–**L3a**) fine-tune the same `Qwen3-VL-30B-A3B-Thinking` base model (Bai et al., 2025) with full-parameter updates under identical hyperparameters (Table 4). Systems differ only in their training trajectories. The training set is split 90/10 into train/eval, and the best checkpoint per system is chosen by held-out 4-benchmark accuracy (Sec. H). Implementation builds on LLaMA-Factory (Zheng et al., 2024).
 
@@ -208,11 +225,11 @@ All SFT systems (Vanilla SFT, Critical-Path, **L1**–**L3a**) fine-tune the sam
 
 *Table 4: Training setting, shared across all SFT systems.*
 
-## Appendix B Inference Setting
+### Appendix B Inference Setting
 
 We use a standard agent loop with one tool call per assistant turn and at most 128 rounds in total. Serving is via `vLLM` (TP=8, bf16). The 128-round limit acts as a safety net. We report *stuck rate* as the fraction of evaluation samples that hit this limit (see Sec. 4 and Sec. D).
 
-## Appendix C Per-Dataset Inference Cost
+### Appendix C Per-Dataset Inference Cost
 
 Tables 5–6 expand the per-sample message and token columns of Table 2 into a system × dataset grid. Both metrics are averaged across the samples of each benchmark, and the rightmost column reproduces the 4-benchmark average reported in the main table. **L2a** is uniformly the cheapest in messages on every benchmark (Table 5). Among SFT systems it is the best on all four benchmarks in tokens (Table 6). Zero-shot’s apparently low token counts on LiveVQA, HLE, and MMSearch, and its 119.26 messages on HLE, are a side-effect of the stuck-loop rate of 45.5% on HLE (Sec. D), which produces short repeated messages until the round limit.
 
@@ -255,11 +272,11 @@ Tables 5–6 expand the per-sample message and token columns of Table 2 into a s
 
 *Table 7: Cost-effectiveness summary, restating the bottom block of Table 2. **Bold** = best in column. Both cost-effectiveness ratios are computed from the row’s average accuracy and the corresponding average message / token count. † Zero-shot’s Acc/tok ratio inherits the stuck-loop artefact in Table 6. **L2a** strictly beats every SFT baseline on both ratios.*
 
-## Appendix D Stuck-Rate Note
+### Appendix D Stuck-Rate Note
 
 The per-dataset stuck-rate breakdown is given in Sec. 4. We note two side observations not covered there. First, the 45.5% stuck rate of zero-shot on HLE explains the anomalously low average-token figure of zero-shot in Sec. C, since stuck rollouts end without an `<answer>` and are truncated at the 128-round ceiling. Second, the residual elevation of **L3a** on HLE (versus **L2a**) is consistent with the format-mismatch interpretation in Sec. 4, since merge-think rephrasing cannot fully reshape the multi-response `<tool_response>` block that **L3** produces.
 
-## Appendix E Merge Granularity and Inference-Time Format Alignment
+### Appendix E Merge Granularity and Inference-Time Format Alignment
 
 **L2**/**L2a** and **L3**/**L3a** use closely related merge primitives but show distinctly different inference behaviour (Tables 5–6, Sec. D). This appendix explains where the gap arises and states the design rule it suggests.
 
@@ -328,7 +345,7 @@ user: <tool_response> resp_y </tool_response>
 
 *Table 10: Matched-base DPO on each setting’s own SFT checkpoint. Δ: +DPO minus that setting’s SFT.*
 
-## Appendix F DPO on Refined-vs-Raw Preference Pairs
+### Appendix F DPO on Refined-vs-Raw Preference Pairs
 
 Each structural edit yields a free preference pair that shares the final answer, taking the refined trajectory as “chosen” and the raw trajectory as “rejected” (counts: Critical-Path 4,446; **L1** 986; **L2**/**L2a** 1,175; **L3**/**L3a** 1,322). We plug these pairs into a follow-up DPO (Rafailov et al., 2024) stage in two recipes that differ only in the DPO starting checkpoint.
 
@@ -336,7 +353,7 @@ Each structural edit yields a free preference pair that shares the final answer,
 
 **Matched-Base Recipe.** Start DPO from each setting’s own SFT checkpoint, Table 10. Accuracy is better preserved than under the shared base, while tokens still drop, though they remain above the shared-base band. Shared-base is stronger for cost-efficient deployment. Matched-base is safer when raw accuracy is the priority.
 
-## Appendix G DPO Setting
+### Appendix G DPO Setting
 
 We train with sigmoid DPO plus an NLL-on-chosen anchor (Table 11). **L1** uses 200 steps and $`\alpha_{\mathrm{RPO}}=0.7`$; others use 300 steps and $`\alpha_{\mathrm{RPO}}=0.5`$. Checkpoints every 50 steps are selected by mix-dev accuracy rather than eval-loss.
 
@@ -362,7 +379,7 @@ We train with sigmoid DPO plus an NLL-on-chosen anchor (Table 11). **L1** uses 2
 
 *Figure 6: Eval-loss curves (left, dense schedule) vs. downstream 4-benchmark accuracy (right, four evaluated checkpoints) for **L1**, **L2a**, **L3a**.*
 
-## Appendix H Checkpoint Selection
+### Appendix H Checkpoint Selection
 
 Eval-loss on the held-out 10% of the training data was recorded at every 200 steps (Table 12, top half, and Fig. 6 left). Downstream task accuracy, however, requires running the full agent loop on the four benchmarks for every candidate checkpoint, which is expensive. Within our compute budget we evaluated four checkpoints for our edits, namely steps 200, 600, 800, and 1396 (final), and a single checkpoint at step 600 for Vanilla SFT and Critical-Path (selected by the same rule applied to our edits). A denser sweep is left to follow-up work.
 
@@ -388,13 +405,13 @@ Eval-loss on the held-out 10% of the training data was recorded at every 200 ste
 
 **Eval-Loss Decouples from Accuracy.** All three of **L1**, **L2a**, **L3a** follow a similar eval-loss trajectory (minimum near step 600, then rising), but downstream accuracy diverges. **L1** peaks at step 600 (50.04%), drops to 46.45% at step 800, and reaches 45.11% at step 1396 (−4.9 pp from peak). **L2a** and **L3a** instead climb *monotonically* from step 600 onwards (47.68 → 47.89 → 48.10 for **L2a**, and 46.90 → 47.22 → 47.55 for **L3a**, all in %). Picking the checkpoint by eval-loss alone would have chosen step 600 for everyone, which is exactly **L1**’s peak but a poor choice for **L2a**/**L3a**. Practitioners training on merged trajectories should therefore select checkpoints by downstream metrics rather than eval-loss. Continuing training beyond step 1396 would extend the 4-epoch SFT budget and require evaluating additional checkpoints on the full agent loop, which doubles inference cost per added checkpoint. Eval-loss has been rising since step 600, so further training carries a non-trivial overfitting risk despite the still-climbing downstream metric for **L2a**/**L3a**. A larger compute-budget sweep is left to follow-up work.
 
-## Appendix I Qualitative Example
+### Appendix I Qualitative Example
 
 **Source Sample.** Training-corpus sample `_idx=1581`. The user shows an image carrying “SAGE Publishing” branding and a “Live Product Training” banner, and asks: *“Who founded SAGE Publishing, and within the first decade after that, who established the company’s first international office in London?”* The gold answer ends with “Sara Miller McCune (with George McCune) founded SAGE in 1965, and SAGE Publications Ltd. was established in London in 1971”.
 
 In what follows, each grey box is one round of the original trajectory, and the bar at the top names the round and its role. Round 1 is the user question (image + text). Rounds 2–4 are assistant turns whose **think** and **call** are followed by a user-side **resp**. Round 5 is the final assistant **answer**. Red-bordered boxes mark rounds removed by an edit, and teal-bordered boxes mark rounds produced by merging.
 
-### Original Trajectory (8 Messages, 5 Rounds)
+#### Original Trajectory (8 Messages, 5 Rounds)
 
 ```text
 R1 (user)
@@ -438,7 +455,7 @@ answer  Sara Miller McCune (with George McCune) founded SAGE, and
         the first international office was established in London in 1971.
 ```
 
-### Annotated DAG (Prompt A)
+#### Annotated DAG (Prompt A)
 
 Running the strict prompt (Sec. J, Prompt A) on this trajectory, the annotator LLM emits three edges with the following abridged reasons.
 
@@ -450,7 +467,7 @@ Running the strict prompt (Sec. J, Prompt A) on this trajectory, the annotator L
 
 The resulting DAG over annotated edges is `R2→R3`, `R2→R5`, and `R4→R5`. R3 has out-degree 0 (no downstream round uses anything it produced), which marks it as the L1 leaf.
 
-### After L1 (Leaf Prune): 6 Messages, 4 Rounds
+#### After L1 (Leaf Prune): 6 Messages, 4 Rounds
 
 R3 has out-degree 0 in the annotated DAG, so **L1** drops it. R1, R2, R4, R5 remain unchanged.
 
@@ -461,7 +478,7 @@ think (removed)    call (removed)    resp (removed)
 
 The kept trajectory after **L1** is `R1 → R2 → R4 → R5`, i.e. the original boxes for R1, R2, R4, R5 unchanged (not redrawn).
 
-### After L2a (Strict Merge + LLM Rephrase): 4 Messages, 3 Rounds
+#### After L2a (Strict Merge + LLM Rephrase): 4 Messages, 3 Rounds
 
 In the annotated DAG after **L1**, R2 and R4 both have an empty parent set (Prompt A emits no `R1→*` edge) and the same child set ({R5}). The strict-merge rule fuses them into one round `R2+4`. Note that even if Prompt A had emitted `R1→R2` and `R1→R4`, both rounds would then share parents {R1} and child {R5}, and the same merge would fire. Their two **think** bodies are concatenated and rephrased by the annotator LLM into a single coherent passage (the `<think>` shown below). The two original calls are emitted as two JSON arguments inside a single `<tool_call>` tag, and the two **resp** bodies are prefixed with “Previous tool call results:” and emitted in one user turn.
 
@@ -486,7 +503,7 @@ The full **L2a** trajectory is `R1 → R2+4 → R5` (R5 unchanged from the origi
 
 **Take-Aways.** Two distinct effects compose on the same trajectory. First, Leaf Prune (**L1**) removes the redundant follow-up search whose evidence was already in R2. Second, Strict Merge with rephrase (**L2a**) folds the two substantively different sub-queries (“who founded” vs. “where was the first international office”) into one round of reasoning whose `<think>` reads as a single chain of thought, not two disjoint segments concatenated with a semicolon. The final answer in R5 is unchanged.
 
-### Two Further DAG-Only Cases
+#### Two Further DAG-Only Cases
 
 To isolate each edit’s topological action, we show two more samples from the training corpus as bare DAGs, omitting the per-round content. The first sample triggers only L1, the second only L3.
 
@@ -500,7 +517,7 @@ To isolate each edit’s topological action, we show two more samples from the t
 
 Together with Sample B (`_idx=1581`) above, the three samples isolate the three edit primitives. Real trajectories often chain them, as Sample B does (L1 then L2a).
 
-## Appendix J Prompt Templates
+### Appendix J Prompt Templates
 
 This appendix gathers LLM prompts used in the paper:
 

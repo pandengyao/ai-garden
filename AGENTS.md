@@ -42,6 +42,7 @@ Every note and index exists in Chinese and in English.
 - Under the switcher line, start with a metadata list: the source (`原文链接` / `Source`, or `官方发布` / `Official announcement`) and one date (`发布日期` / `Published` for a source; `调研日期` / `Research date` or `整理日期` / `Compiled` for original work). `论文` / `Paper`, `官方资料` / `Official resources`, `实测环境` / `Test environment` and `范围` / `Scope` are optional.
 - Never add a `成熟度`, `类型` or `作者` (Maturity, Type, Author) line, and never start an index entry with 🌱, 🌿 or 🌳. The checker rejects both.
 - Every number, name and date comes from the source. Check release dates against the vendor's own announcement, and run every code example before you publish it.
+- A note that carries a paper's full translation opens with `## 主要结论` / `## Key Findings`: a short summary written for the note, in which every number comes from the paper. The paper follows under `## 全文翻译` / `## Full Paper`, with each of its headings moved down one level. In the Chinese file, also translate the prose inside the paper's prompt and example blocks, line for line; keep code, JSON keys, tags, template variables and tool calls unchanged.
 - Index entries go newest first within their section, as `- [Title: subtitle](./notes/<topic>/<File>.md) · YYYY-MM-DD` followed by an indented one-line summary of the conclusion. The date is the source's publication date. Sections are sorted by their English names.
 
 ## Markdown style

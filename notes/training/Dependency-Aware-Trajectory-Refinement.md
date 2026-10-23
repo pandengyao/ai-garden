@@ -5,7 +5,24 @@
 - **原文链接**: [Dependency-Aware Trajectory Refinement for Efficient Multi-Turn Agent Fine-Tuning](https://arxiv.org/abs/2609.18417v1)
 - **论文**: [arXiv:2609.18417](https://arxiv.org/abs/2609.18417)（AACL 2026 Findings）
 - **发布日期**: 2026-09-16
-- **译注**: 本文是 arXiv v1 版的非官方全文中译，含正文、附录、全部图表和参考文献。原文以 [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) 许可发布，本译文沿用同一许可。格式上的改动：图 1、3、4、6 取自 arXiv 源文件中的矢量图，渲染为 PNG；用 TikZ 绘制的图 2 和附录 I 的两张 DAG 示意图从 arXiv PDF 截取；图 5、附录 I 的轮次框和附录 J 的提示词框改为文本代码块（框的颜色和框内的粗体、斜体未保留），框的标题放在代码块首行或上方的说明里；图 2 图注中的两种箭头图例写成 ⇢ 和 →；多行表头和合并单元格改为普通 Markdown 表格，表 9、10 中的彩色增减值改为普通文本；摘要中的链接文字“here”换成了仓库名；Humanity’s Last Exam 一条参考文献与原 PDF 一样只列出前 19 位作者；参考文献按 arXiv HTML 版的条目整理，DOI 链接统一写成 doi.org 形式；交叉引用改为纯文本。提示词、附录 I 的轨迹内容、参考文献，以及模型和数据集名称保留英文。英文版是原文转成的 Markdown，格式改动相同。
+- **译注**: “主要结论”是为本笔记写的摘要，不属于原文，数字均取自论文；“全文翻译”是 arXiv v1 版的非官方全文中译，含正文、附录、全部图表和参考文献。原文以 [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) 许可发布，本译文沿用同一许可，格式上的改动列在“全文翻译”一节的开头。英文版的“主要结论”译自中文摘要，其余是原文转成的 Markdown。
+
+## 主要结论
+
+- **问题**：多轮工具调用轨迹里常有对最终答案没有贡献的轮次，比如失败的检索、对已确认事实的重复核对、结果从未进入答案的并行子查询。它们同时抬高了训练和推理成本。
+- **方法**：先用 GPT-5.4 给每条轨迹标注一张轮次级依赖 DAG：只有后一轮用到了前一轮产出的具体产物（数字、实体、URL、中间结论）时才连边，仅在叙述上提到前一轮不算。之后的编辑都是确定性的图操作：L1 迭代剪掉出度为 0 的轮次（第一轮的用户问题和最后的答案除外）；L2 合并父节点和子节点都相同的兄弟轮次；L3 只要求父节点相同，并迭代合并到收敛（L2、L3 都在 L1 之后执行）；L2a、L3a 再让 LLM 把合并后拼接起来的 `<think>` 改写成一段连贯的推理，工具调用和工具返回保持原样。
+- **L1 准确率最高**：用 6196 条多模态工具调用轨迹全参数微调 Qwen3-VL-30B-A3B-Thinking，L1 在 SimpleVQA、LiveVQA、HLE、MMSearch 四个基准上的平均准确率为 50.04%，比 Vanilla SFT（48.35%）高 1.7 个百分点，比 Critical-Path 基线（44.32%）高 5.7 个百分点；它在四个基准上都高于 Vanilla SFT，每个样本的推理 token 也从 20,940 降到 14,657。
+- **L2a 性价比最高**：平均准确率 48.10%，与 Vanilla SFT 相当，每个样本的推理消息数从 23.94 降到 14.30（约少 40%），token 数从 20,940 降到 10,977（约少 48%）。在所有 SFT 系统中，它在每个基准上的消息数和 token 数都最少。
+- **合并不能破坏推理时的交互格式**：推理时每个助手回合只调用一次工具。L3 把下游消费者不同的兄弟轮次也合并起来（融合 3,234 次，约为 L2 的 3 倍），合并出的回合把多个工具结果塞进同一个 `<tool_response>`，又不再只对应一个后续 `<think>`，与推理时的交互模式对不上。结果是 L3 触及 128 轮上限而卡死的比例是 L2 的 2–3 倍，平均推理 token 反而涨到 31,779。LLM 改写（L3a）把消息数和 token 数分别减少了 45% 和 57%，补回了大部分差距，但剩下的差距是结构性的。论文由此给出设计规则：合并要求父节点和子节点都相同；下游消费者不同时，宁可剪枝也不要合并。
+- **直接删轮次、只靠提示词压缩都不行**：Critical-Path 基线让 LLM 逐轮判断“保留或删除”，在训练数据上删得最多（公平比较子集上消息少 29.46%，token 少 24.65%），平均准确率却只有 44.32%，低于 Vanilla SFT 的 48.35%，甚至略低于未经微调的 Zero-shot（44.68%）。只靠提示词压缩思维链的 Chain-of-Draft 在 SimpleVQA 上比 Zero-shot 低约 22 个百分点，token 反而涨到 6–8 倍。
+- **换标注模型，核心不变**：换用 claude-sonnet-4-6 或 deepseek-v4-pro 重新标注 DAG，都还原出了与 GPT-5.4 相同的核心轮次（Kept-F1 分别为 0.865 和 0.727），差别主要在剪枝有多激进。
+- **精炼轨迹还能做 DPO**：精炼轨迹与原始轨迹天然构成偏好对。从 Vanilla SFT 出发做 DPO，每个样本的推理 token 从 20.9K 降到 4.0K–4.8K，但多数设置的平均准确率下降 1.2–2.3 个百分点，只有 L2 的偏好对提升了 0.5 个百分点，Critical-Path 的偏好对则让训练发散。
+- **按下游指标选 checkpoint**：在合并后的轨迹上训练时，eval-loss 在第 600 步附近最低、之后上升，L2a 和 L3a 的下游准确率却从第 600 步起一直涨到第 1396 步，所以不能只看 eval-loss。
+- **局限**：实验只用了一个基座模型系列（Qwen3-VL-30B-A3B-Thinking）；依赖标注和 think 改写都要在数据准备阶段多跑一遍标注模型，作者认为这笔一次性成本很快能被推理节省摊销。
+
+## 全文翻译
+
+**格式改动**：原文的各级标题都降了一级，放在本节之下；图 1、3、4、6 取自 arXiv 源文件中的矢量图，渲染为 PNG；用 TikZ 绘制的图 2 和附录 I 的两张 DAG 示意图从 arXiv PDF 截取；图 5、附录 I 的轮次框和附录 J 的提示词框改为文本代码块（框的颜色和框内的粗体、斜体未保留），框的标题放在代码块首行或上方的说明里；图 2 图注中的两种箭头图例写成 ⇢ 和 →；多行表头和合并单元格改为普通 Markdown 表格，表 9、10 中的彩色增减值改为普通文本；摘要中的链接文字“here”换成了仓库名；Humanity’s Last Exam 一条参考文献与原 PDF 一样只列出前 19 位作者；参考文献按 arXiv HTML 版的条目整理，DOI 链接统一写成 doi.org 形式；交叉引用改为纯文本。中文版把代码块里的提示词和轨迹示例也逐行译成了中文，其中的工具调用、JSON 字段名、标签、模板变量、评分等级和固定字符串“Previous tool call results:”保持英文，原文见英文版。提示词 B 在原文中就是作者生产环境提示词的英文译文，这里的中文由这份英文转译而来，并非作者的原始提示词。参考文献，以及模型和数据集名称保留英文。
 
 Zhuo Chen$`^{1}`$, Zhen Zhang, Xinyu Wang, Kewei Tu$`^{1}`$\*
 
@@ -13,11 +30,11 @@ $`^{1}`$School of Information Science and Technology, ShanghaiTech University; $
 
 \* 通讯作者。
 
-## 摘要
+### 摘要
 
 多轮智能体轨迹中常常包含冗余的轮次（失败的工具调用、并行的子查询、仅用于验证的步骤），它们同时抬高了训练和推理成本。我们提出把每条轨迹看作一个*轮次级依赖 DAG*，用它揭示哪些轮次在全局上对最终答案起支撑作用，并在经过这个 DAG 精炼的轨迹上微调智能体。给定一个由 LLM 标注的 DAG，这些编辑是确定性的、可解释的，还可以选择再做一步改写。在这些精炼轨迹上训练的模型，始终能以更低的推理成本超过在原始轨迹上训练的模型。具体来说，在四个多模态 QA 基准上，我们的精炼方法使下游准确率比 Vanilla SFT 最多提高 1.7 个百分点（比一个 LLM 删除基线最多提高 5.7 个百分点），同时把每个样本的推理消息数最多减少约 40%、推理 token 数最多减少约 48%，从而大幅节省计算和服务成本。代码见 [Chord-Chen-30/LLaMA-Factory-lite](https://github.com/Chord-Chen-30/LLaMA-Factory-lite)。
 
-## 1 引言
+### 1 引言
 
 将推理与检索调用交替进行的工具增强型多模态智能体，如今代表了视觉问答领域的最先进水平 (Yao et al., 2023; Schick et al., 2023; Qin et al., 2023; Deng et al., 2023; Xie et al., 2024)。要从一个预训练模型出发训练这样的智能体，通常需要高质量的多轮轨迹，来示范如何使用工具解决复杂问题。这些轨迹很有价值，但信息密度并不总是很高。在合成这些轨迹时，源模型不可避免地会执行失败的搜索、反复核对已经确认的事实，或者分出并行的子查询，而这些子查询的结果从未进入最终答案。成本于是在训练和推理两个阶段不断累积。
 
@@ -35,17 +52,17 @@ $`^{1}`$School of Information Science and Technology, ShanghaiTech University; $
 
 **贡献。** (1) 一种看待智能体轨迹的依赖 DAG 视角，它把轨迹精炼变成一个透明、确定的图编辑问题，并给出三个具体层级的结构编辑。(2) 在四个多模态 QA 基准上，用我们精炼后的轨迹训练出的模型，以大幅更低的推理成本超过了 Vanilla SFT 的准确率。(3) 一种 LLM 改写扩展，用来弥合轮次合并带来的训练/推理格式差距，并附有一项分析，把每个编辑层级的行为与这一差距联系起来。
 
-## 2 方法
+### 2 方法
 
-### 2.1 预备知识
+#### 2.1 预备知识
 
 我们在 ReAct 范式 (Yao et al., 2023) 下讨论智能体轨迹，在这一范式中，智能体交替进行推理和行动来解决任务。一条智能体轨迹 $`\mathcal{T}`$ 是由若干*轮次*组成的序列。第 1 轮是用户的问题。第 $`2..N-1`$ 轮各由一个助手回合（`<think>`+`<tool_call>`）和紧随其后的一个用户回合（`<tool_response>`）组成。第 $`N`$ 轮是助手的最终答案（`<think>`+`<answer>`）。我们把 $`\mathcal{T}`$ 精炼成一个 $`\mathcal{T}'`$，它保留最终答案，且所含轮次不多于 $`\mathcal{T}`$。
 
-### 2.2 轮次级依赖 DAG
+#### 2.2 轮次级依赖 DAG
 
 对每条轨迹 $`\mathcal{T}`$，我们抽取一个 DAG $`G(\mathcal{T})`$，其边 $`i \to j`$ 记录*在全局上起支撑作用*的依赖。即轮次 $`i`$ 产生了一个具体的产物（数字、命名实体、URL、中间结论），轮次 $`j`$ 用它来得出最终答案。仅表示叙述性指代的边（“……没有帮助，让我试试……”）被排除在外。解析之后，通过深度优先遍历去除所有的环。我们用附录 J 中给出的提示词查询 GPT-5.4 来获得这些边。
 
-### 2.3 三个层级的结构编辑
+#### 2.3 三个层级的结构编辑
 
 我们按激进程度递增的顺序应用三种编辑，如图 2 所示：
 
@@ -57,13 +74,13 @@ $`^{1}`$School of Information Science and Technology, ShanghaiTech University; $
 
 **规范格式。** 所有编辑都保持每个回合只有一个外层标签（助手一侧为 `<think>` + `<tool_call>`/`<answer>`，用户一侧为 `<tool_response>`）。合并后的内容在标签内部拼接。
 
-### 2.4 LLM 改写合并（L2a、L3a）
+#### 2.4 LLM 改写合并（L2a、L3a）
 
 合并后轮次的 `<think>` 是由若干条互不相干的思路拼接而成的，这种模式在原始轨迹中并不存在。**L2a** 和 **L3a** 对 **L2** 和 **L3** 合并后的 `<think>` 进行 LLM 改写，生成一段连贯的文字，同时保留每一次子任务切换和每一处对工具调用的引用（提示词见附录 J）。`<tool_call>` 和 `<tool_response>` 的内容保持原样。
 
-## 3 实验
+### 3 实验
 
-### 3.1 实验设置
+#### 3.1 实验设置
 
 **训练数据。** 我们使用 6196 条多模态、使用工具的轨迹，它们扩展自 Geng et al. (2025)。表 1 报告了在一个*公平比较子集*上每种编辑带来的消息数和 token 数削减，该子集由 1334 条至少被一种编辑修改过的轨迹组成。**Critical-Path** 最激进，**L1** 最保守。**L2** 和 **L3** 介于两者之间，其中 **L3** 比 **L2** 删除更多轮次，但删除的 token 更少。
 
@@ -83,7 +100,7 @@ $`^{1}`$School of Information Science and Technology, ShanghaiTech University; $
 
 *表 1：训练集上的消息数与 token 数削减。*
 
-### 3.2 主要结果
+#### 3.2 主要结果
 
 表 2 报告了四个基准上的任务准确率、平均消息数和 token 数，以及由此导出的性价比比值。总体来看，叶子剪枝（**L1**）的准确率最高，而改写后的严格合并（**L2a**）是性价比最高的变体。从这些结果中可以得出三点关键观察：
 
@@ -107,7 +124,7 @@ $`^{1}`$School of Information Science and Technology, ShanghaiTech University; $
 
 (iii) 边界探索与各自的专长。宽松合并（**L3**）在标准任务上增加了 token 成本，但在高难度的 HLE 数据集上取得了 11.52% 的峰值准确率，显示出在复杂推理上的潜力。相比之下，**Critical-Path** 基线大幅下降，证实了粗暴地删除中间轮次会损害泛化能力。
 
-## 4 分析
+### 4 分析
 
 本节首先分析宽松合并为什么会提高卡死率，以及 LLM 改写如何缩小这一差距。其次，我们把 Chain-of-Draft 作为推理时基线进行比较。第三，我们检验 L1 的保留节点集合在换用其他标注模型时是否稳定。
 
@@ -115,7 +132,7 @@ $`^{1}`$School of Information Science and Technology, ShanghaiTech University; $
 
 *图 3：卡死率（%），即触及 128 轮智能体循环上限的样本比例。*
 
-### 4.1 轨迹合并与改写
+#### 4.1 轨迹合并与改写
 
 当一个合并组包含子节点各不相同的兄弟节点时，训练中的回合会把多个工具响应聚合进同一个 `<tool_response>` 块。这种格式偏离了典型的多轮交互，造成的偏移可能扰乱模型在推理时的行为。结果是，在全部四个基准上，样本在 **L3** 下触及 128 轮智能体循环上限的频率是在 **L2** 下的 2–3 倍（图 3）。排除这些卡死样本后，**L3** 的消息数中位数几乎与 **L2** 的持平。**L2** 把合并限制在可互换的兄弟节点之间，从而避免了这种分布偏移。
 
@@ -125,11 +142,11 @@ $`^{1}`$School of Information Science and Technology, ShanghaiTech University; $
 
 *图 4：在 SimpleVQA 上对 Chain-of-Draft 做的扫描，与 Zero-shot、Vanilla SFT、**L1** 和 **L2a** 的对比。*
 
-### 4.2 与 Chain-of-Draft 的比较
+#### 4.2 与 Chain-of-Draft 的比较
 
 我们还测试了 Chain of Draft (Xu et al., 2025)，这是一种只靠提示词、用于压缩单次回答中思维链的方法；我们把它作为推理时基线，用在未经修改的 Zero-shot 模型上，智能体循环和评判模型保持不变。在 SimpleVQA 上把每一步的预算从 5 个词扫到 5000 个 token（图 4），准确率比 Zero-shot 低约 22 个百分点，而 token 数上升到 Zero-shot 平均值的 6–8 倍。CoD 针对的是简短的单轮推理；在多轮工具循环中收紧每一轮的 `<think>`，会让智能体在还没理清子问题时就调用工具，因而更加浪费。因此我们没有把 CoD 列入表 2。面向单次回答任务、只靠提示词的压缩方法在这里无法迁移，这支持在训练前编辑轨迹，而不是在推理时约束生成。
 
-### 4.3 标注模型之间的一致性
+#### 4.3 标注模型之间的一致性
 
 我们用两个替代的标注模型重新标注训练轨迹，并以 GPT-5.4 的结果为参照，比较 L1 所使用的保留节点集合（表 3）。Kept-P 是替代标注模型保留的轮次中、GPT-5.4 也保留的比例。Kept-R 是 GPT-5.4 保留的轮次中、替代标注模型也保留下来的比例。两者都还原出了同样的起支撑作用的核心，区别主要在于剪枝的激进程度。
 
@@ -140,11 +157,11 @@ $`^{1}`$School of Information Science and Technology, ShanghaiTech University; $
 
 *表 3：与 GPT-5.4 相比的保留节点一致性。*
 
-### 4.4 其他实验
+#### 4.4 其他实验
 
 附录内容包括训练和推理设置（附录 A–B）、按基准拆分的成本明细（附录 C）、关于卡死率的说明（附录 D）、合并格式的对齐（附录 E）、DPO 的结果与设置（附录 F–G）、checkpoint 选择（附录 H）、一个 DAG 定性示例（附录 I）以及提示词模板（附录 J）。
 
-## 5 相关工作
+### 5 相关工作
 
 将推理与搜索、网页访问或系统级操作交替进行的工具使用型 LLM 智能体，如今已是主流做法 (Yao et al., 2023; Schick et al., 2023; Qin et al., 2023; Deng et al., 2023; Xie et al., 2024; Yao et al., 2024)，而在来自更强 LLM 的多轮轨迹上做 SFT 是主流的微调路线 (Zeng et al., 2024)。
 
@@ -152,19 +169,19 @@ $`^{1}`$School of Information Science and Technology, ShanghaiTech University; $
 
 这些方法要么作用于整个样本之间，要么作用于单个回答内部，要么靠生成新数据，都没有触及智能体轨迹的内部结构。我们把每条轨迹重新表述为轮次级依赖 DAG，并在其内部进行确定性的编辑，从而把轨迹精炼变成一个透明的图编辑问题。
 
-## 6 结论
+### 6 结论
 
 我们把每条多轮智能体轨迹重新表述为轮次级依赖 DAG，并应用三种确定性的结构编辑，外加一个可选的 LLM 改写变体。在四个多模态 QA 基准上，叶子剪枝（**L1**）锚定了高准确率一端，比 Vanilla SFT 高 +1.7 个百分点；带改写的严格合并（**L2a**）则锚定了高性价比一端，在 Vanilla SFT 的准确率水平上把每个样本的推理 token 减半。图编辑视角让每种编辑背后的结构假设变得明确，也为精炼多轮智能体轨迹提供了一个通用的抓手。
 
-## 局限性
+### 局限性
 
 我们的研究仅限于一个基座模型系列（`Qwen3-VL-30B-A3B-Thinking`）。所提出的编辑作用于训练数据而非模型权重，但训练加上逐个 checkpoint 的评测已经接近我们的计算预算，因此跨基座模型和跨模态的迁移留待后续工作。依赖标注和 merge-think 改写在数据准备阶段各增加一遍标注模型调用，这些一次性成本相对于第 3.2 节中推理时的节省，很快就能摊销掉。
 
-## 致谢
+### 致谢
 
 本工作得到了上海科技大学信息科学与技术学院（SIST）计算机科学与通信核心设施平台的支持。
 
-## 参考文献
+### 参考文献
 
 - S. Bai, Y. Cai, R. Chen, K. Chen, X. Chen, Z. Cheng, L. Deng, W. Ding, C. Gao, C. Ge, W. Ge, Z. Guo, Q. Huang, J. Huang, F. Huang, B. Hui, S. Jiang, Z. Li, M. Li, M. Li, K. Li, Z. Lin, J. Lin, X. Liu, J. Liu, C. Liu, Y. Liu, D. Liu, S. Liu, D. Lu, R. Luo, C. Lv, R. Men, L. Meng, X. Ren, X. Ren, S. Song, Y. Sun, J. Tang, J. Tu, J. Wan, P. Wang, P. Wang, Q. Wang, Y. Wang, T. Xie, Y. Xu, H. Xu, J. Xu, Z. Yang, M. Yang, J. Yang, A. Yang, B. Yu, F. Zhang, H. Zhang, X. Zhang, B. Zheng, H. Zhong, J. Zhou, F. Zhou, J. Zhou, Y. Zhu, and K. Zhu (2025). Qwen3-vl technical report. arXiv:2511.21631, <https://arxiv.org/abs/2511.21631>
 - Y. Cao, Y. Kang, C. Wang, and L. Sun (2024). Instruction mining: instruction data selection for tuning large language models. arXiv:2307.06290, <https://arxiv.org/abs/2307.06290>
@@ -189,7 +206,7 @@ $`^{1}`$School of Information Science and Technology, ShanghaiTech University; $
 - Y. Zheng, R. Zhang, J. Zhang, Y. Ye, and Z. Luo (2024). LlamaFactory: unified efficient fine-tuning of 100+ language models. In Proceedings of the 62nd Annual Meeting of the Association for Computational Linguistics (Volume 3: System Demonstrations), Y. Cao, Y. Feng, and D. Xiong (Eds.), Bangkok, Thailand, pp. 400–410. <https://aclanthology.org/2024.acl-demos.38/>, <https://doi.org/10.18653/v1/2024.acl-demos.38>
 - C. Zhou, P. Liu, P. Xu, S. Iyer, J. Sun, Y. Mao, X. Ma, A. Efrat, P. Yu, L. YU, S. Zhang, G. Ghosh, M. Lewis, L. Zettlemoyer, and O. Levy (2023). LIMA: less is more for alignment. In Advances in Neural Information Processing Systems, A. Oh, T. Naumann, A. Globerson, K. Saenko, M. Hardt, and S. Levine (Eds.), Vol. 36, pp. 55006–55021. <https://proceedings.neurips.cc/paper_files/paper/2023/file/ac662d74829e4407ce1d126477f4a03a-Paper-Conference.pdf>
 
-## 附录 A 训练设置
+### 附录 A 训练设置
 
 所有 SFT 系统（Vanilla SFT、Critical-Path、**L1**–**L3a**）都在完全相同的超参数下（表 4），以全参数更新的方式微调同一个基座模型 `Qwen3-VL-30B-A3B-Thinking` (Bai et al., 2025)。各系统之间唯一的区别是训练轨迹。训练集按 90/10 划分为训练集和验证集，每个系统的最佳 checkpoint 按 4 个留出基准上的准确率来选择（附录 H）。实现基于 LLaMA-Factory (Zheng et al., 2024)。
 
@@ -208,11 +225,11 @@ $`^{1}`$School of Information Science and Technology, ShanghaiTech University; $
 
 *表 4：训练设置，所有 SFT 系统共用。*
 
-## 附录 B 推理设置
+### 附录 B 推理设置
 
 我们使用标准的智能体循环，每个助手回合一次工具调用，总共最多 128 轮。推理服务通过 `vLLM` 部署（TP=8，bf16）。128 轮的上限起到安全网的作用。我们把触及这一上限的评测样本比例报告为*卡死率*（见第 4 节和附录 D）。
 
-## 附录 C 各数据集的推理成本
+### 附录 C 各数据集的推理成本
 
 表 5–6 把表 2 中每样本消息数和 token 数这两列展开成系统 × 数据集的网格。两个指标都在每个基准的样本上取平均，最右一列重现了主表中报告的 4 个基准平均值。**L2a** 在每个基准上都一致地是消息数最少的（表 5）。在 SFT 系统中，它在全部四个基准上的 token 数也都是最好的（表 6）。Zero-shot 在 LiveVQA、HLE 和 MMSearch 上看似很低的 token 数，以及它在 HLE 上的 119.26 条消息，都是它在 HLE 上 45.5% 的卡死循环率带来的副作用（附录 D）：卡死循环会不断产生简短的重复消息，直到触及轮次上限。
 
@@ -255,18 +272,18 @@ $`^{1}`$School of Information Science and Technology, ShanghaiTech University; $
 
 *表 7：性价比汇总，复述表 2 最下面的一块。**粗体** = 该列最优。两种性价比比值都由该行的平均准确率和对应的平均消息数 / token 数计算得出。† Zero-shot 的准确率/token 比值继承了表 6 中卡死循环造成的伪影。**L2a** 在两种比值上都严格优于每一个 SFT 基线。*
 
-## 附录 D 关于卡死率的说明
+### 附录 D 关于卡死率的说明
 
 各数据集的卡死率细分见第 4 节。这里补充两个那里没有涉及的旁支观察。第一，Zero-shot 在 HLE 上 45.5% 的卡死率解释了附录 C 中 Zero-shot 平均 token 数异常偏低的现象，因为卡死的 rollout 在没有 `<answer>` 的情况下结束，并在 128 轮上限处被截断。第二，**L3a** 在 HLE 上（相对于 **L2a**）残留的偏高，与第 4 节中格式不匹配的解释一致，因为 merge-think 改写无法完全重塑 **L3** 产生的多响应 `<tool_response>` 块。
 
-## 附录 E 合并粒度与推理时的格式对齐
+### 附录 E 合并粒度与推理时的格式对齐
 
 **L2**/**L2a** 和 **L3**/**L3a** 使用密切相关的合并原语，却表现出明显不同的推理行为（表 5–6，附录 D）。本附录说明这一差距从何而来，并给出它所提示的设计规则。
 
 **格式差距。** 推理时的智能体循环是严格串行的。在绝大多数助手回合中，一个 `<tool_call>` 标签只携带一个 JSON 调用，随后的用户回合返回一个 `<tool_response>`，内含该调用的结果。合并在两侧都保留了规范的外层标签，但把 $`k \geq 2`$ 个兄弟节点的*内容*拼接在标签内部。合并后的 `<tool_call>` 于是包含 $`k`$ 个 JSON 调用，而合并后的 `<tool_response>` 以“Previous tool call results:”开头，包含对应的 $`k`$ 个结果。两个外层标签各装有 $`k`$ 项的轮次，是推理循环不会产生的一种配置（图 5）。
 
 ```text
-(a) Merged training round
+(a) 合并后的训练轮次
 assistant
   <think> … </think>
   <tool_call> {call_a} {call_b} </tool_call>
@@ -276,7 +293,7 @@ user
     resp_a; resp_b
   </tool_response>
 
-(b) Inference-time loop
+(b) 推理时的循环
 assistant: <think> … </think> <tool_call> call_x </tool_call>
 user: <tool_response> resp_x </tool_response>
 assistant: <think> … </think> <tool_call> call_y </tool_call>
@@ -328,7 +345,7 @@ user: <tool_response> resp_y </tool_response>
 
 *表 10：在每种设置各自的 SFT checkpoint 上进行的匹配基座 DPO。Δ：+DPO 减去该设置的 SFT。*
 
-## 附录 F 在“精炼 vs. 原始”偏好对上做 DPO
+### 附录 F 在“精炼 vs. 原始”偏好对上做 DPO
 
 每一种结构编辑都会免费产生一个共享同一最终答案的偏好对：把精炼后的轨迹作为“chosen”，把原始轨迹作为“rejected”（数量：Critical-Path 4,446；**L1** 986；**L2**/**L2a** 1,175；**L3**/**L3a** 1,322）。我们把这些偏好对接入后续的 DPO (Rafailov et al., 2024) 阶段，采用两种方案，二者唯一的区别是 DPO 的起始 checkpoint。
 
@@ -336,7 +353,7 @@ user: <tool_response> resp_y </tool_response>
 
 **匹配基座方案。** 从每种设置各自的 SFT checkpoint 出发做 DPO，见表 10。与共享基座相比，准确率保留得更好，token 数仍会下降，但仍高于共享基座方案的区间。共享基座更适合追求性价比的部署。当准确率本身是首要目标时，匹配基座更稳妥。
 
-## 附录 G DPO 设置
+### 附录 G DPO 设置
 
 我们使用 sigmoid DPO 加上一个在 chosen 上的 NLL 锚定项进行训练（表 11）。**L1** 使用 200 步和 $`\alpha_{\mathrm{RPO}}=0.7`$；其余设置使用 300 步和 $`\alpha_{\mathrm{RPO}}=0.5`$。每 50 步保存一个 checkpoint，并按 mix-dev 准确率而不是 eval-loss 来选择。
 
@@ -362,7 +379,7 @@ user: <tool_response> resp_y </tool_response>
 
 *图 6：eval-loss 曲线（左，密集的记录间隔）与下游 4 个基准准确率（右，评测过的四个 checkpoint）的对比，对象为 **L1**、**L2a**、**L3a**。*
 
-## 附录 H Checkpoint 选择
+### 附录 H Checkpoint 选择
 
 我们在训练数据中留出的 10% 上，每 200 步记录一次 eval-loss（表 12 上半部分，以及图 6 左）。然而，下游任务准确率需要对每个候选 checkpoint 在四个基准上运行完整的智能体循环，代价很高。在我们的计算预算之内，我们为自己的各种编辑评测了四个 checkpoint，即第 200、600、800 和 1396 步（最终），而为 Vanilla SFT 和 Critical-Path 只评测了第 600 步的一个 checkpoint（按与我们的编辑相同的规则选出）。更密集的扫描留待后续工作。
 
@@ -388,57 +405,57 @@ user: <tool_response> resp_y </tool_response>
 
 **eval-loss 与准确率脱钩。** **L1**、**L2a**、**L3a** 三者的 eval-loss 轨迹相似（在第 600 步附近达到最低，之后上升），但下游准确率却出现分化。**L1** 在第 600 步达到峰值（50.04%），在第 800 步降到 46.45%，在第 1396 步降到 45.11%（相对峰值 −4.9 个百分点）。**L2a** 和 **L3a** 则从第 600 步起*单调*上升（**L2a** 为 47.68 → 47.89 → 48.10，**L3a** 为 46.90 → 47.22 → 47.55，单位均为 %）。如果只按 eval-loss 选 checkpoint，所有方法都会选第 600 步，这恰好是 **L1** 的峰值，但对 **L2a**/**L3a** 来说是个糟糕的选择。因此，在合并后的轨迹上训练的实践者应当按下游指标而不是 eval-loss 来选择 checkpoint。在第 1396 步之后继续训练会超出 4 个 epoch 的 SFT 预算，并且需要在完整的智能体循环上评测更多 checkpoint，每增加一个 checkpoint 都会让推理成本翻倍。eval-loss 从第 600 步起就一直在上升，因此尽管 **L2a**/**L3a** 的下游指标仍在攀升，继续训练也有不小的过拟合风险。更大计算预算下的扫描留待后续工作。
 
-## 附录 I 定性示例
+### 附录 I 定性示例
 
 **源样本。** 训练语料中的样本 `_idx=1581`。用户展示了一张带有“SAGE Publishing”品牌标识和“Live Product Training”横幅的图片，并提问：“*SAGE Publishing 是谁创立的？在那之后的头十年里，又是谁设立了公司在伦敦的第一个海外办事处？*”标准答案的结尾是“Sara Miller McCune（与 George McCune 一起）于 1965 年创立了 SAGE，SAGE Publications Ltd. 于 1971 年在伦敦成立”。
 
 下文中，每个灰色框是原始轨迹中的一个轮次，顶部的标题栏写明该轮次及其角色。第 1 轮是用户问题（图片 + 文本）。第 2–4 轮是助手回合，其中的 **think** 和 **call** 之后跟着一个用户侧的 **resp**。第 5 轮是助手最终的 **answer**。红色边框的框表示被某种编辑删除的轮次，青色边框的框表示由合并产生的轮次。
 
-### 原始轨迹（8 条消息，5 个轮次）
+#### 原始轨迹（8 条消息，5 个轮次）
 
 ```text
-R1 (user)
-[image: SAGE Publishing logo on a Live Product Training banner]
-Who founded SAGE Publishing, and within the first decade after
-that, who established the company’s first international office in
-London?
+R1（用户）
+[图片：Live Product Training 横幅上的 SAGE Publishing 标志]
+SAGE Publishing 是谁创立的？在那之后的头十年里，
+又是谁设立了公司在伦敦的第一个
+海外办事处？
 ```
 
 ```text
-R2 (assistant + user)
-think   Identify who founded SAGE Publishing, then look up the
-        London office. Start with the founder.
+R2（助手 + 用户）
+think   先确定 SAGE Publishing 是谁创立的，再查伦敦
+        办事处。先从创始人查起。
 call    web_search("Who founded SAGE Publishing")
-resp    “24-year-old Sara Miller McCune founded Sage in 1965 …”
+resp    “24 岁的 Sara Miller McCune 于 1965 年创立了 Sage……”
         (Wikipedia / About-SAGE)
 ```
 
 ```text
-R3 (assistant + user)
-think   Now find who set up SAGE’s first international office in
-        London.
+R3（助手 + 用户）
+think   接下来查是谁设立了 SAGE 在伦敦的第一个海外
+        办事处。
 call    web_search("SAGE first international office London established by who and when")
-resp    Same About-SAGE snippet as R2, with no new fact about
-        the London office.
+resp    与 R2 相同的 About-SAGE 摘要，没有关于伦敦办事处
+        的任何新事实。
 ```
 
 ```text
-R4 (assistant + user)
-think   The previous result added nothing new. Try SAGE’s own
-        50-year history page directly.
+R4（助手 + 用户）
+think   上一个结果没有带来任何新信息。直接去看 SAGE 自己的
+        50 年历史页面。
 call    visit_url("https://us.sagepub.com/.../sage-50-year-history.pdf")
-resp    “1971: SAGE Publications, Ltd. established in London. Sara
-        and George hired David Brooks …”
+resp    “1971 年：SAGE Publications, Ltd. 在伦敦成立。Sara
+        和 George 聘用了 David Brooks……”
 ```
 
 ```text
-R5 (assistant)
-think   I have what I need.
-answer  Sara Miller McCune (with George McCune) founded SAGE, and
-        the first international office was established in London in 1971.
+R5（助手）
+think   需要的信息都有了。
+answer  Sara Miller McCune（与 George McCune 一起）创立了 SAGE，
+        第一个海外办事处于 1971 年在伦敦设立。
 ```
 
-### 标注得到的 DAG（提示词 A）
+#### 标注得到的 DAG（提示词 A）
 
 在这条轨迹上运行严格版提示词（附录 J，提示词 A），标注 LLM 输出了三条边，并附有以下经过删节的理由。
 
@@ -450,43 +467,43 @@ answer  Sara Miller McCune (with George McCune) founded SAGE, and
 
 根据标注出的边得到的 DAG 是 `R2→R3`、`R2→R5` 和 `R4→R5`。R3 的出度为 0（没有任何下游轮次使用它产生的东西），这使它成为 L1 要剪掉的叶子。
 
-### L1（叶子剪枝）之后：6 条消息，4 个轮次
+#### L1（叶子剪枝）之后：6 条消息，4 个轮次
 
 R3 在标注 DAG 中的出度为 0，因此 **L1** 将其删除。R1、R2、R4、R5 保持不变。
 
 ```text
-R3 (pruned by L1: out-degree 0)
-think (removed)    call (removed)    resp (removed)
+R3（被 L1 剪掉：出度为 0）
+think（已删除）    call（已删除）    resp（已删除）
 ```
 
 **L1** 之后保留下来的轨迹是 `R1 → R2 → R4 → R5`，即 R1、R2、R4、R5 的原始框保持不变（不再重复画出）。
 
-### L2a（严格合并 + LLM 改写）之后：4 条消息，3 个轮次
+#### L2a（严格合并 + LLM 改写）之后：4 条消息，3 个轮次
 
 在 **L1** 之后的标注 DAG 中，R2 和 R4 的父节点集合都为空（提示词 A 不输出任何 `R1→*` 边），子节点集合也相同（{R5}）。严格合并规则把它们融合成一个轮次 `R2+4`。注意，即使提示词 A 输出了 `R1→R2` 和 `R1→R4`，这两个轮次也会共享父节点 {R1} 和子节点 {R5}，同样的合并仍会触发。它们的两段 **think** 内容被拼接起来，并由标注 LLM 改写成一段连贯的文字（即下方所示的 `<think>`）。原来的两次调用以两个 JSON 参数的形式放在同一个 `<tool_call>` 标签中，两段 **resp** 内容则加上前缀“Previous tool call results:”，在同一个用户回合中给出。
 
 ```text
-R2+4 (merged by L2a, covering original R2 and R4)
-think   The image shows SAGE Publishing’s branding on a Live
-        Product Training banner. The question has two parts (who founded
-        SAGE Publishing and who established its first London office within
-        the first decade) and these are likely connected, so first locate
-        the founder, then look at SAGE’s early history for when and how the
-        London office was set up.
+R2+4（由 L2a 合并，涵盖原来的 R2 和 R4）
+think   图片显示了 Live Product Training 横幅上的
+        SAGE Publishing 品牌标识。问题有两部分（SAGE Publishing 是谁创立的，
+        以及在头十年内是谁设立了它在伦敦的第一个办事处），而且两者
+        很可能相互关联，所以先找到创始人，再查看 SAGE 的早期
+        历史，了解伦敦办事处是何时、
+        如何设立的。
 call    web_search("Who founded SAGE Publishing"),
         visit_url("https://us.sagepub.com/.../sage-50-year-history.pdf")
 resp    Previous tool call results:
-          (1) “24-year-old Sara Miller McCune founded Sage in
-          1965 …”
-          (2) “1971: SAGE Publications, Ltd. established in
-          London. Sara and George hired David Brooks …”
+          (1) “24 岁的 Sara Miller McCune 于
+          1965 年创立了 Sage……”
+          (2) “1971 年：SAGE Publications, Ltd. 在
+          伦敦成立。Sara 和 George 聘用了 David Brooks……”
 ```
 
 完整的 **L2a** 轨迹是 `R1 → R2+4 → R5`（R5 与原始轨迹相同）。
 
 **要点。** 两种不同的效果在同一条轨迹上叠加。第一，叶子剪枝（**L1**）删除了多余的后续搜索，其证据早已在 R2 中。第二，带改写的严格合并（**L2a**）把两个实质上不同的子查询（“谁创立的”与“第一个海外办事处在哪里”）折叠进同一个推理轮次，其 `<think>` 读起来是一条完整的思维链，而不是用分号拼接起来的两段互不相干的内容。R5 中的最终答案保持不变。
 
-### 另外两个只看 DAG 的案例
+#### 另外两个只看 DAG 的案例
 
 为了单独展示每种编辑在拓扑上的作用，我们再给出训练语料中的两个样本，只画出 DAG，省略每个轮次的内容。第一个样本只触发 L1，第二个只触发 L3。
 
@@ -500,7 +517,7 @@ resp    Previous tool call results:
 
 结合上面的样本 B（`_idx=1581`），这三个样本分别单独展示了三种编辑原语。真实轨迹常常会把它们串联起来，就像样本 B 那样（先 L1，再 L2a）。
 
-## 附录 J 提示词模板
+### 附录 J 提示词模板
 
 本附录汇集了文中使用的 LLM 提示词：
 
@@ -512,222 +529,222 @@ resp    Previous tool call results:
 *提示词 A：DAG 标注。*
 
 ```text
-# Role
-You are an expert in logical reasoning and causal analysis. Your task
-is to analyze a multi-round AI Agent trajectory and deconstruct it
-into a Directed Acyclic Graph (DAG) that captures only the
-dependencies that actually matter for producing the final answer.
+# 角色
+你是逻辑推理与因果分析方面的专家。你的任务是
+分析一条多轮 AI Agent 轨迹，并把它拆解成
+一个有向无环图（DAG），这个图只记录
+对产生最终答案真正重要的依赖关系。
 
-# Task Description
-The trajectory is organized by “Rounds.” You will be told which
-round contains the final answer (typically the last round). Your job
-is to decide, for every candidate edge Round i -> Round j,
-whether Round j would have been impossible or clearly wrong
-without Round i’s concrete contribution — judged globally
-against the final answer, not by local narrative flow.
+# 任务说明
+轨迹按“轮次”（Round）组织。你会被告知哪一轮
+包含最终答案（通常是最后一轮）。你的工作
+是针对每一条候选边 Round i -> Round j，判断
+如果没有 Round i 的具体贡献，Round j 是否
+就不可能完成或明显出错——要对照最终答案
+从全局来判断，而不是看局部的叙述衔接。
 
-# Definition of a Dependency Edge (Round i -> Round j)
-An edge exists only if ALL of the following are true:
-1. Concrete carry-over: A specific fact, number, entity, URL,
-identifier, or inferred conclusion that Round j actually uses
-was first produced in Round i — and cannot be obtained from any
-other earlier round or from the original query alone.
-2. Globally load-bearing: Removing Round i would break Round
-j’s ability to make progress toward the final answer in Round N. If
-Round j could have been produced by skipping Round i (perhaps with
-minor rewording), do NOT add the edge.
-3. Not mere narrative / chronological continuity: Do NOT add
-an edge just because Round j’s <think> text mentions, reacts
-to, or rhetorically references Round i.
+# 依赖边（Round i -> Round j）的定义
+只有当以下条件全部成立时，才存在一条边：
+1. 具体的信息传递：Round j 实际用到的某个具体事实、数字、实体、URL、
+标识符或推断出的结论，最早产生于 Round i——而且
+无法从任何其他更早的轮次中得到，
+也无法仅凭原始查询得到。
+2. 在全局上起支撑作用：去掉 Round i 会让 Round j 无法
+朝 Round N 中的最终答案继续推进。如果
+跳过 Round i 也能产生 Round j（也许只需
+稍微改一下措辞），就不要添加这条边。
+3. 不能只是叙述上或时间上的衔接：不要仅仅因为
+Round j 的 <think> 文本提到了 Round i、对它作出了反应，
+或在措辞上引用了它，就添加一条边。
 
-# Anti-Patterns — Do NOT Add an Edge When:
-• Dead-end rounds: Round i returned information
-not used anywhere downstream (including Round N).
-• Redundant confirmation: Round j merely
-re-verifies a fact already established in an earlier round.
-• Parallel independent lookups: Round i and j are
-both sub-queries derived from a common ancestor, with no information
-flowing from one to the other.
-• Pure stylistic/continuity reference: “continuing
-from the previous step” without consuming any output of Round i.
+# 反模式——以下情况不要添加边：
+• 死胡同轮次：Round i 返回的信息
+在下游任何地方（包括 Round N）都没有被用到。
+• 冗余确认：Round j 只是
+重新核实一个在更早轮次中已经确立的事实。
+• 并行的独立查询：Round i 和 j 都是
+从同一个祖先派生出来的子查询，彼此之间
+没有任何信息流动。
+• 纯粹风格上或衔接上的指代：比如“接着
+上一步”，却没有用到 Round i 的任何输出。
 
-# Be Aggressive About Pruning Edges
-Default to NOT adding an edge. When in doubt, ask: “If I deleted
-Round i from the transcript, would Round j still reach the same
-conclusion (perhaps via trivial rewording)?” If yes — do not add
-the edge.
+# 剪边要激进
+默认不添加边。拿不准时，问自己：“如果我从记录中删掉
+Round i，Round j 还能得出同样的
+结论吗（也许只需做些无关紧要的改写）？”如果能——就不要添加
+这条边。
 
-# Output Format
-JSON edge list, each entry naming the concrete fact/artifact carried:
+# 输出格式
+JSON 边列表，每一项都要写明所传递的具体事实/产物：
 [{"source": "Round X", "target": "Round Y",
-  "reason": "Round X produced <fact> which
-  Round Y uses to <purpose>"}, ...]
+  "reason": "Round X 产生了 <fact>，
+  Round Y 用它来 <purpose>"}, ...]
 
-# Input Trajectory
+# 输入轨迹
 {INPUT_TRAJ_STRING}
 ```
 
 *提示词 B：Critical-Path KEEP/REMOVE 基线（生产环境所用提示词的英文译文）。*
 
 ```text
-System. You are a rigorous, conservative cleaning assistant
-for multi-modal Agent research data. Your task is to prune
-unnecessary reasoning / tool-call rounds so the training data is more
-efficient, while keeping the remaining trajectory logically coherent
-and self-consistent. Output compact JSON only; do not wrap in
-markdown code fences.
+系统消息：你是一个严谨、保守的多模态 Agent 研究数据
+清洗助手。你的任务是剪掉
+不必要的推理 / 工具调用轮次，让训练数据更
+高效，同时保持剩余轨迹在逻辑上连贯、
+自洽。只输出紧凑的 JSON；不要用
+markdown 代码块包裹。
 
-User.
-# Background
-Below is one Agent trajectory. Each middle round consists of an
-assistant turn (with <think> and <tool_call>)
-followed by a user turn (tool_response). The
-final assistant turn emits <answer>.
+用户消息：
+# 背景
+下面是一条 Agent 轨迹。每个中间轮次由一个
+assistant 回合（含 <think> 和 <tool_call>）
+和紧随其后的一个 user 回合（tool_response）组成。
+最后一个 assistant 回合输出 <answer>。
 
-# Goal
-Decide which middle rounds can be deleted entirely, such
-that the trajectory becomes more concise without changing the
-correctness of the final answer.
+# 目标
+判断哪些中间轮次可以被整个删除，使
+轨迹在不改变最终答案正确性的前提下
+变得更简洁。
 
-# Typical removable rounds
-1. Failed / empty result: tool_response is “Page not found”,
-empty, or irrelevant, and no later round adjusts strategy based on
-it.
-2. Redundant repeat: this tool_call overlaps a prior one,
-information already obtained.
-3. Abandoned branch: this round tried a direction but no
-later think/tool_call uses its output, and the final answer is
-unrelated.
-4. Extra re-verification: the key fact already entered the
-answer via an earlier round; this round only reconfirms.
-5. Over-long reasoning prep: the tool_call output of this
-round does not appear in the evidence chain for the final answer.
+# 典型的可删除轮次
+1. 失败 / 空结果：tool_response 是“Page not found”、
+为空或不相关，而且后续没有任何轮次据此调整
+策略。
+2. 冗余重复：本轮的 tool_call 与之前的某次调用重叠，
+信息已经获得过了。
+3. 被放弃的分支：本轮尝试了一个方向，但之后
+没有任何 think/tool_call 用到它的输出，最终答案也
+与之无关。
+4. 多余的再验证：关键事实已经通过更早的轮次进入了
+答案；本轮只是再次确认。
+5. 过长的推理铺垫：本轮 tool_call 的输出
+没有出现在最终答案的证据链中。
 
-# Non-removable rounds
-Concrete artefacts of this round (number, year, name, link, image
-description, …) appear directly in the final answer; OR
-some kept round’s think / tool_call explicitly references this
-round’s output; OR this round is a non-skippable step in the
-reasoning chain.
+# 不可删除的轮次
+本轮的具体产物（数字、年份、名称、链接、图片
+描述……）直接出现在最终答案中；或者
+某个被保留轮次的 think / tool_call 明确引用了本轮的
+输出；或者本轮是推理链中
+不可跳过的一步。
 
-# Coherence hard constraint
-After deleting a round, the next kept round’s <think> prefix
-must not read as a reference to the deleted content (e.g., “let’s
-try another link”, “that didn’t work”, “another search”,
-“hmm”). To repair such dangling references, you may supply a
-minimal rewrite (patch_think) for the affected
-kept round. The rewrite must preserve its conclusion and subsequent
-tool_call, only altering the opening one or two sentences.
-null means no rewrite needed.
+# 连贯性硬约束
+删除某一轮之后，下一个被保留轮次的 <think> 开头
+读起来不能像是在指代被删掉的内容（例如“我们
+换个链接试试”“那个不行”“再搜一次”
+“嗯”）。为了修复这类悬空指代，你可以为受影响的
+被保留轮次提供一个最小改写（patch_think）。
+改写必须保留该轮的结论和其后的
+tool_call，只改动开头的一两句话。
+null 表示不需要改写。
 
-# Conservative principle
-When in doubt, keep the round. If no round can be safely
-deleted, return remove: [].
+# 保守原则
+拿不准时，就保留该轮。如果没有任何轮次可以安全
+删除，返回 remove: []。
 
-# Output Format
-Strict JSON, no markdown:
+# 输出格式
+严格的 JSON，不要 markdown：
 {
   "status": "reduce" | "non_reducible" | "illogical",
   "remove": [<round_id_int>, ...],
   "patch_think": { "<id>": "<rewritten think>", ... },
   "reason": "<short justification>"
 }
-• reduce: at least one deletable round.
-• non_reducible: all rounds load-bearing or
-patch_think cannot fix coherence.
-• illogical: trajectory itself is broken (answer
-mismatched, final answer missing, …).
-• remove must not include Round 1 or the final
-answer round.
+• reduce：至少有一个可删除的轮次。
+• non_reducible：所有轮次都起支撑作用，或者
+patch_think 无法修复连贯性。
+• illogical：轨迹本身有问题（答案
+不匹配、缺少最终答案……）。
+• remove 中不得包含 Round 1 或最终
+答案所在的轮次。
 
-# Input Trajectory
+# 输入轨迹
 {INPUT_TRAJ_STRING}
 ```
 
 *提示词 C：Merge-think 改写（L2a、L3a 使用）。*
 
 ```text
-Your task is to merge multiple <think></think> segments from
-a trajectory of model outputs into a single coherent reasoning
-passage.
+你的任务是把一条模型输出轨迹中的多个 <think></think> 片段
+合并成一段连贯的推理
+文字。
 
-Context: These <think> segments originally came from
-separate turns in a multi-turn user–assistant conversation, where
-each <think> block was followed by tool_call arguments. It
-has now been determined that the think contents and the tool_calls
-can each be consolidated into a single turn. Your job is to merge the
-think segments into one logical, coherent reasoning passage.
+背景：这些 <think> 片段原本来自
+一段多轮 user–assistant 对话中的不同回合，其中
+每个 <think> 块后面都跟着 tool_call 参数。现在
+已经确定，这些 think 内容和 tool_call
+都可以各自合并到同一个回合中。你的工作是把这些
+think 片段合并成一段有逻辑、连贯的推理文字。
 
-Requirements:
-• Preserve the original intent and logical flow of the
-reasoning.
-• If the original think segments reference or describe
-tool_calls (tool invocations), you must retain that meaning — do
-not drop references to which tools are being used or why.
-• Smooth out the transitions: the current think contents
-are crudely concatenated with semicolons (;) and line
-breaks. Rewrite them so they read as one continuous, natural chain of
-thought rather than disjoint fragments.
-• Do not add new reasoning that wasn’t present in the
-original; only restructure and connect what is already there.
-• Compress for token efficiency without losing information.
-Eliminate redundancy, repeated context, filler phrases, and verbose
-restatements. Merge overlapping points — but every distinct piece
-of information, decision, and tool-call reference must still be
-present in the output.
+要求：
+• 保留原有推理的意图和逻辑
+脉络。
+• 如果原来的 think 片段提到或描述了
+tool_call（工具调用），你必须保留这层意思——不要
+丢掉关于用了哪些工具、为什么用的说明。
+• 让过渡变得顺畅：当前的 think 内容
+只是用分号（;）和换行
+粗暴地拼接在一起。请改写它们，使其读起来是一条连续、自然的
+思维链，而不是互不相干的片段。
+• 不要添加原文中没有的
+新推理；只对已有内容重新组织和衔接。
+• 为节省 token 而压缩，但不能丢失信息。
+去掉冗余、重复的上下文、填充性的词句和啰嗦的
+复述。合并重叠的要点——但每一条不同的
+信息、每一个决定、每一处对工具调用的引用都必须
+保留在输出中。
 
-Input (concatenated think contents):
+输入（拼接后的 think 内容）：
 {CONCATED_THINK}
 
-Output format: Plain text only. Do not wrap the output in any special
-tags (no <think>, no XML, no markdown code fences).
+输出格式：只输出纯文本。不要用任何特殊
+标签包裹输出（不要 <think>、不要 XML、不要 markdown 代码块）。
 ```
 
 *提示词 D：LLM 作为评判（gpt-5-nano）。*
 
 ```text
-Your job is to look at a question, a gold target, and a predicted
-answer, and then assign a grade of either [CORRECT, INCORRECT,
-NOT_ATTEMPTED]. First, examples of each grade; then a new example.
+你的工作是查看一个问题、一个标准答案（gold target）和一个预测
+答案，然后给出以下等级之一：[CORRECT, INCORRECT,
+NOT_ATTEMPTED]。先给出每个等级的示例，然后是一个新的示例。
 
-CORRECT examples (predicted answer is equivalent to the
-gold target):
-Q: “What are the names of Barack Obama’s children?”; Gold: “Malia
-Obama and Sasha Obama”. Accept: “sasha and malia obama”; “most
-people would say Malia and Sasha, but I’m not sure…”; “…Malia Ann and Natasha Marian, but commonly Malia and Sasha…”.
-A predicted answer is CORRECT iff it fully contains the gold
-information, contradicts nothing in it, and only semantic meaning
-matters (case / punctuation / order do not). Hedging is allowed as
-long as the gold is fully included.
+CORRECT 示例（预测答案与标准答案
+等价）：
+问：“Barack Obama 的孩子叫什么名字？”；标准答案：“Malia
+Obama 和 Sasha Obama”。可以接受：“sasha 和 malia obama”；“大多数
+人会说是 Malia 和 Sasha，但我不确定……”；“……Malia Ann 和 Natasha Marian，不过通常叫 Malia 和 Sasha……”。
+当且仅当预测答案完整包含标准答案的
+信息、与之没有任何矛盾时，它才是 CORRECT；只有语义
+才重要（大小写 / 标点 / 顺序都无关紧要）。只要完整包含了标准答案，
+就允许使用含糊的措辞。
 
-INCORRECT examples (predicted answer contradicts the gold):
-“Malia.”; “Malia, Sasha, and Susan.”; “Obama has no children.”;
-“either Malia and Sasha. Or Malia and Jackie…”. A factual
-statement contradicting the gold is INCORRECT, even if hedged.
+INCORRECT 示例（预测答案与标准答案矛盾）：
+“Malia。”；“Malia、Sasha 和 Susan。”；“Obama 没有孩子。”；
+“要么是 Malia 和 Sasha，要么是 Malia 和 Jackie……”。与标准答案
+相矛盾的事实性陈述就是 INCORRECT，即使措辞含糊也一样。
 
-NOT_ATTEMPTED examples (predicted answer neither contains
-nor contradicts the gold):
-“I don’t know.”; “I need more context.”; “He has two children. I
-know one is Malia, but I’m not sure about the other.”
+NOT_ATTEMPTED 示例（预测答案既不包含
+也不违背标准答案）：
+“我不知道。”；“我需要更多上下文。”；“他有两个孩子。我
+知道其中一个是 Malia，但不确定另一个。”
 
-Additional rules:
-• Numbers must be correct to the last significant figure
-in the gold (“120k”→ accept 115k–124k; reject 100k or 113k).
-• Gold may carry extra info beyond the question; predicted
-need only cover what the question asked.
-• Do not punish omissions clearly inferred from the
-question (“San Francisco” for “San Francisco, California”).
-• Tolerate typos in names if clearly the same person.
+补充规则：
+• 数字必须精确到标准答案中的最后一位
+有效数字（“120k”→ 接受 115k–124k；拒绝 100k 或 113k）。
+• 标准答案可能包含问题之外的额外信息；预测答案
+只需覆盖问题所问的内容。
+• 对于能从问题中明显推断出来的省略，不要扣分
+（如用“San Francisco”代替“San Francisco, California”）。
+• 如果明显是同一个人，可以容忍名字中的拼写错误。
 
-Here is a new example. Simply reply with A, B, or
-C (no other text).
-Question: {query}
-Gold target: {reference_answer}
-Predicted answer: {generated_answer}
+下面是一个新的示例。只需回复 A、B 或
+C（不要有其他文字）。
+问题：{query}
+标准答案：{reference_answer}
+预测答案：{generated_answer}
 
-Grade as one of:
+从以下等级中选择一个：
 A: CORRECT
 B: INCORRECT
 C: NOT_ATTEMPTED
-Return only the single letter.
+只返回这一个字母。
 ```
