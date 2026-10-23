@@ -52,6 +52,7 @@ This is not a bookmark list but a garden. Each note is a plant: articles I read 
 
 - [Recursive Self-Improvement (RSI) in AI: A Literature Review](./notes/self_improvement/RSI-Literature-Review_en.md) · 2026-10-21
   - After a systematic search of 5,784 candidate papers and a full reading of 365, the review finds plenty of bounded self-improvement in all five strands (weights, context/memory/skills, harnesses, AI-designed components and automated research), but reliable evidence of recursive, compounding self-improvement in none. Multi-round gains shrink or saturate, and the outermost layer always keeps a fixed evaluation or selection step; of 90 studies that call themselves RSI, only 22% audit two or more reruns of the full loop. The signal source sets the ceiling: loops anchored in execution or formal verification are the most stable, self-judged loops reverse or collapse within a few rounds, and the evidence that risk accumulates across generations is firmer than the evidence that capability compounds.
+  - Parts: [Chapters 4–8](./notes/self_improvement/RSI-Literature-Review-Part1_en.md) · [Chapters 9–13](./notes/self_improvement/RSI-Literature-Review-Part2_en.md)
 
 ### Training
 
