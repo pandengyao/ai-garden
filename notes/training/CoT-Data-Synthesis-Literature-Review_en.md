@@ -105,7 +105,7 @@ The search sources were the arXiv API (title and abstract fields) and the Semant
 
 To offset the dependence of keyword search on wording, we selected representative seed papers in each direction, 23 in total (our count), and retrieved all of their citing papers that have arXiv IDs through Semantic Scholar. This step yielded 9,306 distinct papers (our count). For those not covered by keyword search, we retrieved metadata under the rule "the title contains a topic term, the paper cites several seeds, or it has at least 150 citations", adding 3,975 papers (our count).
 
-The recall check used as its benchmark the 84 arXiv papers in the ledger of the earlier survey plus 62 landmark papers of the field, 146 in total (our count). With keyword search alone, recall was 79% (our count); after adding citation expansion, recall rose to 86% (our count). The 20 papers still not recalled were added to the candidate pool directly by ID (our count). The merged candidate pool totaled 13,589 papers (our count).
+The recall check used as its benchmark the 84 arXiv papers cited in the earlier survey plus 62 landmark papers of the field, 146 in total (our count). With keyword search alone, recall was 79% (our count); after adding citation expansion, recall rose to 86% (our count). The 20 papers still not recalled were added to the candidate pool directly by ID (our count). The merged candidate pool totaled 13,589 papers (our count).
 
 ### 2.3 Screening and Coding
 
@@ -146,7 +146,7 @@ The set read in full consists of two parts (our assessment):
 - The 91 sources already read in full in the earlier survey, comprising 84 arXiv papers and 7 dataset cards, blogs and code-repository documents (our count).
 - The 146 papers added in this round, selected by category from Tiers A and B (our count). The selection principle was that the foundational work, highly cited representative work and recent progress of 2026 in every direction are all covered.
 
-After the full texts of all papers were fetched, they were assigned along eight thematic lanes to parallel LLM evidence-extraction agents (our assessment). Every claim had to come with a quote that matches the original text verbatim, and it entered the ledger only after the citation-ledger script had verified it. Every number in the body of this review can be found in the ledger quotes of the corresponding paper (our assessment).
+After the full texts of all papers were fetched, they were assigned by eight themes to parallel LLM evidence-extraction agents (our assessment). Every claim had to come with a quote that matches the original text verbatim, and it was used only after a script had checked the quote against the full text. Every number in the body of this review can be found in the verbatim quotes from the corresponding paper (our assessment).
 
 Throughout the text, sentences tagged (our assessment), (our inference) or (our count) are syntheses or calculations by the authors of this review based on the evidence, not conclusions of the cited papers.
 
