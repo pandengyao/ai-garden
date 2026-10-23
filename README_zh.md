@@ -56,6 +56,10 @@
 
 ### 训练 (Training)
 
+- [训练数据中的思维链合成：方法、证据与开放问题（文献综述）](./notes/training/CoT-Data-Synthesis-Literature-Review.md) · 2026-10-22
+  - 系统检索 13,589 篇候选、纳入 1,527 篇、精读 237 份来源后的结论：用于 SFT 与蒸馏的推理数据，重心已从“多找题”转向“每题多采样、再按学生挑选”，2026 年又快速转向 on-policy 蒸馏（摘要提及它的纳入文献从 2025 年下半年的 2 篇增至 2026 年上半年的 79 篇）；代码与智能体数据的瓶颈在任务与环境的多样性。“教师越强越好”“答案正确的轨迹更好”“数据越多越好”“验证一定有益”四条直觉都有受控实验给出的反例，成立与否取决于学生规模、师生分布距离与训练预算。以答案为条件的生成、长度惩罚与递归自训练，会以答案正确率察觉不到的方式损害数据。
+  - 分节页面：[第 4 节](./notes/training/CoT-Data-Synthesis-Literature-Review-Ch04.md) · [第 5 节](./notes/training/CoT-Data-Synthesis-Literature-Review-Ch05.md) · [第 6 节](./notes/training/CoT-Data-Synthesis-Literature-Review-Ch06.md) · [第 7 节](./notes/training/CoT-Data-Synthesis-Literature-Review-Ch07.md) · [第 8 节](./notes/training/CoT-Data-Synthesis-Literature-Review-Ch08.md) · [第 9 节](./notes/training/CoT-Data-Synthesis-Literature-Review-Ch09.md) · [第 10 节](./notes/training/CoT-Data-Synthesis-Literature-Review-Ch10.md)
+
 - [面向高效多轮智能体微调的依赖感知轨迹精炼（论文全文翻译）](./notes/training/Dependency-Aware-Trajectory-Refinement.md) · 2026-09-16
   - 把多轮智能体轨迹看成轮次级依赖 DAG，再在图上做确定性的编辑：L1 剪掉出度为 0 的死胡同轮次，L2 合并父节点和子节点都相同的兄弟轮次，L3 只要求父节点相同并迭代合并，L2a/L3a 再让 LLM 把合并后的 `<think>` 改写成一段连贯的推理。用 6196 条轨迹对 Qwen3-VL-30B-A3B-Thinking 做 SFT，在四个多模态 QA 基准上，L1 平均准确率 50.04%，比 Vanilla SFT 高 1.7 个百分点；L2a 与 Vanilla SFT 准确率相当，推理 token 却从 20.9K 降到 11.0K。L3 打破了推理时每回合一次工具调用的格式，卡死率是 L2 的 2–3 倍；让 LLM 直接删除轮次的 Critical-Path 基线反而比 Vanilla SFT 掉点。
 
