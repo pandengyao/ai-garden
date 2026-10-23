@@ -48,6 +48,11 @@ This is not a bookmark list but a garden. Each note is a plant: articles I read 
 - [Gemini 3 Pro Image Preview: The ChatGPT Moment for Image Generation](./notes/multimodal/Gemini-3-Pro-Image-Preview_en.md) · 2025-11-20
   - Image models are shifting from "drawing pretty pictures" to "explaining information clearly"; native multimodality lets understanding carry over into generation.
 
+### Self-Improvement
+
+- [Recursive Self-Improvement (RSI) in AI: A Literature Review](./notes/self_improvement/RSI-Literature-Review_en.md) · 2026-10-21
+  - After a systematic search of 5,784 candidate papers and a full reading of 365, the review finds plenty of bounded self-improvement in all five strands (weights, context/memory/skills, harnesses, AI-designed components and automated research), but reliable evidence of recursive, compounding self-improvement in none. Multi-round gains shrink or saturate, and the outermost layer always keeps a fixed evaluation or selection step; of 90 studies that call themselves RSI, only 22% audit two or more reruns of the full loop. The signal source sets the ceiling: loops anchored in execution or formal verification are the most stable, self-judged loops reverse or collapse within a few rounds, and the evidence that risk accumulates across generations is firmer than the evidence that capability compounds.
+
 ### Training
 
 - [Dependency-Aware Trajectory Refinement for Efficient Multi-Turn Agent Fine-Tuning (full paper, with a Chinese translation)](./notes/training/Dependency-Aware-Trajectory-Refinement_en.md) · 2026-09-16

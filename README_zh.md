@@ -48,6 +48,11 @@
 - [Gemini 3 Pro Image Preview: 图片生成的 ChatGPT 时刻](./notes/multimodal/Gemini-3-Pro-Image-Preview.md) · 2025-11-20
   - 生图模型从“画得好看”转向“把信息讲清楚”，原生多模态让理解能力正向迁移到生成上。
 
+### 自我改进 (Self-Improvement)
+
+- [AI 递归自我改进（RSI）文献综述](./notes/self_improvement/RSI-Literature-Review.md) · 2026-10-21
+  - 系统检索 5,784 篇候选论文、精读 365 篇后的结论：权重、上下文/记忆/技能、脚手架、AI 设计组件和自动化研究五条线索都有大量有界自我改进，但没有一条有可靠的递归（复利）自我改进证据。多轮实验的增益逐轮递减或饱和，最外层始终保留一个固定的评估或选择环节；自称 RSI 的 90 篇研究中，只有 22% 审计过两次以上的完整闭环复跑。信号来源决定上限：以执行或形式验证为锚的回路最稳，自评回路几轮内就会反转或崩溃；风险随世代累积的证据，反而比能力复利的证据更扎实。
+
 ### 训练 (Training)
 
 - [面向高效多轮智能体微调的依赖感知轨迹精炼（论文全文翻译）](./notes/training/Dependency-Aware-Trajectory-Refinement.md) · 2026-09-16
