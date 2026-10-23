@@ -5,7 +5,24 @@
 - **Source**: [OpenThoughts: Data Recipes for Reasoning Models](https://arxiv.org/abs/2506.04178v2)
 - **Paper**: [arXiv:2506.04178](https://arxiv.org/abs/2506.04178)
 - **Published**: 2025-06-04
-- **Translator's note**: The Chinese version is an unofficial full translation of arXiv v2, including the main text, appendices, all figures and tables, and the references. The original is released under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), and the translation carries the same license. Formatting changes: figures come from the arXiv source files (vector figures rendered to PNG), and the logo in the title was left out; in Tables 1 and 31, logos became text, the open-data icons became 🟢🔴🟡, and vertical-rule columns are shown as ‖; standard errors, gray subscripts in the tables, are written as "± value"; merged cells and rotated headers became plain Markdown tables, Takeaway boxes became blockquotes, and cross-references became plain text. The prompts (Figures 16–37), the web example in Figure 15, the references, and model and dataset names stay in English. The English version is the original converted to Markdown, with the same formatting changes.
+- **Translator's note**: The Key Findings are a summary written for this note, not part of the paper, and every number in them comes from the paper; the Full Paper section of the Chinese version is an unofficial full translation of arXiv v2, including the main text, appendices, all figures and tables, and the references. The original is released under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), the translation carries the same license, and the formatting changes are listed at the start of the Full Paper section. In this English version, the Key Findings translate the Chinese summary, and the Full Paper section is the original converted to Markdown.
+
+## Key Findings
+
+- **Problem**: Reasoning models are improving fast, but state-of-the-art models often rely on proprietary datasets with little to no public information, and many questions about the best training recipe for reasoning remain open. The OpenThoughts project aims to build open-source datasets for training reasoning models; its earlier OpenThoughts2-1M dataset produced OpenThinker2-32B, the first model trained on public reasoning data to match DeepSeek-R1-Distill-32B on standard reasoning benchmarks such as AIME and LiveCodeBench.
+- **Method**: The paper splits building a reasoning SFT dataset into a six-step pipeline (question sourcing, question mixing, question filtering, deduplication and sampling multiple answers per question, answer filtering, and teacher-model choice) and runs over 1,000 controlled experiments. Each step is ablated on its own while the other steps stay fixed: every strategy generates 31,600 data points, Qwen2.5-7B-Instruct is fine-tuned on them, and the strategy with the best average over 8 math, code and science benchmarks moves on to the next step. AIME 2025, HMMT 02/25, the multiple-choice subset of HLE and LiveCodeBench 06/24-01/25 are held out and evaluated only after the pipeline experiments end.
+- **Result**: Scaling the best strategy of each step to 1.2M examples (850,000 math, 250,000 code and 100,000 science) with QwQ-32B as the teacher gives OpenThoughts3-1.2M, and fine-tuning Qwen2.5-7B-Instruct on it gives OpenThinker3-7B. By Table 1, it scores 53.3, 51.7 and 53.7 on AIME 2025, LiveCodeBench 06/24-01/25 and GPQA Diamond, 15.3, 17.2 and 20.5 pp above DeepSeek-R1-Distill-Qwen-7B; its average over 12 tasks is 55.3, 12.4 points above R1-Distill-7B and 2.1 points above the next-best open-data model, Nemotron-Nano-8B, making it the best open-data reasoning model at the 7B scale.
+- **Sampling several answers per question is an effective way to scale**: having the teacher sample multiple answers per question grows a data source by at least 16×, and the larger scale brings significant gains. For code and science, the combinations of deduplication method and number of samples perform similarly; for math, exact deduplication with 4 answers per question is best and 16 answers second. The final pipeline samples 16 answers per question in every domain, with exact deduplication for math and science and none for code. The paper takes this to mean that the benefit of question diversity may be limited, at least when answer diversity goes up.
+- **A stronger model is not necessarily a better teacher**: QwQ-32B scores lower than DeepSeek-R1 on the target reasoning benchmarks (DeepSeek-R1 is 9%, 8% and 23% higher on CodeElo, GPQA Diamond and JEEBench), yet it is the better teacher in every domain: compared with DeepSeek-R1 as the teacher, average accuracy is 1.9% higher on code data and 2.6% higher on math data.
+- **Question sources: quality over diversity**: sources differ widely, with a 17.2-point gap between the strongest and the weakest code datasets, and simple synthetic methods perform on par with, and sometimes better than, more complex or manually curated pipelines. Using only the top 1 or 2 high-quality sources beats mixing 8 or 16: the two best code sources alone score 5% higher in average accuracy across all benchmarks than a mix of 16 sources.
+- **Filter questions by LLM judgment**: the two best question filters are asking an LLM (GPT-4o-mini) to rate difficulty and keeping the hardest questions, which is best for code, and asking an LLM to answer directly and keeping the questions with the longest responses, which is best for math and science (with GPT-4.1-mini in the end). Compared with random filtering, they raise the average by 4% for math and 6% for code. In every domain, LLM-based filters beat filters common in pre-training data curation, such as fastText and embeddings.
+- **Answer filtering brings no gain**: none of the verification and answer-filtering methods tried (such as GPT verification, majority consensus, and filtering by length or language) gives a clear improvement. For math, the random-filtering baseline beats every other filter; in every domain, no filtering (all samples, without controlling compute) performs similarly to every filtering method, so the final pipeline skips answer filtering.
+- **Other findings in the appendices**: removing self-reflection such as "wait" and "but wait" from reasoning traces cuts their average length from 11,593 to 328 tokens and lowers average downstream performance by 49.1% in relative terms; keeping only samples of at most 2,048 tokens also costs 33.3%, so both long reasoning and self-reflection are needed (Appendix H.3). Llama-3.1-8B-Instruct also improves a lot after fine-tuning on 100K OpenThoughts3 samples, for example from 15.8 to 75.2 on AMC23, but stays behind Qwen2.5-7B-Instruct overall (Appendix G.1). On a legal reasoning task, Qwen2.5-7B fine-tuned on data annotated by R1 and verified only by majority vote, without expert labels, reaches 0.819 accuracy, above R1's own 0.739 (Appendix J). Distilled reasoning models fluctuate strongly on AIW variants that change details of a problem but not its structure, so their generalization still falls short (Appendix N).
+- **Costs and limits**: reasoning SFT weakens the safety alignment that Qwen2.5 had: the harmfulness rate on Harmbench rises from 14.5 for Qwen2.5-7B-Instruct to 55.5 for OpenThinker3-7B, which was trained without any explicit safety tuning or alignment-focused data (Appendix L). The paper does not explore datasets for reinforcement learning, nor staged SFT or curriculum learning.
+
+## Full Paper
+
+**Formatting changes**: every heading of the paper moved down one level, under this section; figures come from the arXiv source files (vector figures rendered to PNG), and the logo in the title was left out; in Tables 1 and 31, logos became text, the open-data icons became 🟢🔴🟡, and vertical-rule columns are shown as ‖; standard errors, gray subscripts in the tables, are written as "± value"; merged cells and rotated headers became plain Markdown tables, Takeaway boxes became blockquotes, and cross-references became plain text; the arXiv HTML drops the first line of every prompt box (Figures 16–37), so those lines were restored from the arXiv source, matching the PDF. The Chinese version translates the prompts line for line, keeping template variables and code as they are (with code comments translated) and leaving fixed output fields (such as QUESTION: and SOLUTION:) and strings the model must output verbatim in English; material the prompts quote from other sources stays in English, namely the sample source texts in Figures 22 and 24, the positive and negative example questions in Figure 28, and the AoPS difficulty standard and its examples in Figure 29. The web example in Figure 15, the references, and model and dataset names stay in English as well.
 
 Etash Guha\*$`^{1,2}`$, Ryan Marten\*$`^{3}`$, Sedrick Keh\*$`^{4}`$, Negin Raoof\*$`^{5}`$, Georgios Smyrnis\*$`^{6}`$, Hritik Bansal$`^{\zeta 7}`$, Marianna Nezhurina$`^{\zeta 8,9,16}`$, Jean Mercat$`^{\zeta 4}`$, Trung Vu$`^{\zeta 3}`$, Zayne Sprague$`^{\zeta 6}`$, Ashima Suvarna$`^{7}`$, Benjamin Feuer$`^{10}`$, Liangyu Chen$`^{1}`$, Zaid Khan$`^{11}`$, Eric Frankel$`^{2}`$, Sachin Grover$`^{12}`$, Caroline Choi$`^{1}`$, Niklas Muennighoff$`^{1}`$, Shiye Su$`^{1}`$, Wanjia Zhao$`^{1}`$, John Yang$`^{1}`$, Shreyas Pimpalgaonkar$`^{3}`$, Kartik Sharma$`^{3}`$, Charlie Cheng-Jie Ji$`^{3}`$, Yichuan Deng$`^{2}`$, Sarah Pratt$`^{2}`$, Vivek Ramanujan$`^{2}`$, Jon Saad-Falcon$`^{1}`$, Jeffrey Li$`^{2}`$, Achal Dave, Alon Albalak$`^{13}`$, Kushal Arora$`^{4}`$, Blake Wulfe$`^{4}`$, Chinmay Hegde$`^{10}`$, Greg Durrett$`^{6}`$, Sewoong Oh$`^{2}`$, Mohit Bansal$`^{11}`$, Saadia Gabriel$`^{7}`$, Aditya Grover$`^{7}`$, Kai-Wei Chang$`^{7}`$, Vaishaal Shankar, Aaron Gokaslan$`^{14}`$, Mike A. Merrill$`^{1}`$, Tatsunori Hashimoto$`^{1}`$, Yejin Choi$`^{1}`$, Jenia Jitsev$`^{8,9,16}`$, Reinhard Heckel$`^{15}`$, Maheswaran Sathiamoorthy$`^{3}`$, Alexandros G. Dimakis$`^{\dagger 3,5}`$, Ludwig Schmidt$`^{\dagger 1}`$
 
@@ -13,7 +30,7 @@ $`^{1}`$Stanford University, $`^{2}`$University of Washington, $`^{3}`$BespokeLa
 
 \*, † denote equal contribution. ζ denotes additional core contributors. The order is determined randomly.
 
-## Abstract
+### Abstract
 
 Reasoning models have made rapid progress on many benchmarks involving math, code, and science. Yet, there are still many open questions about the best training recipes for reasoning since state-of-the-art models often rely on proprietary datasets with little to no public information available. To address this, the goal of the OpenThoughts project is to create open-source datasets for training reasoning models. After initial explorations, our OpenThoughts2-1M dataset led to OpenThinker2-32B, the first model trained on public reasoning data to match DeepSeek-R1-Distill-32B on standard reasoning benchmarks such as AIME and LiveCodeBench. We then improve our dataset further by systematically investigating each step of our data generation pipeline with 1,000+ controlled experiments, which led to OpenThoughts3. Scaling the pipeline to 1.2M examples and using QwQ-32B as teacher yields our OpenThinker3-7B model, which achieves state-of-the-art results: **53%** on AIME 2025, **51%** on LiveCodeBench 06/24-01/25, and **54%** on GPQA Diamond – improvements of 15.3, 17.2, and 20.5 percentage points compared to the DeepSeek-R1-Distill-Qwen-7B. All of our datasets and models are available on [openthoughts.ai](https://openthoughts.ai).
 
@@ -21,7 +38,7 @@ Reasoning models have made rapid progress on many benchmarks involving math, cod
 
 *Figure 1: **OpenThoughts3 outperforms existing SFT reasoning datasets across data scales.** All models are finetuned from Qwen-2.5-7B-Instruct. We compare to large SFT datasets (AM, Nemotron Nano) and small curated datasets (s1.1, LIMO) on AIME 2025 (left), LiveCodeBench 06/24-01/25 (middle), and GPQA Diamond (right). Scaling curves for all evaluation benchmarks are in Figure 8.*
 
-## 1 Introduction
+### 1 Introduction
 
 Recent models, such as DeepSeek-R1 (Guo et al., 2025) and o3 (OpenAI, 2024), have demonstrated strong performance in reasoning-based domains, including math, coding, and science. These models often start from a strong base model, then introduce reasoning capabilities through a series of post-training techniques like supervised finetuning (SFT) or reinforcement learning (RL). This post-training process equips these models with the ability to output long chains of thought, or "thinking tokens," during inference time, which can guide the model toward the correct answer. Yet, the complete recipes for frontier reasoning models are not public, making research for building reasoning models difficult.
 
@@ -62,7 +79,7 @@ To further improve upon OpenThoughts2-1M, we conduct an empirical investigation 
 4. Selecting questions from a small number (top 1 or 2) of high-quality sources leads to better downstream performance compared to optimizing for diversity (i.e., top 8 or 16 sources).
 5. Filtering questions by LLM labeled difficulty or LLM response length yields better results than filters typical to pre-training data curation that use embeddings or `fastText`.
 
-## 2 Related Work
+### 2 Related Work
 
 The release of models such as Gemini (Gemini-Team et al., 2023), QwQ (Qwen-Team, 2025), and DeepSeek-R1 (Guo et al., 2025), which made long reasoning traces visible to users, opened the possibility of training small models via the distillation of traces from larger ones. DeepSeek released strong distilled models together with DeepSeek-R1 (e.g., DeepSeek-R1-Distill-Qwen-7B), showing how promising this strategy can be. Following this, many open-data efforts have attempted to replicate these models by building SFT reasoning datasets through distillation from teacher models such as QwQ-32B (NovaSky-Team, 2025b) or DeepSeek-R1 (Bespoke-Labs, 2025).
 
@@ -70,7 +87,7 @@ Many datasets target math, code, and science to develop reasoning capabilities. 
 
 In practice, many reasoning projects (e.g., DeepMath-103K (He et al., 2025b), OpenR1 (Face, 2025), and Nvidia Nemotron (Adler et al., 2024)) introduce innovations across multiple stages, such as data sourcing, filtering, and scaling. Beyond SFT, works such as AceReason (Chen et al., 2025) and Skywork-OR1 (He et al., 2025a) build reasoning datasets for reinforcement learning.
 
-## 3 The OpenThoughts project
+### 3 The OpenThoughts project
 
 We are launching the OpenThoughts project to create state-of-the-art open reasoning datasets by exploring the rich design space in reasoning SFT datasets, specifically focusing on how to identify the best questions and corresponding answers that encourage reasoning. Beginning with BespokeStratos-17K (Bespoke-Labs, 2025), we have progressed through four generations of releases, culminating in OpenThoughts3-1.2M and OpenThinker3-7B. We share open artifacts with the community via [openthoughts.ai](https://openthoughts.ai).
 
@@ -89,7 +106,7 @@ We are launching the OpenThoughts project to create state-of-the-art open reason
 
 **OpenThoughts3-1.2M**, the focus of this paper, is the culmination of the insights gained from the previous OpenThoughts datasets and our systematic exploration (Section 4) of the dataset pipeline design space. The following section details this pipeline and the final dataset composition.
 
-## 4 OpenThoughts3 Data Pipeline
+### 4 OpenThoughts3 Data Pipeline
 
 ![Figure 2](./img/OpenThoughts-Data-Recipes-for-Reasoning-Models-fig02.png)
 
@@ -126,7 +143,7 @@ This section introduces our experimental pipeline for building OpenThoughts3-1.2
 
 *Table 3: **Evaluating question sources and generation strategies.** We show only the top 3 scoring sources for each domain; descriptions of each source are in Section R.1 and full results are in Tables 32, 33 and 34. Each row represents a unique source of questions. Question quality greatly affects performance, yielding a 17.2 gap between the strongest and the weakest code datasets. The \* symbol denotes a new dataset we created with a programmatic generation strategy. Gray subscripts represent standard errors, and we bold values within two standard errors of the highest-scoring data strategy.*
 
-### 4.1 Question Sourcing
+#### 4.1 Question Sourcing
 
 The first step in our data generation pipeline is finding questions for each data domain. We can broadly categorize our question sourcing techniques into three types: (1) Fully synthetic – an existing LLM generates questions with little-to-no seed material. Examples include CodeAlpaca (Chaudhary, 2023) and CamelChemistry (Li et al., 2023a). These often involve prompting an LLM with a template to generate multiple questions. (2) Semi-synthetic – an LLM uses existing data sources such as CommonCrawl or FineWeb (Penedo et al., 2024a) as seeds to form questions. Examples include TigerLabMath (Yue et al., 2024) and AutoMathText (Zhang et al., 2024). (3) Non-synthetic – humans write the questions. Examples include StackExchange and ShareGPTCode. These questions often arise from online forums, contests, chatbot interactions, and other sources.
 
@@ -145,7 +162,7 @@ Our experiments cover 27 different question sources for code questions, 21 sourc
 
 The experimental results are in Table 3. For code, CodeGolf questions from StackExchange and competitive coding questions from OpenCodeReasoning (Ahmad et al., 2025) perform well, achieving scores of 25.3 and 27.5 on average on code benchmarks. For math, both LLM-generated questions in openmath-2-math (Toshniwal et al., 2024) and human-written questions in NuminaMath (LI et al., 2024) score the highest, achieving 58.8 and 58.5 on average across math benchmarks. Lastly, for science, the highest-scoring question generation strategies are physics questions from StackExchange and LLM-extracted questions from organic chemistry textbooks, which achieve an average score of 43.2 and 45.3, respectively, on science benchmarks. No clear pattern emerges across question generation strategies – simple synthetic methods perform comparably to, and occasionally better than, more complex or manually curated pipelines. These top-performing question sources provide the foundation for subsequent stages of the pipeline.
 
-### 4.2 Mixing Questions
+#### 4.2 Mixing Questions
 
 After obtaining high-quality questions from various question sources, the challenge becomes how to combine them effectively – should we rely on a single best-performing strategy, or blend multiple strong ones to maximize downstream performance? This mixing strategy is a key design choice in many generation pipelines (Yue et al., 2024; Moshkov et al., 2025; Lambert et al., 2024). Intuitively, adding more question sources into the mix introduces the risk of incorporating lower-quality strategies in exchange for greater diversity. Our experiments aim to assess whether the additional question diversity justifies this tradeoff in terms of question quality.
 
@@ -170,7 +187,7 @@ For simplicity, we use the rankings of the previous step in our pipeline (Sectio
 
 *Table 5: **Filtering questions provides an effective tool for extracting high-quality questions.** Using LLM-based methods to find the best questions from the question sources outperformed classical filtering methods such as `fastText` and embedding-based filters. This table shows the top-performing strategies. Full results including science datasets are reported in Tables 38, 39 and 40.*
 
-### 4.3 Question filtering
+#### 4.3 Question filtering
 
 Since each data source can contain millions of potential questions, answering and training on every possible question is infeasibly expensive. Therefore, the next step is to select a high-quality subset of questions from each source. Across the literature, a wide range of filtering strategies have consistently improved overall dataset quality (Soldaini et al., 2024; Su et al., 2024; Li et al., 2024; Wettig et al., 2025; Penedo et al., 2024a; Gao et al., 2020; Shum et al., 2025). Using the best question sources from Section 4.2 as a starting point, we extensively explore various filtering methods, including `fastText` classifiers, difficulty scores, and embedding distance, to select higher-quality questions. A detailed description of these filtering methods is in Section R.2. The results of these experiments for math and code are reported in Table 5 while the science results are in Section S.3 (Table 40).
 
@@ -193,7 +210,7 @@ The two highest performing question filtering methods are difficulty-based filte
 
 *Table 6: **Deduplication and repeated teacher sampling provide an axis of scale.** Using fewer questions and annotating more times performs similarly or even outperforms annotating more questions fewer times. There does not seem to be a clear trend in types of deduplication that improve performance. Full results including math and code datasets are in Tables 41, 42 and 43.*
 
-### 4.4 Deduplication and Sampling Multiple Answers per Question
+#### 4.4 Deduplication and Sampling Multiple Answers per Question
 
 Deduplication is a powerful strategy for improving dataset quality (Li et al., 2024; Lee et al., 2022; Penedo et al., 2024b; Fang et al., 2025; Liu et al., 2024). Our ablations investigate the effects of question deduplication on downstream reasoning performance. We explore three degrees of deduplication strictness: no deduplication, exact match deduplication, and fuzzy deduplication using a threshold-based string similarity. Further details are in Section R.3.
 
@@ -203,7 +220,7 @@ To address the interplay between naturally occurring duplicate questions in the 
 
 > **Takeaway:** Our final pipeline uses 16× answers per question for all domains. It uses exact deduplication for math and science and no deduplication for code.
 
-### 4.5 Answer Filtering
+#### 4.5 Answer Filtering
 
 Verification or removing low-quality annotations is a common step in many reasoning data pipelines. Intuitively, removing data that may be incorrect should improve downstream performance. Our experiments explore various answer filtering techniques. To ensure that we can still obtain datasets of size 31,600 after filtering, we first generate 63,200 answers, apply each answer-filtering strategy, and then sample 31,600 question-answer pairs from the filtered dataset. Our ablations also include a baseline with no filtering, which is not compute-controlled, as it contains 63,200 questions.
 
@@ -223,7 +240,7 @@ Table 7 shows the result of each filtering method for math datasets, and the res
 
 > **Takeaway:** We do not perform answer filtering because no filtering strategy outperformed the baseline, which uses all the answers.
 
-### 4.6 Teacher Model
+#### 4.6 Teacher Model
 
 | SFT Datasets | | Benchmarks | | |
 | --- | --- | --- | --- | --- |
@@ -242,7 +259,7 @@ The previous experiments have relied on using DeepSeek-R1 as a teacher model sin
 
 > **Takeaway:** We use QwQ-32B as the teacher model.
 
-## 5 Scaling our pipeline to OpenThoughts3-1.2M
+### 5 Scaling our pipeline to OpenThoughts3-1.2M
 
 Dataset scaling plays a key role in achieving strong performance. We investigate how well our pipeline scales by identifying the winning strategy in each successive pipeline step and plotting its performance from 316 to 31.6k examples. Figure 3 demonstrates that the scaling behavior improves as we successively stack the best choices from each stage in the pipeline. Additionally, Figure 3 also shows a strong positive correlation between scale and performance. This suggests that further scaling the dataset size could yield even greater gains.
 
@@ -258,7 +275,7 @@ As seen in Table 1, OpenThinker3-7B is the best open-data reasoning model at the
 
 *Figure 4: **The OpenThoughts3-1.2M Full Data Pipeline.** Our full dataset begins with sourcing many questions in math, code, and science domains. The next step is filtering those questions, deduplicating the math and science questions, randomly sampling questions, and then generating multiple answers for each question. Our final dataset contains 1.2 million datapoints.*
 
-## 6 Conclusion
+### 6 Conclusion
 
 Through iterative experimentation, our pipeline surfaced several key insights into effective SFT reasoning data curation. These findings collectively shape our final pipeline, allowing us to build OpenThoughts3-1.2M, a state-of-the-art open-data SFT reasoning dataset, composed of science, math, and code data. Our final model, OpenThinker3-7B, trained on this data, is the SOTA open-data reasoning model at its model scale.
 
@@ -270,7 +287,7 @@ This project also raises several open directions for further investigation:
 2. We find that scaling data improves downstream performance. How does this change as the student model’s performance approaches that of the teacher? It is an open question whether models eventually plateau or surpass the teacher, achieving weak-to-strong generalization.
 3. Our results show that limited question diversity has relatively little impact on performance if answer diversity is high. A key open question is how this interaction behaves across different domains, dataset sizes, and model scales.
 
-## Acknowledgements
+### Acknowledgements
 
 We would like to thank Alex Fang, Matthew Wallingford, Jiaqi Zeng, Oleksii Kuchaiev, Asad Aali, Benjamin Burchfiel, and Russ Tedrake for helpful discussions and support at various stages of the project. We would also like to thank Adam R. Klivans, Mike Garrison, and Satya Kotari for support with compute and infrastructure. Further thanks go for support provided by supercomputing facilities and their teams, especially to Damian Alvarez and Mathis Bode from Juelich Supercomputer Center (JSC, Germany) and to Laura Morselli from CINECA (Italy).
 
@@ -280,7 +297,7 @@ This research is also supported by NSF Grants AF 1901292, CNS 2148141, IFML CCF 
 
 This work would not be possible without the support of the Gauss Centre for Supercomputing e.V. through the John von Neumann Institute for Computing (NIC) on the supercomputer JUWELS Booster at Juelich Supercomputing Centre (JSC). We further acknowledge EuroHPC Joint Undertaking for providing this project access to the EuroHPC supercomputer LEONARDO, hosted by CINECA (Italy) and the LEONARDO consortium through an EuroHPC Extreme Access grant EHPC-EXT-2023E02-068, storage resources on JUST granted and operated by JSC and supported by Helmholtz Data Federation (HDF), compute resources provided via WestAI compute grant "Measuring and enhancing advanced reasoning capabilities of foundation models via local model deployment" (westai0007) at JSC and compute resources provided via JSC at JURECA.
 
-## References
+### References
 
 - Marah Abdin, Jyoti Aneja, Hany Awadalla, Ahmed Awadallah, Ammar Ahmad Awan, Nguyen Bach, Amit Bahree, Arash Bakhtiari, Jianmin Bao, Harkirat Behl, et al. Phi-3 technical report: A highly capable language model locally on your phone. *arXiv preprint arXiv:2404.14219*, 2024.
 - Marah Abdin, Sahaj Agarwal, Ahmed Awadallah, Vidhisha Balachandran, Harkirat Behl, Lingjiao Chen, Gustavo de Rosa, Suriya Gunasekar, Mojan Javaheripi, Neel Joshi, et al. Phi-4-reasoning technical report. *arXiv preprint arXiv:2504.21318*, 2025.
@@ -349,15 +366,15 @@ This work would not be possible without the support of the Gauss Centre for Supe
 - Xiang Yue, Tuney Zheng, Ge Zhang, and Wenhu Chen. Mammoth2: Scaling instructions from the web. *Advances in Neural Information Processing Systems*, 2024.
 - Yifan Zhang, Yifan Luo, Yang Yuan, and Andrew Chi-Chih Yao. Autonomous data selection with language models for mathematical texts. *arXiv preprint arXiv:2402.07625*, 2024.
 
-## Appendix A Links to Assets
+### Appendix A Links to Assets
 
 We release our model and our dataset as part of a collection on Hugging Face. Our OpenThinker3-7B model can be found in <https://huggingface.co/open-thoughts/OpenThinker3-7B>, and our dataset can be found in <https://huggingface.co/datasets/open-thoughts/OpenThoughts3-1.2M>. Our codebase will be released at <https://github.com/open-thoughts/open-thoughts>. We also release a blog post accompanying this work, found at <https://www.open-thoughts.ai/blog/ot3>.
 
-## Appendix B Contributions
+### Appendix B Contributions
 
 All authors are listed alphabetically by last name.
 
-### Infrastructure
+#### Infrastructure
 
 **Data Generation Framework**: Etash Guha, Sedrick Keh, Ryan Marten, Mike A. Merrill, Negin Raoof, Georgios Smyrnis, Zayne Sprague, Trung Vu
 
@@ -369,7 +386,7 @@ All authors are listed alphabetically by last name.
 
 **Logging and Database**: Etash Guha, Sedrick Keh, Ryan Marten, Negin Raoof
 
-### Experiments
+#### Experiments
 
 **Data Generation**: Etash Guha, Sedrick Keh, Ryan Marten, Negin Raoof, Georgios Smyrnis
 
@@ -379,17 +396,17 @@ All authors are listed alphabetically by last name.
 
 **Extended Analysis and Ablations**: Hritik Bansal, Liangyu Chen, Caroline Choi, Yichuan Deng, Benjamin Feuer, Eric Frankel, Sachin Grover, Etash Guha, Reinhard Heckel, Zaid Khan, Ryan Marten, Jean Mercat, Mike A. Merrill, Niklas Muennighoff, Vivek Ramanujan, Zayne Sprague, Ashima Suvarna, Wanjia Zhao
 
-### Writing
+#### Writing
 
 Hritik Bansal, Liangyu Chen, Alexandros G. Dimakis, Benjamin Feuer, Etash Guha, Reinhard Heckel, Jenia Jitsev, Sedrick Keh, Zaid Khan, Ryan Marten, Jean Mercat, Mike A. Merrill, Niklas Muennighoff, Marianna Nezhurina, Sarah Pratt, Negin Raoof, Ludwig Schmidt, Georgios Smyrnis, Ashima Suvarna, Wanjia Zhao
 
-### Leadership and Advising
+#### Leadership and Advising
 
 **Advising**: Alon Albalak, Kushal Arora, Mohit Bansal, Kai-Wei Chang, Yejin Choi, Achal Dave, Alexandros G. Dimakis, Greg Durrett, Saadia Gabriel, Aaron Gokaslan, Aditya Grover, Tatsunori Hashimoto, Reinhard Heckel, Chinmay Hegde, Jenia Jitsev, Jeffrey Li, Mike A. Merrill, Sewoong Oh, Maheswaran Sathiamoorthy, Ludwig Schmidt, Vaishaal Shankar, Blake Wulfe
 
 **Project Coordination**: Alexandros G. Dimakis, Etash Guha, Ryan Marten, Ludwig Schmidt
 
-## Appendix C Bespoke-Stratos and OpenThoughts 1 & 2
+### Appendix C Bespoke-Stratos and OpenThoughts 1 & 2
 
 As mentioned in Section 3, the OpenThoughts project consists of a series of continuous releases, beginning with BespokeStratos-17K (Bespoke-Labs, 2025), and progressing through four generations of models and datasets.
 
@@ -407,13 +424,13 @@ Our initial OpenThoughts and OpenThoughts2 releases are documented on <https://w
 
 OpenThoughts-114K [^2] scaled up the Sky-T1 pipeline with small tweaks such as using DeepSeek-R1 as an annotator and using an LLM Judge for verification. The entire pipeline for OpenThoughts-114K is visualized in Figure 5, and specific details are outlined in the blog post. Due to the success of OpenThoughts-114K, scaling the dataset size is a natural next step. The main tool for data scale for OpenThoughts2-1M [^3] is additional question generation strategies across the math and code domains. These question generation strategies include preexisting datasets such as Glaive, ShareGPTCode, and OpenR1-Math, as well as datasets we generated ourselves, such as AutoMathText. The full pipeline is captured Figure 6. Once again, more specific details can be found in the blog post.
 
-## Appendix D Training Details
+### Appendix D Training Details
 
-### D.1 Training Framework
+#### D.1 Training Framework
 
 Our training is done using LlamaFactory. This repository is publicly available at <https://github.com/hiyouga/LLaMA-Factory>.
 
-### D.2 Hyperparameters
+#### D.2 Hyperparameters
 
 For the different scales in Figure 1, we use different hyperparameters for each scale. In general, we want to use larger batch sizes and larger learning rates, but doing this on datasets that are smaller would lead us to take too few steps. We performed hyperparameter sweeps to find an appropriate set of hyperparameters in each model scale. We ultimately ended up with 4 sets of hyperparameters – micro (for 0.3K scale), small (for 1K, 3K scale), medium (for 10K, 30K scale), and large (for 100K scale and above). These hyperparameter sets are identical, except for number of epochs, batch size, learning rate, and packing.
 
@@ -432,7 +449,7 @@ As shown in Table 9 above, the micro, small, and medium sets are trained without
 
 Aside from packing, we adjust certain hyperparameters to optimize for training speed. We use DeepSpeed v3 without memory offloading. In addition, we use persistent dataloader workers, with num\_workers=4. We conducted small tests with these settings to ensure that they did not negatively affect performance.
 
-### D.3 Packing
+#### D.3 Packing
 
 We investigate the effect of sequence packing on model performance across diverse reasoning and coding benchmarks. Sequence packing concatenates multiple training examples into single sequences to improve computational efficiency, but may affect learning dynamics. Table 10 compares models trained with and without packing on a dataset with shorter sequences. Overall, we see that adding packing does not negatively affect performance. This observation is in contrast with some of the findings reported by Face (2025), where they found that packing negatively affected performance on their setup. We believe this drop in performance can likely be attributed to truncating long sequences into multiple parts, whereas in Llama Factory’s packing implementation, packing is implemented in a greedy way, and only shorter sequences are packed together.
 
@@ -443,7 +460,7 @@ We investigate the effect of sequence packing on model performance across divers
 
 *Table 10: **Performance comparison between models trained with and without sequence packing.** Packing shows mixed effects.*
 
-### D.4 Chat Template
+#### D.4 Chat Template
 
 One other axis we explore is the chat template. More specifically, this refers to how reasoning models can be prompted to produce thinking tokens. This often comes in the form of specialized templates. For instance, the R1 template encloses the thinking tokens in `<think>` and `</think>`. In Table 11, we compare this R1 template with the SkyT1 template which uses `<|begin_of_thought|>` and `<|end_of_thought|>` and was originally used to train the initial OpenThinker-7B on OpenThoughts-114k. From Table 11, we see that the results for the two different chat templates are roughly equivalent, suggesting that the chat template may not be as important as long as they exist (see Section D.5 below for ablations where we remove this completely). For simplicity, we stick with the R1 chat template of `<think>` and `</think>` in all of our pipeline experiments.
 
@@ -454,7 +471,7 @@ One other axis we explore is the chat template. More specifically, this refers t
 
 *Table 11: **Performance comparison of OpenThinker-7B model with and without R1 template across different benchmarks.** The table shows that using simpler `<think>` and `</think>` tokens instead of the more complex SkyT1 tokens (`<|begin_of_thought|>` and `<|end_of_thought|>`) yields comparable or slightly improved performance on most benchmarks.*
 
-### D.5 System Prompt
+#### D.5 System Prompt
 
 In this subsection, we investigate the effect of removing the chat template completely and simply prompting the model directly. We report our results in Table 12. Our evaluation reveals several key findings. First, enabling explicit reasoning consistently improves performance across mathematical and scientific reasoning tasks, with particularly dramatic improvements on AIME benchmarks (45.3% vs. 2.0% on AIME25). Second, even when reasoning is explicitly disabled, many responses still begin with `<think>` tokens (1681/3127), indicating the model has learned to engage reasoning mechanisms by default. Third, the choice between system prompts shows task-dependent effects: while "reasoning on" helps mathematical tasks, removing system prompts entirely can sometimes yield better results (70.0% vs. 61.3% on AIME24), suggesting that explicit instruction may occasionally constrain the model’s natural reasoning patterns.
 
@@ -470,7 +487,7 @@ In this subsection, we investigate the effect of removing the chat template comp
 
 *Table 12: **Performance comparison across reasoning benchmarks with reasoning enabled and not.** Turning reasoning on for existing models greatly improves performance. However, using no system prompt at all also performs similarly well to Reasoning On.*
 
-## Appendix E Evaluation Details
+### Appendix E Evaluation Details
 
 All model evaluations across benchmarks were performed using **Evalchemy** (Raoof et al., 2025), our unified, multi-GPU evaluation framework. Evalchemy partitions each task into independent shards, runs them in parallel (via data parallel sharding), and streams per-shard metrics back to a central coordinator for real-time aggregation. This architecture ensured consistent generation settings, reproducible logging of model checkpoints and sampling parameters, and enabled us to compute average model accuracy and standard error over repeated runs. We used Evalchemy to cache full model completions for long chain-of-thought tasks (e.g., AIME, LiveCodeBench, GPQA Diamond), which reduced redundant inference costs and enabled easy analysis of failure cases.
 
@@ -520,7 +537,7 @@ We provide brief descriptions for each of our benchmarks.
 
 *Table 13: **We evaluate on 12 tasks across multiple data domains.** We validate experiments on 8 of these tasks, and keep the remaining 4 (AIME 2025, LiveCodeBench 06/24-01/25, HMMT, HLE) as held-out sets.*
 
-## Appendix F Decontamination
+### Appendix F Decontamination
 
 Contamination with the evaluation datasets is an important issue, since it poses the danger of misleading results over the actual usefulness of the training set. It is expected that training data that contains evaluation questions in some form will lead to improved performance on those same questions. Such an effect could potentially affect the conclusions of our experiments. To avoid this issue, we perform decontamination against our evaluation sets, via two separate criteria.
 
@@ -550,7 +567,7 @@ Overall, our dataset has 3092 contaminated samples and 3000 uncontaminated sampl
 
 *Figure 7: **Our decontamination algorithm accurately identifies contaminated samples.** Our decontamination algorithm has a 99.6% true negative accuracy rate. The algorithm also throws out minimal amounts of noncontaminated samples.*
 
-## Appendix G Additional Scaling Experiments
+### Appendix G Additional Scaling Experiments
 
 ![Figure 8](./img/OpenThoughts-Data-Recipes-for-Reasoning-Models-fig08.png)
 
@@ -572,7 +589,7 @@ We include "No Pipeline" as a naive baseline to demonstrate the full gains from 
 
 *Figure 9: **The OpenThoughts3 data recipe within each domain shows strong scaling over baselines**. Math performance is averaged over AIME24, AMC32, and MATH500. Code performance is averaged over LCB 05/23-05/24, CodeElo, and CodeForces. Science is averaged over GPQA Diamond and JEEBench. The largest scale for the OpenThoughts3 math and science subsets are 250K and 100K, respectively.*
 
-### G.1 Base Model
+#### G.1 Base Model
 
 | Base Model | AIME24 | AIME25 | AMC23 | MATH500 | GPQA-D | LCB 05/23-05/24 |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -585,19 +602,19 @@ We include "No Pipeline" as a naive baseline to demonstrate the full gains from 
 
 We train OpenThoughts3 using the Llama-3.1-8B-Instruct models. This experiment shows that the scaling gains that we observe are not just limited to Qwen models, and our dataset is indeed scalable and generalizable. The results of this experiment are shown in Table 14. Overall, we see that for some datasets, the Llama models see a more significant performance gain as compared to the Qwen models. This is most prominent in some math datasets such as AMC23 (from 15.8 to 75.2) and MATH500 (from 43.2 to 83.8), though the Qwen models, which start from a stronger starting point, still perform better overall. In the future, we would like to expand this to further consider stronger models such as the recent Qwen 3 series of models.
 
-## Appendix H Additional Data Recipe Experiments
+### Appendix H Additional Data Recipe Experiments
 
 Due to space constraints, we could not present all of our data curation ablations in the main text. This section discusses several interesting experiments that provide further insights into tools for improving reasoning models.
 
-### H.1 Verification
+#### H.1 Verification
 
 Verification played a large role in OpenThoughts-114K. We examine how verification impacted OpenThoughts-114K in the following sections.
 
-#### H.1.1 Verification Impact on the Original OpenThoughts
+##### H.1.1 Verification Impact on the Original OpenThoughts
 
 Verification played an important part in OpenThoughts-114K and OpenThoughts2. However, OpenThoughts3 does not rely on any form of verification. A natural question is how important empirically was verification for the original OpenThoughts experiments. Table 15 demonstrates the findings of this study. We trained a 7B and 32B model on the unverified version of OpenThoughts-114K and evaluated the difference between the unverified models and the original models. Our results show that verification may hurt performance at the 7B level but help at the 32B level.
 
-#### H.1.2 Removing proof-based questions
+##### H.1.2 Removing proof-based questions
 
 | Models | Average | Code Avg | Math Avg | Science Avg |
 | --- | --- | --- | --- | --- |
@@ -618,7 +635,7 @@ We push further on the impact of verification on OpenThoughts-114K. Some math qu
 
 *Table 16: **Comparison of OpenThoughts with and without proof-based questions.** Throwing out proof-based questions harms performance overall by 5.6 points on average.*
 
-#### H.1.3 Extraction-based Math Verification
+##### H.1.3 Extraction-based Math Verification
 
 Another verification strategy we explore is filtering question–answer pairs based on answer correctness. For math examples with a known ground truth answer, we compare the model-generated answer to the reference and discard samples with incorrect responses. However, extracting and evaluating the model’s final answer, which is often embedded in complex mathematical expressions, is non-trivial.
 
@@ -635,7 +652,7 @@ We apply both methods to filter the OpenThoughts-114K dataset and train downstre
 
 *Table 17: **Comparison of math answer verification strategies.** We filter the OpenThoughts-114K dataset using either LLM-based or Math-Verify-based answer correctness. The resulting models are evaluated using both Hendrycks and Math-Verify answer extraction tools.*
 
-#### H.1.4 LLM-generated Unit Test Verification
+##### H.1.4 LLM-generated Unit Test Verification
 
 We investigate the effect of filtering code examples by LLM-generated unit tests. From an initial pool of 45,000 question–answer pairs, we use GPT4o-mini to (1) detect which answers contain Python code and (2) generate a standalone, executable unit test for each Python instance. We then apply our “verification” filter only to those Python examples, while non-Python examples remain untouched. Next, we fine-tune Qwen2.5-7B-Instruct on two separate subsets of 16,000 samples each: one filtered to include only examples whose generated tests pass, and one drawn at random without filtering. The results shown in Table 18 suggest that an LLM-generated unit test verification does not improve downstream code-generation accuracy.
 
@@ -647,7 +664,7 @@ We investigate the effect of filtering code examples by LLM-generated unit tests
 
 *Table 18: **Effect of using LLM-Generated unit tests for code data verification.** Downstream performance of models trained on 16,000 code examples: one set filtered to include only samples verified by LLM-generated unit tests, and the other unfiltered. No improvement is observed from verification-based filtering.*
 
-### H.2 Teacher Model
+#### H.2 Teacher Model
 
 In this section, we study Claude 3.7 (with thinking mode) as an annotator. First, we show that Claude-thinking traces contribute to better performance in code, maths, and general question answering. Longer thinking traces lead to better results in all three categories of benchmarks. Then we demonstrate that using Claude 3.7 to re-annotate the S1K Muennighoff et al. (2025) dataset (math) as well as our science or code data actually leads to worse performance than using R1.
 
@@ -695,7 +712,7 @@ In this section, we study Claude 3.7 (with thinking mode) as an annotator. First
 
 *Table 21: **Scores for switching the annotator from Gemini to R1 or Claude.**.*
 
-### H.3 Compressing Reasoning Traces
+#### H.3 Compressing Reasoning Traces
 
 | Setup | Avg. length | AIME24 | MATH500 | GPQA | LCB 05/23-05/24 | Average |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -713,7 +730,7 @@ To examine the first approach, we begin with a random subset of 12K instances fr
 
 Our second approach to reducing the reasoning trace is to filter instances whose lengths exceed a given threshold (e.g., 2048, 4096, or 8192 tokens). This method reduces both the length of the reasoning traces and the overall dataset size, while preserving the self-reflection capabilities within the retained traces. We present the results in Table 22. We observe that the downstream performance of models trained on the filtered datasets drops significantly compared to the default dataset. Specifically, the filtered-2048 setting results in a relative performance degradation of 33.3% across downstream benchmarks. Furthermore, higher filtering thresholds show improved model performance. This indicates that the presence of long reasoning structures in the dataset is beneficial, and that self-reflection alone is not sufficient for achieving strong reasoning performance. Nevertheless, the ability to reduce overthinking post-hoc remains an active and highly relevant area of research (Sui et al., 2025).
 
-### H.4 Poorly Performing SFT Datasets from Weak questions
+#### H.4 Poorly Performing SFT Datasets from Weak questions
 
 When benchmarking existing SFT reasoning datasets, we finetune models on the full sample sets from multiple available sources. Evaluating downstream performance on our fixed benchmark suite, we observe a wide range of dataset quality.
 
@@ -736,7 +753,7 @@ When benchmarking existing SFT reasoning datasets, we finetune models on the ful
 
 To investigate further, we finetune on a small subset of 31,600 randomly sampled question–answer pairs from each original dataset and re-annotate those questions with DeepSeek-R1, using the same procedure described in the sourcing stage of our pipeline (Section 4.1). Once again, we observe significant variance in downstream performance, which appears to stem primarily from differences in the quality and nature of the question sources.
 
-### H.5 Stacking Gains from Out of Domain Transfer
+#### H.5 Stacking Gains from Out of Domain Transfer
 
 During our experimentation on the dataset pipeline in Section 4, it was clear that reasoning ability transferred across domains. For example, scores on science evaluations would increase when a model was finetuned on only math reasoning data. We often observed such significant out-of-domain performance gains between candidate pipeline choices that the model with the highest in-domain average performance would not be the same as the model with the highest overall average performance.
 
@@ -754,9 +771,9 @@ Then, we compared the downstream science performance between the mixes created b
 
 *Table 24: **Out-of-domain (code to science transfer) gains do not persist when mixed with the in-domain (science) dataset**. The individual datasets (above the midline) contain only 31K samples from that domain and the mixes (below the midline) contain 62K samples of both code and science. When combining a code dataset with strong performance on science evaluations with a strong science dataset, there is no difference in the downstream model GPQA-D scores over mixing with a code dataset with weak performance on science evaluations.*
 
-## Appendix I Model Reasoning Performance Analysis
+### Appendix I Model Reasoning Performance Analysis
 
-### I.1 Performance on Math Difficulty
+#### I.1 Performance on Math Difficulty
 
 While developing OpenThoughts, we explored using language models to filter math data questions by difficulty. We applied the difficulty labeling prompt from Sky-T1 NovaSky-Team (2025b) to the math questions from Bespoke-Stratos with GPT-4o-mini as the annotator. This prompt uses example problems to judge questions on a 1-10 scale, with one corresponding to beginners questions and ten corresponding to the hardest IMO problems.
 
@@ -766,7 +783,7 @@ We found that GPT-4o-mini could reliably predict which questions DeepSeek-R1 wou
 
 *Figure 11: GPT-4o-mini can reliably determine the relative difficulty of questions. DeepSeek R1 performs substantially worse on the hardest questions (difficulty ten).*
 
-### I.2 Performance Scaling by Code Difficulty
+#### I.2 Performance Scaling by Code Difficulty
 
 While testing the scaling of OpenThoughts3 (shown in figure 1 of the main paper), we noticed a slight drop in performance on all code benchmarks at 100K scale. To study this phenomenon in more detail, we studied LiveCodeBench 05/23-05/24 and represented the contributions of each difficulty level to the average accuracy. We expected to see a saturation of the easy category and very low performance levels in the hard category. Surprisingly, in figure 12, we observe that the models’ accuracies are actually increasing nicely with scale for both the medium and hard tasks, and the slight drop is entirely happening in the easy category.
 
@@ -774,7 +791,7 @@ While testing the scaling of OpenThoughts3 (shown in figure 1 of the main paper)
 
 *Figure 12: OpenThoughts3 performance scaling on LiveCodeBench 05/23-05/24 as the dataset size is increased. The contribution of the performance on each category of problem is represented.*
 
-### I.3 Sampling by Longest, Shortest, Majority
+#### I.3 Sampling by Longest, Shortest, Majority
 
 When sampling multiple responses, we have multiple aggregation strategies to predict the final answer as a number or an MCQ choice: (1) "shortest": using the answer of the shortest response as the final answer; (2) "longest": using the answer of the longest response as the final answer; (3) "majority": using the majority prediction as the final answer.
 
@@ -821,7 +838,7 @@ The superiority of the shortest response strategy suggests that concise reasonin
 
 However, it’s important to note that the shortest strategy is not universally optimal. For some models, like NovaSky-Sky-T1-32B on certain datasets, other strategies may perform better, indicating that the optimal sampling strategy may be model-dependent. Additionally, majority voting can sometimes achieve the highest performance when computational resources allow for multiple response generation and aggregation.
 
-## Appendix J Surpassing the Teacher with Distillation for Legal Reasoning
+### Appendix J Surpassing the Teacher with Distillation for Legal Reasoning
 
 In this work, we focus primarily on reasoning for math, science, and coding. However, reasoning can also be beneficial for other domains, for example, for legal reasoning. For such domains, reasoning models out of the box can be significantly improved through finetuning.
 
@@ -843,7 +860,7 @@ Those results demonstrate that finetuning with a strong teacher model, like R1, 
 
 *Table 28: **Comparison of model performance under different finetuning setups.**.*
 
-## Appendix K All Teachers Ablations
+### Appendix K All Teachers Ablations
 
 We report the benchmarks of all of our teacher models in Table 29. Our results indicate that DeepSeek-R1 is the most performant model despite QwQ-32B being the stronger teacher. Phi-4-Reasoning-Plus is also strong on certain benchmarks, but performs poorly on code. This is because it often fails to produce code tags such as "“‘python" which Evalchemy uses for code extraction. One notable number is that OpenThinker3-7B outperforms QwQ-32B on JEEBench, demonstrating a single example of weak-to-strong generalization.
 
@@ -865,7 +882,7 @@ We report the benchmarks of all of our teacher models in Table 29. Our results i
 
 *Table 29: **Comparison of OpenThinker3-7B to teacher models**. We see that DeepSeek-R1 is empirically the best model overall and our actual teacher model, QwQ-32B, is empirically worse. Phi-4-Reasoning-Plus performs empirically poorly on code evaluations since it outputs code without code tags which Evalchemy marks as incorrect.*
 
-## Appendix L Safety Analysis of OpenThinker Models
+### Appendix L Safety Analysis of OpenThinker Models
 
 | **Model** | **Harmbench (↓)** | **XSTEST (↓)** |
 | --- | --- | --- |
@@ -886,7 +903,7 @@ In Table 30, we observe that supervised fine-tuning on reasoning inadvertently d
 
 Interestingly, when comparing Tables 30 and 1, we find a clear trade-off between reasoning capabilities and safety. These findings underscore the challenge of balancing safety and utility in reasoning models Wang et al. (2025); Bercovich et al. (2025). Future work on the OpenThoughts would benefit from incorporating safety-specific datasets to mitigate these risks while preserving their strong reasoning capabilities.
 
-## Appendix M Existing Frontier Model Evaluations
+### Appendix M Existing Frontier Model Evaluations
 
 Table 31 shows the benchmark results of the models available through APIs. Gemini-2.5-pro displays the strongest performance despite some of its answers being empty (and thus incorrect) due to running out of token budget when its thinking process is too long (especially visible in JEEBench). Claude 3.7 was given a 32K token budget. o3 was used with its default medium reasoning effort. Our OpenThinker3-7B model outperforms, on average, the models to the right of the separator.
 
@@ -909,7 +926,7 @@ Table 31 shows the benchmark results of the models available through APIs. Gemin
 
 *Table 31: **Performance of current API-based frontier models.** A significant gap remains between current open-source reasoning models and frontier reasoning models. The vertical line denotes the division between models that underperform and overperform OpenThinker3-7B according to average benchmark performance. The largest gaps arise from benchmarks such as CodeElo, CodeForces, and GPQA Diamond. Gemini-2.5-pro is the most performant model.*
 
-## Appendix N Testing reasoning robustness: Alice in Wonderland evaluation
+### Appendix N Testing reasoning robustness: Alice in Wonderland evaluation
 
 Here, we build on the work on Alice in Wonderland problems (Nezhurina et al., 2024), which use variations in simple problem templates that do not change both problem and solution structure. Given an instance of a problem $`P`$ and its corresponding solution $`S`$, reasoning (i.e. abstract solution) $`R`$ and the final answer $`A`$, the reasoning-invariant perturbation to the problem statement $`P^{*}_{i}`$ will have a solution $`S^{*}_{i}`$ and answer $`A^{*}_{i}`$. $`i`$ indicates an arbitrary ID of a perturbation, depending on a problem template, it can have infinitely many perturbations, e.g. if varying variables that hold arbitrary natural numbers. Importantly, $`P^{*}_{i}`$ will have the same abstract solution (or reasoning) $`R`$ as the original template $`P`$. Models capable of strong generalization should show similar performance solving the problem across all its structure-preserving variations
 
@@ -927,11 +944,11 @@ As evident from Fig. 14, reasoning models clearly and strongly outperform their 
 
 *Figure 14: **Reasoning models outperform conventional LLMs.** Albeit suffering from strong fluctuations, larger-scale distilled reasoning models set themselves apart from the conventional language models from which they were distilled. Shown are correct response rates averaged across all variations of AIW Friends, AIW Plus, and AIW Circles Colleagues problems Nezhurina et al. (2024). Larger reasoning models on a 32B scale are populating the upper correct response rate range (the only exception being R1-Qwen-32B). Conventional LLMs, including the largest scale Llama 3.1 405B and DeepSeek v3 671B, stay confined to the low correct response rate region below 0.2. As a reference, we show closed reasoning models o3-mini and o1-preview that show only weak fluctuations and settle in the upper performance region above 0.7%.*
 
-## Appendix O Compute Requirements
+### Appendix O Compute Requirements
 
 The three main compute requirements for this effort are for annotation, training, and evaluation. Annotating OpenThoughts3-1.2M with QwQ-32B required 22,000 H100 GPU hours on 16 1xNvidia GH200 nodes. One single run of training OpenThinker3-7B required 25,000 A100 GPU hours on 128 nodes, each equipped with 4x Nvidia A100 GPUs (512 GPUs in total). One evaluation run for OpenThinker3-7B required 32 GPU-hours on 16 1xNvidia GH200 nodes. Throughout the pipeline experiments, annotating each 31,600-size dataset cost roughly \$300 in API costs through the DeepSeek API.
 
-## Appendix P Sourcing reasoning traces from the Web
+### Appendix P Sourcing reasoning traces from the Web
 
 In this work, we generate reasoning traces with annotator models. As an alternative, we also experimented with finding reasoning traces from the web, then processing them with language models in order to bring them in a suitable form for SFT, following Yue et al. (2024), which generated instruction-finetuning data in that manner.
 
@@ -965,7 +982,7 @@ Update this answer! Update this answer
 
 *Figure 15: **Example of a reasoning trace found in DCLM-Baseline.** This is an example reasoning trace found in DCLM-Baseline. This text does not resemble reasoning traces from modern reasoning models.*
 
-## Appendix Q Licenses of Existing Assets
+### Appendix Q Licenses of Existing Assets
 
 - **Qwen-2.5-7B-Instruct** model is distributed under Apache 2.0 license as indicated in [Qwen-2.5-7B-Instruct](https://huggingface.co/Qwen/Qwen2.5-7B-Instruct).
 - **Open2Math** dataset is distributed under Creative Commons Attribution 4.0 license as indicated in [openmath-2-math](https://huggingface.co/datasets/ai2-adapt-dev/openmath-2-math).
@@ -997,15 +1014,15 @@ Update this answer! Update this answer
 - **Advanced Organic Synthesis** by Richard Monson has all rights reserved.
 - **Chemistry** by Rice University is subject to Creative Commons Attribution 4.0 International License.
 
-## Appendix R Pipeline Details
+### Appendix R Pipeline Details
 
 In this Section we go into more details for each step of our pipeline, which we briefly described in Section 4.
 
-### R.1 Question Generation Strategies
+#### R.1 Question Generation Strategies
 
 We will now go over the different ways we generated questions.
 
-#### R.1.1 Code Question Generation Strategies
+##### R.1.1 Code Question Generation Strategies
 
 We begin by detailing all the code question generation strategies:
 
@@ -1038,6 +1055,8 @@ We begin by detailing all the code question generation strategies:
 - **bugdaryan/sql-create-context-instruction** (Number of Questions: 78.6K): Coding questions about SQL from the WikiSQL and Spider forums.
 
 ```text
+You are to generate a question or task for a language model based on the following error and code pairs.
+
 Error Type: {{original_status}}
 Code: {{original_src}}
 
@@ -1047,6 +1066,8 @@ Include only the new question and task. Do not include anything like "Here is th
 *Figure 16: **Coder Stat Prompt**.*
 
 ```text
+You are to generate a question or task for a language model based on the following instruction and code pairs.
+
 Instruction: {{message}}
 Code: {{old_contents}}
 
@@ -1056,7 +1077,7 @@ the code in your question and make the task sound like what a human would ask a 
 
 *Figure 17: **CommitPack Prompt**.*
 
-#### R.1.2 Math Question Generation Strategies
+##### R.1.2 Math Question Generation Strategies
 
 We also detail all the math question generation strategies:
 
@@ -1083,6 +1104,7 @@ We also detail all the math question generation strategies:
 - **Lap1official/Math** (Number of Questions: >1M): No information provided.
 
 ```text
+You are to reform the following math text snippet into a question with a quantitative or verifiable answer such as one that would be
 included in the USAMO or the Putnam Exam.
 
 Text: {{text}}
@@ -1094,6 +1116,7 @@ question from the text or form a new one based on the text. Make the question so
 *Figure 18: **AutoMathText Prompt**.*
 
 ```text
+You are to reform the following math text snippet into a question with a quantitative or verifiable answer such as one that would be
 included in the USAMO or the Putnam Exam.
 
 Text: {{formula}
@@ -1104,7 +1127,7 @@ question from the text or form a new one based on the text. Make the question so
 
 *Figure 19: **Formulas**.*
 
-#### R.1.3 Science Question Generation Strategies
+##### R.1.3 Science Question Generation Strategies
 
 We also detail all the science question generation strategies:
 
@@ -1121,6 +1144,7 @@ We also detail all the science question generation strategies:
 - **AdapterOcean/biology\_dataset\_standardized\_unified**: (Number of questions: 22K) No information provided.
 
 ```text
+Yes or No, is this question an organic chemistry question?
 Question:
 {{problem}}
 ```
@@ -1128,6 +1152,7 @@ Question:
 *Figure 20: **Organic Chemistry Filtering**.*
 
 ```text
+Yes or No, is the question an answerable difficult science, math, or coding question? If the question refers to content (figures, equations, additional text) that you cannot see, then it is unanswerable.
 Provide your reasoning.
 Question:
 {{improved_question_solution}}
@@ -1136,6 +1161,7 @@ Question:
 *Figure 21: **Code, Math, and Science Question Filtering Prompt**.*
 
 ```text
+You are an instructor creating exam questions.
 I will provide you with a given question and the text from which it was extracted from.
 You will ensure that the question is answerable, meaning that there is enough context to answer the question.
 To do this, you will look at the extracted text and ensure that nothing is missing from the current questions instantiation. If there is, you will provide the new extra text before restating the question but be sure you always add the question itself at the end.
@@ -1173,6 +1199,8 @@ Do not include the solution if you see it. This is an exam, so you should NOT in
 *Figure 22: **Question Refinement Prompt**.*
 
 ```text
+Extract the questions, answer choices, and solutions from the extracted text from the pdf below.
+
 Format your response as below:
 QUESTION: "the question from the text and all relevant context excluding the answer and choices" (i.e. if the question is "What was Elvis Presley's (a) favorite sandwich? (b) most hated song? (c) birthday?" You should have a question "QUESTION: What was Elvis Presley's favorite sandwich..." and then another question "QUESTION: What was Elvis Presley's most hated song?..."  etc.)
 ANSWER CHOICES: "answer choice 1" ||| "answer choice 2" ... (if no answer choices are available just say "free response", if answer choices are available please write them out i.e. "A: 0.57 ||| B: John Hancock ||| ..." etc.)
@@ -1191,6 +1219,7 @@ Extracted Text:
 *Figure 23: **Question Extraction Prompt**.*
 
 ```text
+Extract all text from this PDF, including all text from images. Example extractions could look like this:
 html><body><table><tr><td>2</td><td>1 1</td><td>1 6</td><td>-14</td></tr><tr><td rowspan="2"></td><td>2 3</td><td>7</td><td>14 0</td></tr><tr><td>1</td><td></td><td></td></tr></table></body></html>
 
 Notice that the final sum is zero, telling us that 2 is a zero.  But the nice thing about synthetic division, is that long division, the other coefficients are the coefficients of the quotient polynomial.
@@ -1221,6 +1250,7 @@ Now please give me your extraction of all text, including text in images.
 *Figure 24: **Gemini OCR Prompt**.*
 
 ```text
+You are to reform the following math text snippet into a question with a quantitative or verifiable answer such as one that would be
 included in the Biology, Physics or Chemistry Olympiad.
 Text: {{text}}
 
@@ -1231,6 +1261,7 @@ question from the text or form a new one based on the text. Make the question so
 *Figure 25: **Prompt for Generating Science Questions**.*
 
 ```text
+You are to reform the following math text snippet into a question with a quantitative or verifiable answer such as one that would be
 included in the Biology, Physics or Chemistry Olympiad.
 Text: {{abstract}}
 
@@ -1240,11 +1271,11 @@ question from the text or form a new one based on the text. Make the question so
 
 *Figure 26: **Prompt for Generating Science Questions**.*
 
-### R.2 Information on question filtering strategies
+#### R.2 Information on question filtering strategies
 
 We will now provide more information on our question filtering strategies.
 
-#### R.2.1 FastText Details
+##### R.2.1 FastText Details
 
 We provide some more details on our FastText filters.
 
@@ -1254,7 +1285,7 @@ We provide some more details on our FastText filters.
 - We use bigrams or n = 2.
 - We use a minimum n-gram count of 3.
 
-#### R.2.2 Code Filtering Strategies
+##### R.2.2 Code Filtering Strategies
 
 We provide more details about our code filtering strategies.
 
@@ -1274,6 +1305,7 @@ We provide more details about our code filtering strategies.
 - **Embedding-based Selection**: Embed a set of positives, which are CodeForces, and a set of negatives, which are bugdaryan/sql-create-context-instruction, using OpenAI’s embedding model, text-embedding-3-large. First, embed a given question and measure its mean cosine similarity to positives and mean cosine similarity to negatives, and generate the final score by taking the difference.
 
 ```text
+You will be given a code problem. Your job is to grade the difficulty level from 1-10 according to the ICPC standard.
 Here is the standard:
 A 10-point scale for ICPC problems could be structured as follows, where level 1 represents the easiest problems and level 10 represents the most challenging:
 Level 1: Basic implementation problems requiring simple input/output handling and straightforward calculations. Typically solvable with a single loop or basic conditional statements. Examples include summing numbers or finding the maximum in an array.
@@ -1293,6 +1325,8 @@ Problem to be labeled: {{question}}."
 *Figure 27: **Prompt for Code Difficulty Filtering.** This text is the prompt for Code Difficulty Filtering.*
 
 ```text
+I want you to judge whether the following question is like the positive examples provided or like the negative examples. Here are a few positive examples of questions:
+
 Positive Questions
 1. A plane contains $40$ lines, no $2$ of which are parallel. Suppose that there are $3$ points where exactly $3$ lines intersect, $4$ points where exactly $4$ lines intersect, $5$ points where exactly $5$ lines intersect, $6$ points where exactly $6$ lines intersect, and no points where more than $6$ lines intersect. Find the number of points where exactly $2$ lines intersect.
 2. A spin-half particle is in a linear superposition0.8|\uparrow\rangle+0.6|\downarrow\rangle of its spin-up and spin-down states. If |\uparrow\rangle and |\downarrow\rangle are the eigenstates of \sigma_{z} , then what is the expectation value up to one decimal place, of the operator 10\sigma_{z}+5\sigma_{x} ? Here, symbols have their usual meanings.
@@ -1315,7 +1349,7 @@ Return a score between 1 and 100, where 100 means exactly like the positive ques
 
 *Figure 28: **Prompt for AskLLM Filtering.** This text is the prompt for AskLLM Filtering.*
 
-#### R.2.3 Math Question Filtering
+##### R.2.3 Math Question Filtering
 
 - **Length-based Selection (GPT-4.1-nano)**: Annotate questions with GPT-4.1-Nano and keep the questions with longest responses.
 - **AskLLM Selection**: Ask GPT-4o-mini to rate on a scale of 1 to 100 how similar a question is to a set of good questions and different from a set of bad questions. When asking GPT-4o-mini to help with question filtering, we only use temperature set to 1.0. We do not set other sampling hyperparameters. The prompt for AskLLM filtering is in Figure 28. We use structured decoding to extract a numerical response from GPT-4o-mini. For AskLLM Filtering, we request a numerical response as an integer and a string response for reasoning.
@@ -1333,6 +1367,7 @@ Return a score between 1 and 100, where 100 means exactly like the positive ques
 - **FastText Selection (P: Numina; N: Lap1official)**: Classify questions with a FastText classifier trained with positives, which are the "amc\_aime" and "olympiads" subsets of AI-MO/NuminaMath-CoT, and negatives, that is, questions from Lap1official/Math\_small\_corpus. More info is in Section R.2.1.
 
 ```text
+You will be given a math problem. Your job is to grade the difficulty level from 1-10 according to the AoPS standard. \
 Here is the standard: \
 All levels are estimated and refer to averages. The following is a rough standard based on the USA tier system AMC 8 - AMC 10 - AMC 12 - AIME - USAMO/USAJMO - IMO, \
 representing Middle School - Junior High - High School - Challenging High School - Olympiad levels. Other contests can be interpolated against this. \
@@ -1374,7 +1409,7 @@ Problem to be labeled: {{question}}"
 
 *Figure 29: **Prompt for Math Difficulty Filtering.** This text is the prompt for Math Difficulty Filtering.*
 
-#### R.2.4 Science Question Filtering
+##### R.2.4 Science Question Filtering
 
 - **FastText (P: ExpertQA; N: Arxiv)**: Classify questions with a FastText classifier trained with positives that are questions from katielink/expertqa and negatives that are questions from AdapterOcean/biology\_dataset\_standardized\_unified. More info is in Section R.2.1.
 - **Length-based Selection (GPT-4o-mini)**: Annotate questions with GPT-4o-mini and keep the questions with longest responses.
@@ -1388,6 +1423,7 @@ Problem to be labeled: {{question}}"
 - **Difficulty-based Selection**: Ask GPT-4o-mini to rate the question on a scale of 1 to 10 using a rubric for science Olympiad problems and select the hardest-rated problems. When asking GPT-4o-mini to help with question filtering, we only use temperature set to 1.0. We do not set other sampling hyperparameters. The prompt for Difficulty filtering is in Figure 30. We use structured decoding to extract a numerical response from GPT-4o-mini. For AskLLM Filtering, we request a numerical response as an integer and a string response for reasoning.
 
 ```text
+You will be given a science problem. Your job is to grade the difficulty level from 1-10 according to the international science olympiad standard. \
 Here is the standard: \
 A 10-point scale for international science olympiad problems could be structured as follows, where level 1 represents the easiest problems and level 10 represents the most challenging:
 Level 1: Basic Knowledge Application - Straightforward recall of fundamental scientific facts and principles. Simple calculations requiring only basic formulas. Direct application of a single scientific concept. Problems typically solvable in 1-2 steps. Content typically covered in standard high school curriculum. Examples include identifying simple chemical compounds, basic circuit calculations, or classifying organisms.
@@ -1414,7 +1450,7 @@ Problem to be labeled: {{question}}."
 
 *Figure 30: **Prompt for Science Difficulty Filtering.** This text is the prompt for Science Difficulty Filtering.*
 
-### R.3 Deduplication and Teacher Sampling
+#### R.3 Deduplication and Teacher Sampling
 
 There are several methods for performing deduplication. We choose to use Indel Similarity to measure the similarity between two questions. This similarity refers to the number of characters that need to be inserted or deleted from one sample to match the other, and is calculated relative to the sample length. More precisely, we consider the Normalized Indel similarity score between a pair of strings, as computed via the Longest Common Subsequence (LCS) metric:
 
@@ -1422,11 +1458,11 @@ There are several methods for performing deduplication. We choose to use Indel S
 \text{indel}_{\text{sim}}=100\times\frac{\text{LCS}_{\text{length}}(s_{1},s_{2})}{\max(|s_{1}|,|s_{2}|)} \qquad (2)
 ```
 
-### R.4 Question Answer Filtering
+#### R.4 Question Answer Filtering
 
 We will now discuss the details of each question-answer filtering method.
 
-#### R.4.1 Question Answer Filtering for Math
+##### R.4.1 Question Answer Filtering for Math
 
 - **Comprehensive Large Dataset**: Take all 63,200 responses for one dataset without filtering. This is not compute-controlled.
 - **Random Filtering**: Filtering questions-answer pairs randomly.
@@ -1439,6 +1475,7 @@ We will now discuss the details of each question-answer filtering method.
 - **Removing Long Paragraphs**: Ask GPT-4o-mini whether a provided answer is free of long paragraphs. The sampling hyperparameters are temperature of 0.0, top\_p of 1.0, and presence penalty of 1.0. We use structured decoding to get a response, which is a boolean value, and a reasoning, which is a string. The full prompt is in Figure 35.
 
 ```text
+I will provide you the last words of 16 math problem solutions.
 They are candidate solutions to a problem.
 
 They will typically contain the solution to a math problem. I want you to return the indices of the responses with the most common final numerical answer.
@@ -1469,13 +1506,15 @@ Here are your candidate solutions:
 *Figure 31: **Prompt for Math Question-Answer Majority Consensus Verification.** This text is the prompt for Math Question-Answer Majority Consensus Verification.*
 
 ```text
+Is the provided answer a correct solution to the following problem?
+
 Question: {{question}}
 Response: {{answer}}
 ```
 
 *Figure 32: **Prompt for Math Question-Answer GPT Verification.** This text is the prompt for Math Question-Answer GPT Verification.*
 
-#### R.4.2 Code Question Answer Filtering
+##### R.4.2 Code Question Answer Filtering
 
 - **FastText Selection**: Classify question-answer pairs with a FastText filter. Form the query strings by the following format: "Question: {question} \\nAnswer: {answer\_column}". We do this for both training and using the FastText classifier. The classifier’s positives are CodeForces which contains responses from DeepSeek R1. The classifier’s negatives are CodeForces annotated with GPT-4o-mini. More info is in Section R.2.1.
 - **Comprehensive Large Dataset**: Take all 63,200 responses for one dataset without filtering. This is not compute-controlled.
@@ -1488,7 +1527,7 @@ Response: {{answer}}
 - **Random Filtering**: Filtering questions-answer pairs randomly.
 - **Removing Long Paragraphs**: Ask GPT-4o-mini whether a provided answer is free of long paragraphs. The sampling hyperparameters are temperature of 0.0, top\_p of 1.0, and presence penalty of 1.0. We use structured decoding to get a response, which is a boolean value, and a reasoning, which is a string. The full prompt is in Figure 35.
 
-#### R.4.3 Science Question Answer Filtering
+##### R.4.3 Science Question Answer Filtering
 
 - **FastText Selection**: Classify question-answer pairs with a FastText filter. Form the query strings by the following format: "Question: {question} \\nAnswer: {answer\_column}". We do this for both training and using the FastText classifier. The classifier’s positives are S1.1, which contains responses from DeepSeek R1. The classifier’s negatives are from mlfoundations-dev/stratos\_verified\_mix annotated with GPT-4o-mini. More info is in Section R.2.1.
 - **Comprehensive Large Dataset**: Take all 63,200 responses for one dataset without filtering. This is not compute-controlled.
@@ -1501,6 +1540,8 @@ Response: {{answer}}
 - **GPT Verification**: Ask GPT-4o-mini whether a provided answer is the correct answer for the provided question. The sampling hyperparameters are temperature of 0.0, top\_p of 1.0, and presence penalty of 1.0. We use structured decoding to get a response, which is a boolean value, and a reasoning, which is a string. The full prompt is in Figure 32.
 
 ```text
+Is the provided code snippet a correct solution to the following problem?
+
 Question: {{question}}
 Response: {{answer}}
 ```
@@ -1508,6 +1549,8 @@ Response: {{answer}}
 *Figure 33: **Prompt for Code Question-Answer GPT Verification.** This text is the prompt for Code Question-Answer GPT Verification.*
 
 ```text
+Does the provided answer only contain one language?
+
 Question: {{question}}
 Response: {{answer}}
 ```
@@ -1515,6 +1558,7 @@ Response: {{answer}}
 *Figure 34: **Prompt for English Verification.** This text is the prompt for English Verification.*
 
 ```text
+Is the provided answer free of any long paragraphs?
 A paragraph is any block of text separated by a blank line.
 A paragraph is *too long* if it has **>750 words**.
 
@@ -1525,6 +1569,7 @@ Response: {{answer}}
 *Figure 35: **Prompt for Long Paragraphs Verification.** This text is the prompt for Long Paragraphs Verification.*
 
 ```text
+I will provide you the last words of 16 science problem solutions.
 They are candidate solutions to a problem.
 
 They will typically contain the solution to a science problem. I want you to return the indices of the responses with the most common answer.
@@ -1542,6 +1587,7 @@ Now tell me the solutions. Please remember to zero index these solutions. Do not
 *Figure 36: **Prompt for Science Question-Answer Majority Consensus Verification.** This text is the prompt for Science Majority Consensus Verification.*
 
 ```text
+I will provide you 16 code_samples.
 They are candidate solutions to a coding problem.
 
 I want you to compare all of the code samples functionally and return a list of indices corresponding to
@@ -1599,11 +1645,11 @@ Here are your candidate solutions:
 
 *Figure 37: **Prompt for Code Question-Answer Majority Consensus Verification.** This text is the prompt for Code Question-Answer Majority Consensus Verification.*
 
-## Appendix S Pipeline Experiments Expanded Results
+### Appendix S Pipeline Experiments Expanded Results
 
 Due to spatial constraints, we do not show every table and every data strategy in the main text. We elaborate and show the full results here.
 
-### S.1 Question Sourcing
+#### S.1 Question Sourcing
 
 Our results for the code question sourcing ablation are in Table 32. Our results for the math question sourcing ablation are in Table 33. Our results for the science question sourcing ablation are in Table 34. The gap between the top-performing datasets and the lowest-performing datasets is large. In the code data domain, this difference is 17.2 points on average
 
@@ -1688,7 +1734,7 @@ Our results for the code question sourcing ablation are in Table 32. Our results
 
 *Table 34: **Full Ablation for Science Question Sources**.*
 
-### S.2 Mixing Question Generation Strategies
+#### S.2 Mixing Question Generation Strategies
 
 Our results for the code question mixing ablation are in Table 35. Our results for the math question mixing ablation are in Table 36. Our results for the science question mixing ablation are in Table 37. The trend of less mixing being better holds across all domains.
 
@@ -1725,7 +1771,7 @@ Our results for the code question mixing ablation are in Table 35. Our results f
 
 *Table 37: **Full Ablation for Science Question Source Mixing**.*
 
-### S.3 Filtering Questions
+#### S.3 Filtering Questions
 
 Our results for the code question filtering ablation are in Table 38. Our results for the math question filtering ablation are in Table 39. Our results for the science question filtering ablation are in Table 40. For each data domain, we try each question filtering strategy from Section R.2. The ablations contain different combinations of FastText positives and negatives. They also include various models for the length-based filtering, such as GPT-4o-mini, GPT-4.1-mini, and GPT-4.1-nano. Across both science and math, length-based filtering with GPT-4.1 models works well. Around half of the filtering strategies improve over random filtering for each data domain. On all data domains, AskLLM filtering and difficulty-based filtering work relatively well.
 
@@ -1787,7 +1833,7 @@ Our results for the code question filtering ablation are in Table 38. Our result
 
 *Table 40: **Full Ablation for Science Question Filtering**.*
 
-### S.4 Deduplication and Multiple Sampling
+#### S.4 Deduplication and Multiple Sampling
 
 Our results for the code deduplication and multiple sampling ablation are in Table 41. Our results for the math deduplication and multiple sampling ablation are in Table 42. Our results for the science deduplication and multiple sampling ablation are in Table 43. Across all data domains, doing exact deduplication or no deduplication was better than doing fuzzy deduplication. Moreover, doing multiple sampling performed as well as or equal to annotating each question one time. The main exception here is in Table 42, where doing 1 annotation per question is better. However, the second-best strategy empirically is doing exact deduplication with 16× sampling. The 16× provides an axis for scaling data more for OpenThoughts3-1.2M, so we chose this annotation strategy for our final pipeline.
 
@@ -1834,7 +1880,7 @@ Our results for the code deduplication and multiple sampling ablation are in Tab
 
 *Table 43: **Full Ablation for Science Deduplication and Multiple Sampling**.*
 
-### S.5 Question Answer Filtering
+#### S.5 Question Answer Filtering
 
 Our results for the code question-answer filtering ablation are in Table 44. Our results for the math question-answer filtering ablation are in Table 45. Our results for the science question-answer filtering ablation are in Table 46. Across all data domains, not doing filtering at all performs similarly or outperforms the best question-answer filtering strategy.
 
@@ -1884,7 +1930,7 @@ Our results for the code question-answer filtering ablation are in Table 44. Our
 
 *Table 46: **Full Ablation for Science Question-Answer Filtering**.*
 
-### S.6 Teacher Model Experiments
+#### S.6 Teacher Model Experiments
 
 Our results for the teacher model ablations for code are in Table 47. Our results for the teacher model ablations for math are in Table 48. Our results for the teacher model ablations for science are in Table 49. Across all data domains, QwQ-32B is the best teacher by a statistically significant margin.
 

@@ -5,7 +5,24 @@
 - **原文链接**: [OpenThoughts: Data Recipes for Reasoning Models](https://arxiv.org/abs/2506.04178v2)
 - **论文**: [arXiv:2506.04178](https://arxiv.org/abs/2506.04178)
 - **发布日期**: 2025-06-04
-- **译注**: 本文是 arXiv v2 版的非官方全文中译，含正文、附录、全部图表和参考文献。原文以 [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) 许可发布，本译文沿用同一许可。格式上的改动：图片取自 arXiv 源文件（矢量图渲染为 PNG），标题处的 logo 未收录；表 1、表 31 中的 logo 换成文字，开放数据图标换成 🟢🔴🟡，竖线分隔列显示为 ‖；表中灰色下标的标准误写成“± 值”；合并单元格和旋转表头改为普通 Markdown 表格，Takeaway 框改为引用块，交叉引用改为纯文本。提示词（图 16–37）、图 15 的网页示例、参考文献，以及模型和数据集名称保留英文。英文版是原文转成的 Markdown，格式改动相同。
+- **译注**: “主要结论”是为本笔记写的摘要，不属于原文，数字均取自论文；“全文翻译”是 arXiv v2 版的非官方全文中译，含正文、附录、全部图表和参考文献。原文以 [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) 许可发布，本译文沿用同一许可，格式上的改动列在“全文翻译”一节的开头。英文版的“主要结论”译自中文摘要，其余是原文转成的 Markdown。
+
+## 主要结论
+
+- **问题**：推理模型进步很快，但最先进的模型往往依赖几乎不公开任何信息的专有数据集，推理训练的最佳配方仍有许多悬而未决的问题。OpenThoughts 项目的目标是做出用于训练推理模型的开源数据集；此前发布的 OpenThoughts2-1M 训练出的 OpenThinker2-32B，是第一个用公开推理数据训练、在 AIME 和 LiveCodeBench 等标准推理基准上达到 DeepSeek-R1-Distill-32B 水平的模型。
+- **方法**：把推理 SFT 数据的构建拆成六步流水线（问题来源、问题混合、问题过滤、去重与每题多次采样、答案过滤、教师模型选择），共做了 1,000 多次受控实验。每一步单独消融，其余步骤保持不变：每种策略生成 31,600 条数据，微调 Qwen2.5-7B-Instruct，按 8 个数学、代码和科学基准的平均分选出最优策略，再进入下一步。AIME 2025、HMMT 02/25、HLE 的多选题子集和 LiveCodeBench 06/24-01/25 作为留出基准，流水线实验结束后才评测。
+- **结果**：把各步的最优策略扩大到 1.2M 条样本（850,000 条数学、250,000 条代码、100,000 条科学），以 QwQ-32B 为教师，得到 OpenThoughts3-1.2M；在其上微调 Qwen2.5-7B-Instruct 得到 OpenThinker3-7B。按表 1，它在 AIME 2025、LiveCodeBench 06/24-01/25 和 GPQA Diamond 上分别得到 53.3、51.7 和 53.7，比 DeepSeek-R1-Distill-Qwen-7B 高 15.3、17.2 和 20.5 个百分点；12 项任务的平均分为 55.3，比 R1-Distill-7B 高 12.4 分，比次优的开放数据模型 Nemotron-Nano-8B 高 2.1 分，是 7B 规模上最好的开放数据推理模型。
+- **每题多次采样是有效的扩量手段**：让教师模型为每个问题采样多个答案，能把一个数据源的规模扩大至少 16 倍，规模扩大带来显著收益。在代码和科学上，去重方式与采样次数的各种组合结果相近；数学上精确去重加每题 4 个答案最好，16 个答案次之。最终流水线对所有领域都每题采样 16 个答案，数学和科学做精确去重，代码不去重。论文据此认为，至少在答案多样性提高时，问题多样性的收益可能有限。
+- **更强的模型不一定是更好的教师**：QwQ-32B 在目标推理基准上的分数低于 DeepSeek-R1（DeepSeek-R1 在 CodeElo、GPQA Diamond 和 JEEBench 上分别高出 9%、8% 和 23%），作为教师却在所有领域都更好：与用 DeepSeek-R1 作教师相比，代码和数学数据的平均准确率分别高 1.9% 和 2.6%。
+- **问题来源重质量、轻多样性**：不同来源之间差距很大，最强和最弱的代码数据集相差 17.2 分；简单的合成方法与更复杂或人工整理的流水线不相上下，有时还更好。只用排名前 1 或 2 的高质量来源，好过混合 8 个或 16 个来源：只用两个最好的代码来源，比混合 16 个来源在所有基准上的平均准确率高 5%。
+- **按 LLM 的判断筛问题**：最好的两种问题过滤方法，一是让 LLM（GPT-4o-mini）评估难度、保留最难的题，在代码上最好；二是让 LLM 直接作答、保留回答最长的题，在数学和科学上最好（最终用 GPT-4.1-mini）。与随机过滤相比，数学和代码的平均分分别提高 4% 和 6%。在所有领域，基于 LLM 的过滤都好过 fastText 和 embedding 这类预训练数据常用的过滤方法。
+- **答案过滤没有带来收益**：试过的验证和答案过滤方法（如 GPT 验证、多数一致、按长度或语言筛选）都没有明显提升。数学上，随机过滤基线胜过其他所有过滤方法；在所有领域，不过滤（使用全部样本，不控制计算量）与各种过滤方法表现相近，所以最终流水线不做答案过滤。
+- **附录里的其他发现**：从推理轨迹中删去“wait”“but wait”这类自我反思，平均长度从 11,593 降到 328 个 token，下游平均性能相对下降 49.1%；只保留不超过 2,048 个 token 的样本，也会相对下降 33.3%，说明长推理和自我反思都不可少（附录 H.3）。Llama-3.1-8B-Instruct 用 100K 条 OpenThoughts3 样本微调后也大幅提升，如 AMC23 从 15.8 升到 75.2，但整体仍不如 Qwen2.5-7B-Instruct（附录 G.1）。在一项法律推理任务上，用 R1 标注、只靠多数投票验证（不用专家标签）的数据微调 Qwen2.5-7B，准确率达到 0.819，超过 R1 本身的 0.739（附录 J）。蒸馏出的推理模型在只改动题目细节、不改变题目结构的 AIW 变体上表现波动很大，泛化仍有缺陷（附录 N）。
+- **代价与局限**：推理 SFT 削弱了 Qwen2.5 原有的安全对齐：Harmbench 上的有害率从 Qwen2.5-7B-Instruct 的 14.5 升到 OpenThinker3-7B 的 55.5，后者没有经过任何专门的安全调优，也没有用以对齐为目标的数据训练（附录 L）。论文没有探索强化学习数据集，也没有尝试分阶段 SFT 或课程学习。
+
+## 全文翻译
+
+**格式改动**：原文的各级标题都降了一级，放在本节之下；图片取自 arXiv 源文件（矢量图渲染为 PNG），标题处的 logo 未收录；表 1、表 31 中的 logo 换成文字，开放数据图标换成 🟢🔴🟡，竖线分隔列显示为 ‖；表中灰色下标的标准误写成“± 值”；合并单元格和旋转表头改为普通 Markdown 表格，Takeaway 框改为引用块，交叉引用改为纯文本；arXiv HTML 版的每个提示词框（图 16–37）都漏掉了第一行，这里按 arXiv 源文件补上，与 PDF 一致。中文版把提示词逐行译成了中文，模板变量和代码保持原样（代码注释译出），固定的输出字段（如 QUESTION:、SOLUTION:）和要求模型原样输出的字符串保留英文；提示词里引用的外部材料保留英文，包括图 22 和图 24 的示例原文、图 28 的正负例题，以及图 29 的 AoPS 难度标准和例题。图 15 的网页示例、参考文献，以及模型和数据集名称也保留英文。
 
 Etash Guha\*$`^{1,2}`$, Ryan Marten\*$`^{3}`$, Sedrick Keh\*$`^{4}`$, Negin Raoof\*$`^{5}`$, Georgios Smyrnis\*$`^{6}`$, Hritik Bansal$`^{\zeta 7}`$, Marianna Nezhurina$`^{\zeta 8,9,16}`$, Jean Mercat$`^{\zeta 4}`$, Trung Vu$`^{\zeta 3}`$, Zayne Sprague$`^{\zeta 6}`$, Ashima Suvarna$`^{7}`$, Benjamin Feuer$`^{10}`$, Liangyu Chen$`^{1}`$, Zaid Khan$`^{11}`$, Eric Frankel$`^{2}`$, Sachin Grover$`^{12}`$, Caroline Choi$`^{1}`$, Niklas Muennighoff$`^{1}`$, Shiye Su$`^{1}`$, Wanjia Zhao$`^{1}`$, John Yang$`^{1}`$, Shreyas Pimpalgaonkar$`^{3}`$, Kartik Sharma$`^{3}`$, Charlie Cheng-Jie Ji$`^{3}`$, Yichuan Deng$`^{2}`$, Sarah Pratt$`^{2}`$, Vivek Ramanujan$`^{2}`$, Jon Saad-Falcon$`^{1}`$, Jeffrey Li$`^{2}`$, Achal Dave, Alon Albalak$`^{13}`$, Kushal Arora$`^{4}`$, Blake Wulfe$`^{4}`$, Chinmay Hegde$`^{10}`$, Greg Durrett$`^{6}`$, Sewoong Oh$`^{2}`$, Mohit Bansal$`^{11}`$, Saadia Gabriel$`^{7}`$, Aditya Grover$`^{7}`$, Kai-Wei Chang$`^{7}`$, Vaishaal Shankar, Aaron Gokaslan$`^{14}`$, Mike A. Merrill$`^{1}`$, Tatsunori Hashimoto$`^{1}`$, Yejin Choi$`^{1}`$, Jenia Jitsev$`^{8,9,16}`$, Reinhard Heckel$`^{15}`$, Maheswaran Sathiamoorthy$`^{3}`$, Alexandros G. Dimakis$`^{\dagger 3,5}`$, Ludwig Schmidt$`^{\dagger 1}`$
 
@@ -13,7 +30,7 @@ $`^{1}`$Stanford University, $`^{2}`$University of Washington, $`^{3}`$BespokeLa
 
 \*、† 表示同等贡献，ζ 表示其他核心贡献者。顺序随机决定。
 
-## 摘要
+### 摘要
 
 推理模型在许多涉及数学、代码和科学的基准上取得了快速进展。然而，关于推理的最佳训练配方仍存在许多悬而未决的问题，因为最先进的模型往往依赖专有数据集，而这些数据集几乎没有任何公开信息。为解决这一问题，OpenThoughts 项目的目标是创建用于训练推理模型的开源数据集。经过初步探索，我们的 OpenThoughts2-1M 数据集催生了 OpenThinker2-32B，这是首个基于公开推理数据训练、并在 AIME 和 LiveCodeBench 等标准推理基准上达到 DeepSeek-R1-Distill-32B 水平的模型。随后，我们通过 1,000+ 次受控实验，系统地研究了我们数据生成流水线的每个步骤，从而进一步改进了数据集，并由此得到了 OpenThoughts3。将该流水线扩展到 1.2M 个样本，并使用 QwQ-32B 作为教师模型，我们得到了 OpenThinker3-7B 模型，它取得了最先进的结果：在 AIME 2025 上达到 **53%**，在 LiveCodeBench 06/24-01/25 上达到 **51%**，在 GPQA Diamond 上达到 **54%**——与 DeepSeek-R1-Distill-Qwen-7B 相比，分别提升了 15.3、17.2 和 20.5 个百分点。我们所有的数据集和模型均可在 [openthoughts.ai](https://openthoughts.ai) 上获取。
 
@@ -21,7 +38,7 @@ $`^{1}`$Stanford University, $`^{2}`$University of Washington, $`^{3}`$BespokeLa
 
 *图 1：**OpenThoughts3 在各个数据规模上都优于现有的 SFT 推理数据集**。所有模型均基于 Qwen-2.5-7B-Instruct 微调。我们在 AIME 2025（左）、LiveCodeBench 06/24-01/25（中）和 GPQA Diamond（右）上，与大型 SFT 数据集（AM、Nemotron Nano）以及精心构建的小型数据集（s1.1、LIMO）进行了比较。所有评估基准的扩展曲线见图 8。*
 
-## 1 引言
+### 1 引言
 
 近期的模型，如 DeepSeek-R1 (Guo et al., 2025) 和 o3 (OpenAI, 2024)，已在基于推理的领域（包括数学、编程和科学）中展现出强大的性能。这些模型通常以一个强大的基座模型为起点，再通过监督微调（SFT）或强化学习（RL）等一系列后训练技术引入推理能力。这一后训练过程使这些模型具备在推理阶段输出长思维链（或称“思考 token”）的能力，这些思维链能够引导模型得出正确答案。然而，前沿推理模型的完整配方并未公开，这使得构建推理模型的研究变得困难。
 
@@ -62,7 +79,7 @@ OpenThoughts 项目的目标是揭开 SFT 数据构建过程的神秘面纱，�
 4. 从少数（排名前 1 或 2 的）高质量来源中选择问题，相比以多样性为优化目标（即使用排名前 8 或 16 的来源），能带来更好的下游性能。
 5. 按 LLM 标注的难度或 LLM 回答长度来过滤问题，能取得比预训练数据构建中典型的、使用嵌入或 `fastText` 的过滤器更好的结果。
 
-## 2 相关工作
+### 2 相关工作
 
 Gemini (Gemini-Team et al., 2023)、QwQ (Qwen-Team, 2025) 和 DeepSeek-R1 (Guo et al., 2025) 等模型让用户能够看到长推理轨迹，它们的发布开启了通过蒸馏更大模型的推理轨迹来训练小模型的可能性。DeepSeek 在发布 DeepSeek-R1 的同时，还发布了强大的蒸馏模型（例如 DeepSeek-R1-Distill-Qwen-7B），展示了这一策略的巨大潜力。此后，许多开放数据工作尝试复现这些模型，通过从 QwQ-32B (NovaSky-Team, 2025b) 或 DeepSeek-R1 (Bespoke-Labs, 2025) 等教师模型进行蒸馏来构建 SFT 推理数据集。
 
@@ -70,7 +87,7 @@ Gemini (Gemini-Team et al., 2023)、QwQ (Qwen-Team, 2025) 和 DeepSeek-R1 (Guo e
 
 在实践中，许多推理项目（例如 DeepMath-103K (He et al., 2025b)、OpenR1 (Face, 2025) 和 Nvidia Nemotron (Adler et al., 2024)）在数据来源、过滤和扩展等多个阶段引入了创新。在 SFT 之外，AceReason (Chen et al., 2025) 和 Skywork-OR1 (He et al., 2025a) 等工作构建了用于强化学习的推理数据集。
 
-## 3 OpenThoughts 项目
+### 3 OpenThoughts 项目
 
 我们发起 OpenThoughts 项目，旨在通过探索推理 SFT 数据集中丰富的设计空间来创建最先进的开放推理数据集，并特别关注如何找出能够激发推理的最佳问题及其对应答案。从 BespokeStratos-17K (Bespoke-Labs, 2025) 开始，我们已历经四代发布，最终推出了 OpenThoughts3-1.2M 和 OpenThinker3-7B。我们通过 [openthoughts.ai](https://openthoughts.ai) 与社区共享开放成果。
 
@@ -89,7 +106,7 @@ Gemini (Gemini-Team et al., 2023)、QwQ (Qwen-Team, 2025) 和 DeepSeek-R1 (Guo e
 
 **OpenThoughts3-1.2M** 是本文的重点，它是我们从此前各版 OpenThoughts 数据集以及对数据集流水线设计空间的系统性探索（第 4 节）中所获洞见的集大成者。下一节将详细介绍该流水线以及最终数据集的构成。
 
-## 4 OpenThoughts3 数据流水线
+### 4 OpenThoughts3 数据流水线
 
 ![图 2](./img/OpenThoughts-Data-Recipes-for-Reasoning-Models-fig02.png)
 
@@ -126,7 +143,7 @@ Gemini (Gemini-Team et al., 2023)、QwQ (Qwen-Team, 2025) 和 DeepSeek-R1 (Guo e
 
 *表 3：**评估问题来源和生成策略**。我们仅展示每个领域得分前 3 的来源；各来源的说明见第 R.1 节，完整结果见表 32、33 和 34。每一行代表一个不同的问题来源。问题质量对性能影响很大，使最强与最弱的代码数据集之间产生了 17.2 的差距。符号 \* 表示我们采用程序化生成策略创建的新数据集。灰色下标表示标准误，我们将与得分最高的数据策略相差在两个标准误以内的数值加粗。*
 
-### 4.1 问题来源
+#### 4.1 问题来源
 
 我们数据生成流水线的第一步，是为每个数据领域寻找问题。我们可以将问题来源技术大致分为三类：（1）完全合成——由现有 LLM 在很少甚至没有种子材料的情况下生成问题。例子包括 CodeAlpaca (Chaudhary, 2023) 和 CamelChemistry (Li et al., 2023a)。这类方法通常是用模板提示 LLM 生成多个问题。（2）半合成——LLM 以 CommonCrawl 或 FineWeb (Penedo et al., 2024a) 等现有数据源为种子来构造问题。例子包括 TigerLabMath (Yue et al., 2024) 和 AutoMathText (Zhang et al., 2024)。（3）非合成——由人类编写问题。例子包括 StackExchange 和 ShareGPTCode。这些问题通常来自在线论坛、竞赛、聊天机器人交互以及其他来源。
 
@@ -145,7 +162,7 @@ Gemini (Gemini-Team et al., 2023)、QwQ (Qwen-Team, 2025) 和 DeepSeek-R1 (Guo e
 
 实验结果见表 3。在代码方面，来自 StackExchange 的 CodeGolf 问题和来自 OpenCodeReasoning (Ahmad et al., 2025) 的竞赛编程问题表现良好，在代码基准上的平均得分分别为 25.3 和 27.5。在数学方面，openmath-2-math (Toshniwal et al., 2024) 中由 LLM 生成的问题和 NuminaMath (LI et al., 2024) 中由人类编写的问题均得分最高，在各数学基准上的平均得分分别为 58.8 和 58.5。最后，在科学方面，得分最高的问题生成策略是来自 StackExchange 的物理问题和由 LLM 从有机化学教科书中提取的问题，它们在科学基准上的平均得分分别为 43.2 和 45.3。各问题生成策略之间没有呈现出明显的规律——简单的合成方法与更复杂的或人工构建的流水线表现相当，有时甚至更好。这些表现最好的问题来源为流水线的后续阶段奠定了基础。
 
-### 4.2 问题混合
+#### 4.2 问题混合
 
 从各种问题来源中获得高质量问题之后，接下来的挑战是如何有效地组合它们——我们应该依赖单一的表现最佳的策略，还是融合多个表现强劲的策略，以最大化下游性能？这种混合策略是许多生成流水线中的关键设计选择 (Yue et al., 2024; Moshkov et al., 2025; Lambert et al., 2024)。直观上，向混合中加入更多问题来源，会带来纳入较低质量策略的风险，以此换取更高的多样性。我们的实验旨在评估，额外的问题多样性是否值得在问题质量上做出这种权衡。
 
@@ -170,7 +187,7 @@ Gemini (Gemini-Team et al., 2023)、QwQ (Qwen-Team, 2025) 和 DeepSeek-R1 (Guo e
 
 *表 5：**问题过滤为提取高质量问题提供了一种有效工具**。使用基于 LLM 的方法从问题来源中找出最佳问题，效果优于 `fastText` 和基于嵌入的过滤器等经典过滤方法。本表展示了表现最好的策略。包括科学数据集在内的完整结果列于表 38、39 和 40。*
 
-### 4.3 问题过滤
+#### 4.3 问题过滤
 
 由于每个数据源可能包含数百万个潜在问题，为每个可能的问题都生成回答并在其上训练，成本高得不可行。因此，下一步是从每个来源中选出一个高质量的问题子集。在已有文献中，各种各样的过滤策略都一致地提升了数据集的整体质量 (Soldaini et al., 2024; Su et al., 2024; Li et al., 2024; Wettig et al., 2025; Penedo et al., 2024a; Gao et al., 2020; Shum et al., 2025)。我们以第 4.2 节中的最佳问题来源为起点，广泛探索了各种过滤方法来选出更高质量的问题，包括 `fastText` 分类器、难度评分和嵌入距离。这些过滤方法的详细描述见第 R.2 节。这些实验在数学和代码上的结果列于表 5，而科学领域的结果见第 S.3 节（表 40）。
 
@@ -193,7 +210,7 @@ Gemini (Gemini-Team et al., 2023)、QwQ (Qwen-Team, 2025) 和 DeepSeek-R1 (Guo e
 
 *表 6：**去重和对教师模型的重复采样提供了一个扩展规模的维度**。使用较少的问题并进行更多次标注，与对较多问题进行较少次标注相比，表现相近甚至更好。在哪些类型的去重能提升性能方面，似乎并没有明显的趋势。包括数学和代码数据集在内的完整结果见表 41、42 和 43。*
 
-### 4.4 去重与每个问题采样多个答案
+#### 4.4 去重与每个问题采样多个答案
 
 去重是提升数据集质量的一种有力策略 (Li et al., 2024; Lee et al., 2022; Penedo et al., 2024b; Fang et al., 2025; Liu et al., 2024)。我们的消融实验研究了问题去重对下游推理性能的影响。我们探索了三种严格程度的去重：不去重、精确匹配去重，以及使用基于阈值的字符串相似度的模糊去重。更多细节见第 R.3 节。
 
@@ -203,7 +220,7 @@ Gemini (Gemini-Team et al., 2023)、QwQ (Qwen-Team, 2025) 和 DeepSeek-R1 (Guo e
 
 > **要点：** 我们的最终流水线在所有领域中都对每个问题使用 16× 答案。它对数学和科学使用精确去重，对代码则不去重。
 
-### 4.5 答案过滤
+#### 4.5 答案过滤
 
 验证或移除低质量标注是许多推理数据流水线中的常见步骤。直观上，移除可能不正确的数据应当能提升下游性能。我们的实验探索了多种答案过滤技术。为了确保过滤后仍能得到规模为 31,600 的数据集，我们先生成 63,200 个答案，应用每种答案过滤策略，然后从过滤后的数据集中采样 31,600 个问答对。我们的消融实验还包括一个不做过滤的基线；该基线没有控制计算量，因为它包含 63,200 个问题。
 
@@ -223,7 +240,7 @@ Gemini (Gemini-Team et al., 2023)、QwQ (Qwen-Team, 2025) 和 DeepSeek-R1 (Guo e
 
 > **要点：** 我们不进行答案过滤，因为没有任何过滤策略优于使用全部答案的基线。
 
-### 4.6 教师模型
+#### 4.6 教师模型
 
 | SFT 数据集 | | 基准 | | |
 | --- | --- | --- | --- | --- |
@@ -242,7 +259,7 @@ Gemini (Gemini-Team et al., 2023)、QwQ (Qwen-Team, 2025) 和 DeepSeek-R1 (Guo e
 
 > **要点：** 我们使用 QwQ-32B 作为教师模型。
 
-## 5 将我们的流水线扩展至 OpenThoughts3-1.2M
+### 5 将我们的流水线扩展至 OpenThoughts3-1.2M
 
 数据集扩展对于取得强劲性能起着关键作用。我们通过依次确定流水线每一步的最佳策略，并绘制其在 316 到 31.6k 个样本范围内的性能，来考察我们的流水线的扩展效果。图 3 表明，随着我们逐步叠加流水线各阶段的最佳选择，扩展行为随之改善。此外，图 3 还显示出规模与性能之间存在很强的正相关。这表明，进一步扩大数据集规模可能会带来更大的收益。
 
@@ -258,7 +275,7 @@ Gemini (Gemini-Team et al., 2023)、QwQ (Qwen-Team, 2025) 和 DeepSeek-R1 (Guo e
 
 *图 4：**OpenThoughts3-1.2M 完整数据流水线**。我们的完整数据集以从数学、代码和科学领域获取大量问题为起点。下一步是过滤这些问题、对数学和科学问题进行去重、随机采样问题，然后为每个问题生成多个答案。我们的最终数据集包含 1.2M 个数据点。*
 
-## 6 结论
+### 6 结论
 
 通过迭代式的实验，我们的流水线揭示了关于有效构建 SFT 推理数据的若干关键洞见。这些发现共同塑造了我们的最终流水线，使我们得以构建 OpenThoughts3-1.2M——一个由科学、数学和代码数据组成的、最先进的开放数据 SFT 推理数据集。我们在这些数据上训练得到的最终模型 OpenThinker3-7B，是同等模型规模下最先进的（SOTA）开放数据推理模型。
 
@@ -270,7 +287,7 @@ Gemini (Gemini-Team et al., 2023)、QwQ (Qwen-Team, 2025) 和 DeepSeek-R1 (Guo e
 2. 我们发现扩展数据能够提升下游性能。当学生模型的性能逼近教师模型时，这一情况会如何变化？模型最终会进入平台期，还是会超越教师模型、实现弱到强泛化，仍是一个开放问题。
 3. 我们的结果表明，如果答案多样性较高，有限的问题多样性对性能的影响相对较小。一个关键的开放问题是：这种相互作用在不同领域、数据集规模和模型规模下会如何表现。
 
-## 致谢
+### 致谢
 
 我们感谢 Alex Fang、Matthew Wallingford、Jiaqi Zeng、Oleksii Kuchaiev、Asad Aali、Benjamin Burchfiel 和 Russ Tedrake 在项目各个阶段提供的有益讨论与支持。我们还要感谢 Adam R. Klivans、Mike Garrison 和 Satya Kotari 在算力与基础设施方面提供的支持。此外，我们还要感谢各超级计算设施及其团队提供的支持，尤其感谢来自 Juelich Supercomputer Center（JSC，德国）的 Damian Alvarez 和 Mathis Bode，以及来自 CINECA（意大利）的 Laura Morselli。
 
@@ -280,7 +297,7 @@ Gemini (Gemini-Team et al., 2023)、QwQ (Qwen-Team, 2025) 和 DeepSeek-R1 (Guo e
 
 没有 Gauss Centre for Supercomputing e.V. 通过 John von Neumann Institute for Computing（NIC）在 Juelich Supercomputing Centre（JSC）的超级计算机 JUWELS Booster 上提供的支持，这项工作就不可能完成。我们还感谢：EuroHPC Joint Undertaking 通过 EuroHPC Extreme Access 资助项目 EHPC-EXT-2023E02-068 为本项目提供了 EuroHPC 超级计算机 LEONARDO 的访问权限，该超级计算机由 CINECA（意大利）和 LEONARDO 联盟托管；由 JSC 授予并运营、由 Helmholtz Data Federation（HDF）支持的 JUST 存储资源；通过 WestAI 计算资助项目“Measuring and enhancing advanced reasoning capabilities of foundation models via local model deployment”（westai0007）在 JSC 提供的计算资源；以及通过 JSC 在 JURECA 上提供的计算资源。
 
-## 参考文献
+### 参考文献
 
 - Marah Abdin, Jyoti Aneja, Hany Awadalla, Ahmed Awadallah, Ammar Ahmad Awan, Nguyen Bach, Amit Bahree, Arash Bakhtiari, Jianmin Bao, Harkirat Behl, et al. Phi-3 technical report: A highly capable language model locally on your phone. *arXiv preprint arXiv:2404.14219*, 2024.
 - Marah Abdin, Sahaj Agarwal, Ahmed Awadallah, Vidhisha Balachandran, Harkirat Behl, Lingjiao Chen, Gustavo de Rosa, Suriya Gunasekar, Mojan Javaheripi, Neel Joshi, et al. Phi-4-reasoning technical report. *arXiv preprint arXiv:2504.21318*, 2025.
@@ -349,15 +366,15 @@ Gemini (Gemini-Team et al., 2023)、QwQ (Qwen-Team, 2025) 和 DeepSeek-R1 (Guo e
 - Xiang Yue, Tuney Zheng, Ge Zhang, and Wenhu Chen. Mammoth2: Scaling instructions from the web. *Advances in Neural Information Processing Systems*, 2024.
 - Yifan Zhang, Yifan Luo, Yang Yuan, and Andrew Chi-Chih Yao. Autonomous data selection with language models for mathematical texts. *arXiv preprint arXiv:2402.07625*, 2024.
 
-## 附录 A 资源链接
+### 附录 A 资源链接
 
 我们将模型和数据集作为 Hugging Face 上一个合集的一部分发布。我们的 OpenThinker3-7B 模型见 <https://huggingface.co/open-thoughts/OpenThinker3-7B>，数据集见 <https://huggingface.co/datasets/open-thoughts/OpenThoughts3-1.2M>。我们的代码库将发布于 <https://github.com/open-thoughts/open-thoughts>。我们还发布了一篇与本工作配套的博客文章，地址为 <https://www.open-thoughts.ai/blog/ot3>。
 
-## 附录 B 贡献
+### 附录 B 贡献
 
 所有作者均按姓氏字母顺序排列。
 
-### 基础设施
+#### 基础设施
 
 **数据生成框架**：Etash Guha, Sedrick Keh, Ryan Marten, Mike A. Merrill, Negin Raoof, Georgios Smyrnis, Zayne Sprague, Trung Vu
 
@@ -369,7 +386,7 @@ Gemini (Gemini-Team et al., 2023)、QwQ (Qwen-Team, 2025) 和 DeepSeek-R1 (Guo e
 
 **日志与数据库**：Etash Guha, Sedrick Keh, Ryan Marten, Negin Raoof
 
-### 实验
+#### 实验
 
 **数据生成**：Etash Guha, Sedrick Keh, Ryan Marten, Negin Raoof, Georgios Smyrnis
 
@@ -379,17 +396,17 @@ Gemini (Gemini-Team et al., 2023)、QwQ (Qwen-Team, 2025) 和 DeepSeek-R1 (Guo e
 
 **延伸分析与消融实验**：Hritik Bansal, Liangyu Chen, Caroline Choi, Yichuan Deng, Benjamin Feuer, Eric Frankel, Sachin Grover, Etash Guha, Reinhard Heckel, Zaid Khan, Ryan Marten, Jean Mercat, Mike A. Merrill, Niklas Muennighoff, Vivek Ramanujan, Zayne Sprague, Ashima Suvarna, Wanjia Zhao
 
-### 写作
+#### 写作
 
 Hritik Bansal, Liangyu Chen, Alexandros G. Dimakis, Benjamin Feuer, Etash Guha, Reinhard Heckel, Jenia Jitsev, Sedrick Keh, Zaid Khan, Ryan Marten, Jean Mercat, Mike A. Merrill, Niklas Muennighoff, Marianna Nezhurina, Sarah Pratt, Negin Raoof, Ludwig Schmidt, Georgios Smyrnis, Ashima Suvarna, Wanjia Zhao
 
-### 领导与指导
+#### 领导与指导
 
 **指导**：Alon Albalak, Kushal Arora, Mohit Bansal, Kai-Wei Chang, Yejin Choi, Achal Dave, Alexandros G. Dimakis, Greg Durrett, Saadia Gabriel, Aaron Gokaslan, Aditya Grover, Tatsunori Hashimoto, Reinhard Heckel, Chinmay Hegde, Jenia Jitsev, Jeffrey Li, Mike A. Merrill, Sewoong Oh, Maheswaran Sathiamoorthy, Ludwig Schmidt, Vaishaal Shankar, Blake Wulfe
 
 **项目协调**：Alexandros G. Dimakis, Etash Guha, Ryan Marten, Ludwig Schmidt
 
-## 附录 C Bespoke-Stratos 与 OpenThoughts 1 & 2
+### 附录 C Bespoke-Stratos 与 OpenThoughts 1 & 2
 
 如第 3 节所述，OpenThoughts 项目由一系列连续发布的版本组成，始于 BespokeStratos-17K (Bespoke-Labs, 2025)，此后历经四代模型和数据集。
 
@@ -407,13 +424,13 @@ BespokeStratos-17K 沿用了与 SkyT1 (NovaSky-Team, 2025b) 相同的数据来�
 
 OpenThoughts-114K [^2] 在 Sky-T1 流水线的基础上扩大了规模，并做了一些小的调整，例如使用 DeepSeek-R1 作为标注模型，以及使用 LLM 评判进行验证。OpenThoughts-114K 的完整流水线如图 5 所示，具体细节在博客文章中有所概述。鉴于 OpenThoughts-114K 的成功，扩大数据集规模是顺理成章的下一步。OpenThoughts2-1M [^3] 扩大数据规模的主要手段，是在数学和代码领域引入更多的问题生成策略。这些问题生成策略既包括 Glaive、ShareGPTCode 和 OpenR1-Math 等已有数据集，也包括我们自己生成的数据集，例如 AutoMathText。完整的流水线如图 6 所示。同样，更具体的细节可参见博客文章。
 
-## 附录 D 训练细节
+### 附录 D 训练细节
 
-### D.1 训练框架
+#### D.1 训练框架
 
 我们使用 LlamaFactory 进行训练。该仓库已公开，地址为 <https://github.com/hiyouga/LLaMA-Factory>。
 
-### D.2 超参数
+#### D.2 超参数
 
 对于图 1 中的不同规模，我们为每个规模使用不同的超参数。一般而言，我们希望使用更大的 batch size 和更大的学习率，但在较小的数据集上这样做会导致训练步数过少。我们进行了超参数扫描，以便在每个模型规模下找到一组合适的超参数。最终我们得到了 4 组超参数——微型（用于 0.3K 规模）、小型（用于 1K、3K 规模）、中型（用于 10K、30K 规模）和大型（用于 100K 及以上规模）。除 epoch 数、batch size、学习率和序列打包（packing）外，这些超参数组完全相同。
 
@@ -432,7 +449,7 @@ OpenThoughts-114K [^2] 在 Sky-T1 流水线的基础上扩大了规模，并做�
 
 除打包外，我们还调整了部分超参数以优化训练速度。我们使用不带内存卸载的 DeepSpeed v3。此外，我们使用持久化的 dataloader worker，并设置 num\_workers=4。我们用这些设置进行了小规模测试，以确保它们不会对性能产生负面影响。
 
-### D.3 序列打包
+#### D.3 序列打包
 
 我们研究了序列打包在多种推理和编程基准上对模型性能的影响。序列打包将多个训练样本拼接成单个序列，以提高计算效率，但可能会影响学习动态。表 10 比较了在一个序列较短的数据集上使用与不使用打包训练的模型。总体而言，我们看到加入打包并不会对性能产生负面影响。这一观察与 Face (2025) 报告的部分发现相反，他们发现在其实验设置下打包会对性能产生负面影响。我们认为，这种性能下降很可能归因于将长序列截断成多个部分；而在 Llama Factory 的打包实现中，打包以贪心方式实现，并且只有较短的序列才会被打包在一起。
 
@@ -443,7 +460,7 @@ OpenThoughts-114K [^2] 在 Sky-T1 流水线的基础上扩大了规模，并做�
 
 *表 10：**使用与不使用序列打包训练的模型的性能比较**。打包表现出好坏参半的效果。*
 
-### D.4 对话模板
+#### D.4 对话模板
 
 我们探索的另一个维度是对话模板。更具体地说，它指的是如何通过提示让推理模型生成思考 token。这通常以专门模板的形式出现。例如，R1 模板用 `<think>` 和 `</think>` 包裹思考 token。在表 11 中，我们将这一 R1 模板与 SkyT1 模板进行了比较，后者使用 `<|begin_of_thought|>` 和 `<|end_of_thought|>`，并且最初被用于在 OpenThoughts-114k 上训练初版 OpenThinker-7B。从表 11 可以看出，两种不同对话模板的结果大致相当，这表明只要存在对话模板，模板本身可能并没有那么重要（完全移除对话模板的消融实验见下文第 D.5 节）。为简单起见，我们在所有流水线实验中都沿用由 `<think>` 和 `</think>` 构成的 R1 对话模板。
 
@@ -454,7 +471,7 @@ OpenThoughts-114K [^2] 在 Sky-T1 流水线的基础上扩大了规模，并做�
 
 *表 11：**使用与不使用 R1 模板的 OpenThinker-7B 模型在不同基准上的性能比较**。该表显示，使用更简单的 `<think>` 和 `</think>` token 来代替更复杂的 SkyT1 token（`<|begin_of_thought|>` 和 `<|end_of_thought|>`），在大多数基准上能取得相当或略有提升的性能。*
 
-### D.5 系统提示词
+#### D.5 系统提示词
 
 在本小节中，我们研究完全去除对话模板、仅直接对模型进行提示的效果。我们在表 12 中报告了结果。我们的评估揭示了几项关键发现。第一，显式开启推理能在数学和科学推理任务上稳定地提升性能，在 AIME 基准上的提升尤为显著（在 AIME25 上为 45.3% vs. 2.0%）。第二，即使显式关闭推理，仍有许多回答以 `<think>` token 开头（1681/3127），这表明模型已经学会默认启用推理机制。第三，不同系统提示词的选择会产生因任务而异的影响：虽然“开启推理”有助于数学任务，但完全去除系统提示词有时能取得更好的结果（在 AIME24 上为 70.0% vs. 61.3%），这表明显式指令偶尔可能会限制模型自然的推理模式。
 
@@ -470,7 +487,7 @@ OpenThoughts-114K [^2] 在 Sky-T1 流水线的基础上扩大了规模，并做�
 
 *表 12：**开启推理与不开启推理时在各推理基准上的性能比较**。对现有模型开启推理能大幅提升性能。然而，完全不使用系统提示词也能取得与“开启推理”相近的良好表现。*
 
-## 附录 E 评估细节
+### 附录 E 评估细节
 
 所有基准上的模型评估均使用我们统一的多 GPU 评估框架 **Evalchemy** (Raoof et al., 2025) 完成。Evalchemy 将每个任务划分为相互独立的分片，并行运行这些分片（通过数据并行分片），并将每个分片的指标以流式方式传回中央协调器进行实时汇总。这一架构确保了一致的生成设置以及对模型检查点和采样参数的可复现记录，并使我们能够计算多次重复运行下的平均模型准确率和标准误。我们使用 Evalchemy 缓存长思维链任务（例如 AIME、LiveCodeBench、GPQA Diamond）的完整模型生成结果，从而减少了冗余的推理开销，并便于分析失败案例。
 
@@ -520,7 +537,7 @@ OpenThoughts-114K [^2] 在 Sky-T1 流水线的基础上扩大了规模，并做�
 
 *表 13：**我们在跨越多个数据领域的 12 个任务上进行评估**。我们在其中 8 个任务上验证实验，并将其余 4 个任务（AIME 2025、LiveCodeBench 06/24-01/25、HMMT、HLE）保留为留出集。*
 
-## 附录 F 去污染
+### 附录 F 去污染
 
 来自评估数据集的污染是一个重要问题，因为它有可能导致关于训练集实际效用的误导性结果。可以预期，以某种形式包含评估题目的训练数据会提升在这些相同题目上的性能。这种效应可能会影响我们实验的结论。为避免这一问题，我们依据两种不同的标准，针对我们的评估集进行去污染。
 
@@ -550,7 +567,7 @@ OpenThoughts-114K [^2] 在 Sky-T1 流水线的基础上扩大了规模，并做�
 
 *图 7：**我们的去污染算法能够准确识别被污染的样本**。我们的去污染算法的真阴性准确率为 99.6%。该算法丢弃的未被污染样本也极少。*
 
-## 附录 G 补充扩展实验
+### 附录 G 补充扩展实验
 
 ![图 8](./img/OpenThoughts-Data-Recipes-for-Reasoning-Models-fig08.png)
 
@@ -572,7 +589,7 @@ OpenThoughts-114K [^2] 在 Sky-T1 流水线的基础上扩大了规模，并做�
 
 *图 9：**在每个领域内，OpenThoughts3 数据配方相对于基线都表现出强劲的扩展性**。数学性能为 AIME24、AMC32 和 MATH500 上的平均值。代码性能为 LCB 05/23-05/24、CodeElo 和 CodeForces 上的平均值。科学性能为 GPQA Diamond 和 JEEBench 上的平均值。OpenThoughts3 数学子集和科学子集的最大规模分别为 250K 和 100K。*
 
-### G.1 基座模型
+#### G.1 基座模型
 
 | 基座模型 | AIME24 | AIME25 | AMC23 | MATH500 | GPQA-D | LCB 05/23-05/24 |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -585,19 +602,19 @@ OpenThoughts-114K [^2] 在 Sky-T1 流水线的基础上扩大了规模，并做�
 
 我们使用 Llama-3.1-8B-Instruct 模型在 OpenThoughts3 上进行训练。该实验表明，我们观察到的扩展收益并不仅限于 Qwen 模型，而且我们的数据集确实具有可扩展性和泛化性。该实验的结果见表 14。总体而言，我们发现在某些数据集上，Llama 模型相比 Qwen 模型获得了更显著的性能提升。这在部分数学数据集上最为突出，例如 AMC23（从 15.8 提升至 75.2）和 MATH500（从 43.2 提升至 83.8），不过起点更强的 Qwen 模型整体表现仍然更好。未来，我们希望将这项研究进一步扩展到更强的模型，例如近期的 Qwen 3 系列模型。
 
-## 附录 H 补充数据配方实验
+### 附录 H 补充数据配方实验
 
 由于篇幅所限，我们无法在正文中展示全部数据构建消融实验。本节讨论几个有趣的实验，它们让我们对改进推理模型的工具有了更深入的认识。
 
-### H.1 验证
+#### H.1 验证
 
 验证在 OpenThoughts-114K 中发挥了很大作用。我们将在以下各节中考察验证对 OpenThoughts-114K 产生了怎样的影响。
 
-#### H.1.1 验证对原始 OpenThoughts 的影响
+##### H.1.1 验证对原始 OpenThoughts 的影响
 
 验证在 OpenThoughts-114K 和 OpenThoughts2 中扮演了重要角色。然而，OpenThoughts3 并不依赖任何形式的验证。一个自然的问题是：从实证上看，验证对最初的 OpenThoughts 实验究竟有多重要。表 15 展示了这项研究的结果。我们在 OpenThoughts-114K 的未验证版本上分别训练了一个 7B 模型和一个 32B 模型，并评估了未验证模型与原始模型之间的差异。我们的结果表明，验证在 7B 规模上可能损害性能，但在 32B 规模上则有所帮助。
 
-#### H.1.2 移除证明类问题
+##### H.1.2 移除证明类问题
 
 | 模型 | 平均 | 代码平均 | 数学平均 | 科学平均 |
 | --- | --- | --- | --- | --- |
@@ -618,7 +635,7 @@ OpenThoughts-114K [^2] 在 Sky-T1 流水线的基础上扩大了规模，并做�
 
 *表 16：**包含与不包含证明类问题的 OpenThoughts 对比**。剔除证明类问题会使整体性能平均下降 5.6 个百分点。*
 
-#### H.1.3 基于提取的数学验证
+##### H.1.3 基于提取的数学验证
 
 我们探索的另一种验证策略是根据答案的正确性来过滤问答对。对于具有已知标准答案的数学样本，我们将模型生成的答案与参考答案进行比较，并丢弃回答错误的样本。然而，模型的最终答案往往嵌在复杂的数学表达式中，提取并评估这一答案并非易事。
 
@@ -635,7 +652,7 @@ OpenThoughts-114K [^2] 在 Sky-T1 流水线的基础上扩大了规模，并做�
 
 *表 17：**数学答案验证策略的比较**。我们分别依据基于 LLM 或基于 Math-Verify 的答案正确性来过滤 OpenThoughts-114K 数据集。所得模型同时使用 Hendrycks 和 Math-Verify 两种答案提取工具进行评估。*
 
-#### H.1.4 基于 LLM 生成单元测试的验证
+##### H.1.4 基于 LLM 生成单元测试的验证
 
 我们研究了利用 LLM 生成的单元测试来过滤代码样本的效果。在由 45,000 个问答对构成的初始数据池中，我们使用 GPT4o-mini 来（1）检测哪些答案包含 Python 代码，以及（2）为每个 Python 样本生成一个独立、可执行的单元测试。随后，我们仅对这些 Python 样本应用“验证”过滤器，非 Python 样本则保持不变。接着，我们在两个各含 16,000 个样本的独立子集上微调 Qwen2.5-7B-Instruct：一个子集经过过滤，只包含生成的测试能够通过的样本；另一个子集则不经过滤、随机抽取。表 18 所示的结果表明，基于 LLM 生成单元测试的验证并不能提高下游代码生成的准确率。
 
@@ -647,7 +664,7 @@ OpenThoughts-114K [^2] 在 Sky-T1 流水线的基础上扩大了规模，并做�
 
 *表 18：**使用 LLM 生成的单元测试进行代码数据验证的效果**。在 16,000 个代码样本上训练的模型的下游性能：一组经过过滤，只包含通过 LLM 生成单元测试验证的样本；另一组未经过滤。未观察到基于验证的过滤带来任何提升。*
 
-### H.2 教师模型
+#### H.2 教师模型
 
 在本节中，我们研究将 Claude 3.7（启用思考模式）用作标注模型。首先，我们表明 Claude 的思考轨迹有助于在代码、数学和通用问答上取得更好的性能。在全部三类基准上，更长的思考轨迹都带来了更好的结果。随后我们展示，使用 Claude 3.7 重新标注 S1K Muennighoff et al. (2025) 数据集（数学）以及我们的科学或代码数据，实际上会导致比使用 R1 更差的性能。
 
@@ -695,7 +712,7 @@ OpenThoughts-114K [^2] 在 Sky-T1 流水线的基础上扩大了规模，并做�
 
 *表 21：**将标注模型从 Gemini 切换为 R1 或 Claude 后的得分**。*
 
-### H.3 压缩推理轨迹
+#### H.3 压缩推理轨迹
 
 | 设置 | 平均长度 | AIME24 | MATH500 | GPQA | LCB 05/23-05/24 | 平均 |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -713,7 +730,7 @@ OpenThoughts-114K [^2] 在 Sky-T1 流水线的基础上扩大了规模，并做�
 
 我们缩减推理轨迹的第二种方法是过滤掉长度超过给定阈值（例如 2048、4096 或 8192 个 token）的样本。该方法既缩短了推理轨迹的长度，也缩小了数据集的整体规模，同时保留了留存轨迹中的自我反思能力。我们在表 22 中给出了结果。我们观察到，与默认数据集相比，在过滤后数据集上训练的模型的下游性能显著下降。具体而言，filtered-2048 设置使下游基准上的相对性能下降了 33.3%。此外，更高的过滤阈值带来了更好的模型性能。这表明数据集中存在长推理结构是有益的，而仅靠自我反思不足以实现强大的推理性能。尽管如此，事后减少过度思考的能力仍是一个活跃且高度相关的研究领域 (Sui et al., 2025)。
 
-### H.4 由弱问题导致表现不佳的 SFT 数据集
+#### H.4 由弱问题导致表现不佳的 SFT 数据集
 
 在对现有 SFT 推理数据集进行基准评测时，我们在来自多个可用来源的完整样本集上微调模型。在我们固定的基准套件上评估下游性能后，我们观察到各数据集的质量差异很大。
 
@@ -736,7 +753,7 @@ OpenThoughts-114K [^2] 在 Sky-T1 流水线的基础上扩大了规模，并做�
 
 为进一步探究，我们在从每个原始数据集中随机采样的 31,600 个问答对构成的小子集上进行微调，并使用 DeepSeek-R1 重新标注这些问题，所用流程与我们流水线问题来源阶段（第 4.1 节）中所述的流程相同。我们再次观察到下游性能存在显著差异，这似乎主要源于各问题来源在质量和性质上的差异。
 
-### H.5 叠加域外迁移带来的增益
+#### H.5 叠加域外迁移带来的增益
 
 在第 4 节针对数据集流水线开展实验的过程中，我们清楚地看到推理能力能够跨域迁移。例如，当模型仅在数学推理数据上微调时，其科学评估得分也会提高。我们经常在候选流水线选项之间观察到如此显著的域外性能增益，以至于域内平均性能最高的模型与总体平均性能最高的模型并不是同一个。
 
@@ -754,9 +771,9 @@ OpenThoughts-114K [^2] 在 Sky-T1 流水线的基础上扩大了规模，并做�
 
 *表 24：**域外（代码到科学的迁移）增益在与域内（科学）数据集混合后不再保持**。单独的数据集（中线以上）只包含来自该领域的 31K 个样本，混合数据集（中线以下）则包含代码和科学两类共 62K 个样本。将在科学评估上表现强的代码数据集与强科学数据集组合时，下游模型的 GPQA-D 得分与混入在科学评估上表现弱的代码数据集时相比没有差异。*
 
-## 附录 I 模型推理性能分析
+### 附录 I 模型推理性能分析
 
-### I.1 不同数学难度下的性能
+#### I.1 不同数学难度下的性能
 
 在开发 OpenThoughts 的过程中，我们探索了使用语言模型按难度过滤数学数据中的问题。我们以 GPT-4o-mini 作为标注模型，将 Sky-T1 NovaSky-Team (2025b) 中的难度标注提示词应用于 Bespoke-Stratos 中的数学问题。该提示词借助示例题目，按 1-10 的等级对问题进行评判，其中一级对应初学者级别的问题，十级对应最难的 IMO 题目。
 
@@ -766,7 +783,7 @@ OpenThoughts-114K [^2] 在 Sky-T1 流水线的基础上扩大了规模，并做�
 
 *图 11：GPT-4o-mini 能够可靠地判断问题的相对难度。DeepSeek R1 在最难的问题（难度十级）上的表现明显更差。*
 
-### I.2 按代码难度划分的性能扩展
+#### I.2 按代码难度划分的性能扩展
 
 在测试 OpenThoughts3 的扩展情况时（见正文图 1），我们注意到在 100K 规模下，所有代码基准上的性能都略有下降。为了更细致地研究这一现象，我们考察了 LiveCodeBench 05/23-05/24，并展示了各难度级别对平均准确率的贡献。我们原本预期会看到简单类别趋于饱和，而困难类别的性能处于很低的水平。出人意料的是，在图 12 中，我们观察到模型在中等和困难任务上的准确率实际上都随规模扩大呈现出良好的上升趋势，而上述轻微下降完全出现在简单类别中。
 
@@ -774,7 +791,7 @@ OpenThoughts-114K [^2] 在 Sky-T1 流水线的基础上扩大了规模，并做�
 
 *图 12：随着数据集规模增大，OpenThoughts3 在 LiveCodeBench 05/23-05/24 上的性能扩展情况。图中展示了每一类问题上的性能贡献。*
 
-### I.3 按最长、最短、多数进行采样
+#### I.3 按最长、最短、多数进行采样
 
 在采样多个回答时，我们有多种聚合策略来预测最终答案（数值或选择题选项）：（1）“最短”：将最短回答中的答案作为最终答案；（2）“最长”：将最长回答中的答案作为最终答案；（3）“多数”：将多数预测作为最终答案。
 
@@ -821,7 +838,7 @@ OpenThoughts-114K [^2] 在 Sky-T1 流水线的基础上扩大了规模，并做�
 
 不过需要指出的是，最短策略并非普遍最优。对于一些模型，例如在某些数据集上的 NovaSky-Sky-T1-32B，其他策略的表现可能更好，这表明最优采样策略可能因模型而异。此外，当计算资源允许生成并聚合多个回答时，多数投票有时能取得最高性能。
 
-## 附录 J 在法律推理中通过蒸馏超越教师模型
+### 附录 J 在法律推理中通过蒸馏超越教师模型
 
 在本工作中，我们主要关注数学、科学和编程方面的推理。然而，推理同样可以使其他领域受益，例如法律推理。对于这类领域，开箱即用的推理模型可以通过微调得到显著提升。
 
@@ -843,7 +860,7 @@ OpenThoughts-114K [^2] 在 Sky-T1 流水线的基础上扩大了规模，并做�
 
 *表 28：**不同微调设置下的模型性能比较**。*
 
-## 附录 K 所有教师模型的消融实验
+### 附录 K 所有教师模型的消融实验
 
 我们在表 29 中报告了所有教师模型的基准结果。我们的结果表明，尽管 QwQ-32B 是更强的教师模型，DeepSeek-R1 却是性能最好的模型。Phi-4-Reasoning-Plus 在某些基准上表现也很强，但在代码上表现不佳。这是因为它经常无法输出 Evalchemy 用于提取代码的代码标签，例如 "“‘python"。一个值得注意的数字是，OpenThinker3-7B 在 JEEBench 上超过了 QwQ-32B，这展示了弱到强泛化的一个孤例。
 
@@ -865,7 +882,7 @@ OpenThoughts-114K [^2] 在 Sky-T1 流水线的基础上扩大了规模，并做�
 
 *表 29：**OpenThinker3-7B 与各教师模型的比较**。我们看到，从实证结果来看，DeepSeek-R1 总体上是最好的模型，而我们实际使用的教师模型 QwQ-32B 的实证表现则更差。Phi-4-Reasoning-Plus 在代码评测上的实证表现较差，因为它输出代码时不带代码标签，Evalchemy 会将这种输出判为错误。*
 
-## 附录 L OpenThinker 模型的安全性分析
+### 附录 L OpenThinker 模型的安全性分析
 
 | **模型** | **Harmbench (↓)** | **XSTEST (↓)** |
 | --- | --- | --- |
@@ -886,7 +903,7 @@ OpenThoughts-114K [^2] 在 Sky-T1 流水线的基础上扩大了规模，并做�
 
 有趣的是，对比表 30 和 1，我们发现推理能力与安全性之间存在明显的权衡。这些发现凸显了在推理模型中平衡安全性与实用性的挑战 Wang et al. (2025); Bercovich et al. (2025)。OpenThoughts 的后续工作若能引入专门针对安全性的数据集，将有助于在保持其强大推理能力的同时缓解这些风险。
 
-## 附录 M 现有前沿模型的评测
+### 附录 M 现有前沿模型的评测
 
 表 31 展示了可通过 API 访问的模型的基准结果。Gemini-2.5-pro 表现最强，尽管它的部分答案为空（因而是错误的），原因是其思考过程过长时会耗尽 token 预算（这在 JEEBench 上尤为明显）。Claude 3.7 的 token 预算设为 32K。o3 使用其默认的中等推理强度。我们的 OpenThinker3-7B 模型平均而言优于分隔线右侧的模型。
 
@@ -909,7 +926,7 @@ OpenThoughts-114K [^2] 在 Sky-T1 流水线的基础上扩大了规模，并做�
 
 *表 31：**当前基于 API 的前沿模型的性能**。当前的开源推理模型与前沿推理模型之间仍存在显著差距。竖线表示按平均基准性能划分的界线，用以区分表现不及和表现优于 OpenThinker3-7B 的模型。差距最大的是 CodeElo、CodeForces 和 GPQA Diamond 等基准。Gemini-2.5-pro 是性能最强的模型。*
 
-## 附录 N 推理鲁棒性测试：Alice in Wonderland 评测
+### 附录 N 推理鲁棒性测试：Alice in Wonderland 评测
 
 在此，我们以关于 Alice in Wonderland 问题的工作 (Nezhurina et al., 2024) 为基础，这类问题采用简单问题模板的各种变体，这些变体既不改变问题结构，也不改变解答结构。给定一个问题实例 $`P`$ 及其对应的解答 $`S`$、推理（即抽象解答）$`R`$ 和最终答案 $`A`$，对问题陈述施加的推理不变扰动 $`P^{*}_{i}`$ 将具有解答 $`S^{*}_{i}`$ 和答案 $`A^{*}_{i}`$。$`i`$ 表示扰动的任意编号；视问题模板而定，一个问题可以有无穷多个扰动，例如当所变化的变量可取任意自然数时。重要的是，$`P^{*}_{i}`$ 将与原始模板 $`P`$ 具有相同的抽象解答（或推理）$`R`$。具备强泛化能力的模型在求解该问题的所有保持结构的变体时，应表现出相近的性能。
 
@@ -927,11 +944,11 @@ OpenThoughts-114K [^2] 在 Sky-T1 流水线的基础上扩大了规模，并做�
 
 *图 14：**推理模型优于常规 LLM**。尽管存在剧烈波动，较大规模的蒸馏推理模型仍与作为其蒸馏来源的常规语言模型明显拉开了差距。图中所示为在 AIW Friends、AIW Plus 和 AIW Circles Colleagues 问题 Nezhurina et al. (2024) 的所有变体上取平均的正确回答率。32B 规模的较大推理模型集中分布在正确回答率较高的区间（唯一的例外是 R1-Qwen-32B）。常规 LLM，包括规模最大的 Llama 3.1 405B 和 DeepSeek v3 671B，都局限在正确回答率低于 0.2 的低区间内。作为参照，我们展示了闭源推理模型 o3-mini 和 o1-preview，它们仅有轻微波动，并稳定处于 0.7% 以上的高性能区间。*
 
-## 附录 O 计算资源需求
+### 附录 O 计算资源需求
 
 这项工作的计算需求主要来自三个方面：标注、训练和评估。使用 QwQ-32B 标注 OpenThoughts3-1.2M 需要在 16 个 1xNvidia GH200 节点上耗费 22,000 H100 GPU 小时。训练 OpenThinker3-7B 的单次运行需要在 128 个节点上耗费 25,000 A100 GPU 小时，每个节点配备 4x Nvidia A100 GPU（共 512 块 GPU）。对 OpenThinker3-7B 进行一次评估运行需要在 16 个 1xNvidia GH200 节点上耗费 32 GPU 小时。在整个流水线实验过程中，通过 DeepSeek API 标注每个规模为 31,600 的数据集，API 费用约为 \$300。
 
-## 附录 P 从网络获取推理轨迹
+### 附录 P 从网络获取推理轨迹
 
 在本工作中，我们使用标注模型生成推理轨迹。作为一种替代方案，我们还尝试了先从网络上寻找推理轨迹，再用语言模型对其进行处理，使其转换为适合 SFT 的形式。这一做法参照了 Yue et al. (2024)，该工作正是以这种方式生成指令微调数据的。
 
@@ -965,7 +982,7 @@ Update this answer! Update this answer
 
 *图 15：**在 DCLM-Baseline 中找到的推理轨迹示例**。这是在 DCLM-Baseline 中找到的一个推理轨迹示例。这段文本与现代推理模型产生的推理轨迹并不相似。*
 
-## 附录 Q 现有资产的许可证
+### 附录 Q 现有资产的许可证
 
 - **Qwen-2.5-7B-Instruct** 模型采用 Apache 2.0 许可证分发，如 [Qwen-2.5-7B-Instruct](https://huggingface.co/Qwen/Qwen2.5-7B-Instruct) 所示。
 - **Open2Math** 数据集采用 Creative Commons Attribution 4.0 许可证分发，如 [openmath-2-math](https://huggingface.co/datasets/ai2-adapt-dev/openmath-2-math) 所示。
@@ -997,15 +1014,15 @@ Update this answer! Update this answer
 - **Advanced Organic Synthesis**（Richard Monson 著）保留所有权利。
 - **Chemistry**（Rice University 著）受 Creative Commons Attribution 4.0 International License 约束。
 
-## 附录 R 流水线细节
+### 附录 R 流水线细节
 
 在本节中，我们将更详细地介绍我们流水线的各个步骤，这些步骤已在第 4 节中简要描述过。
 
-### R.1 问题生成策略
+#### R.1 问题生成策略
 
 下面逐一介绍我们生成问题的不同方式。
 
-#### R.1.1 代码问题生成策略
+##### R.1.1 代码问题生成策略
 
 首先，我们详细介绍所有的代码问题生成策略：
 
@@ -1038,25 +1055,29 @@ Update this answer! Update this answer
 - **bugdaryan/sql-create-context-instruction**（问题数量：78.6K）：来自 WikiSQL 和 Spider 论坛的 SQL 编程问题。
 
 ```text
-Error Type: {{original_status}}
-Code: {{original_src}}
+请根据下面的错误与代码对，为语言模型生成一个问题或任务。
 
-Include only the new question and task. Do not include anything like "Here is the instruction". Include the code in your question and make the task sound like what a human would ask a language model.
+错误类型：{{original_status}}
+代码：{{original_src}}
+
+只写出新的问题和任务，不要包含“下面是指令”之类的话。在问题中附上代码，并让任务听起来像是人类会向语言模型提出的请求。
 ```
 
 *图 16：**Coder Stat 提示词**。*
 
 ```text
-Instruction: {{message}}
-Code: {{old_contents}}
+请根据下面的指令与代码对，为语言模型生成一个问题或任务。
 
-Include only the new question and task. Do not include anything like "Here is the instruction". Include
-the code in your question and make the task sound like what a human would ask a language model.
+指令：{{message}}
+代码：{{old_contents}}
+
+只写出新的问题和任务，不要包含“下面是指令”之类的话。在问题中
+附上代码，并让任务听起来像是人类会向语言模型提出的请求。
 ```
 
 *图 17：**CommitPack 提示词**。*
 
-#### R.1.2 数学问题生成策略
+##### R.1.2 数学问题生成策略
 
 我们还详细介绍所有的数学问题生成策略：
 
@@ -1083,28 +1104,30 @@ the code in your question and make the task sound like what a human would ask a 
 - **Lap1official/Math**（问题数量：>1M）：未提供相关信息。
 
 ```text
-included in the USAMO or the Putnam Exam.
+请把下面这段数学文本改写成一道答案可量化或可验证的题目，例如可以
+出现在 USAMO 或 Putnam 竞赛中的题目。
 
-Text: {{text}}
+文本：{{text}}
 
-Include only the new question or task. Do not include anything like "Here is the instruction". You can either extract a
-question from the text or form a new one based on the text. Make the question sound like what a human would ask a language model.
+只写出新的问题或任务，不要包含“下面是指令”之类的话。你可以从文本中
+提取一道题，也可以根据文本另拟一道新题。让题目听起来像是人类会向语言模型提出的问题。
 ```
 
 *图 18：**AutoMathText 提示词**。*
 
 ```text
-included in the USAMO or the Putnam Exam.
+请把下面这段数学文本改写成一道答案可量化或可验证的题目，例如可以
+出现在 USAMO 或 Putnam 竞赛中的题目。
 
-Text: {{formula}
+文本：{{formula}
 
-Include only the new question or task. Do not include anything like "Here is the instruction". You can either extract a
-question from the text or form a new one based on the text. Make the question sound like what a human would ask a language model.
+只写出新的问题或任务，不要包含“下面是指令”之类的话。你可以从文本中
+提取一道题，也可以根据文本另拟一道新题。让题目听起来像是人类会向语言模型提出的问题。
 ```
 
 *图 19：**公式**。*
 
-#### R.1.3 科学问题生成策略
+##### R.1.3 科学问题生成策略
 
 我们还详细介绍所有的科学问题生成策略：
 
@@ -1121,37 +1144,40 @@ question from the text or form a new one based on the text. Make the question so
 - **AdapterOcean/biology\_dataset\_standardized\_unified**：（问题数量：22K）未提供相关信息。
 
 ```text
-Question:
+请回答是或否：这道题是有机化学题吗？
+问题：
 {{problem}}
 ```
 
 *图 20：**有机化学过滤**。*
 
 ```text
-Provide your reasoning.
-Question:
+请回答是或否：这道题是可以作答的高难度科学、数学或编程题吗？如果题目引用了你看不到的内容（图、公式、附加文本），那它就无法作答。
+请给出你的理由。
+问题：
 {{improved_question_solution}}
 ```
 
 *图 21：**代码、数学和科学问题过滤提示词**。*
 
 ```text
-I will provide you with a given question and the text from which it was extracted from.
-You will ensure that the question is answerable, meaning that there is enough context to answer the question.
-To do this, you will look at the extracted text and ensure that nothing is missing from the current questions instantiation. If there is, you will provide the new extra text before restating the question but be sure you always add the question itself at the end.
-Because you are an instructor creating exam questions, you will never include the solution in the extra text or question.
+你是一位正在出考题的老师。
+我会给你一道题，以及这道题提取自的原文。
+你要确保这道题可以作答，也就是有足够的上下文来回答它。
+为此，你要查看提取出的原文，确保当前这道题的表述没有缺少任何内容。如果有缺失，就先给出补充的文本，再重述题目，但一定要始终把题目本身放在最后。
+因为你是在出考题的老师，所以绝不能在补充文本或题目中写出答案。
 
-Here is an example of your task:
-Extracted Question: Calculate the chemical amount (in mol or mmol) of nitric acid that reacts with the
+下面是这项任务的一个示例：
+提取出的题目：Calculate the chemical amount (in mol or mmol) of nitric acid that reacts with the
 5.000 g sample of this mineral.
-Extracted Text: A sample of a different mineral is analysed by the same methods. This mineral also contains only Pb2, CO3, OH, and O2 ions.
+提取出的原文：A sample of a different mineral is analysed by the same methods. This mineral also contains only Pb2, CO3, OH, and O2 ions.
 When a 5.000 g sample of this mineral is treated with 25.00 mL of 2.000 mol L nitric acid
 (HNO3), 0.5214 g of carbon dioxide is released, and 0.01051 mol of the acid remains.
 When subjected to thermal decomposition, 5.000 g of this mineral loses 0.5926 g.
 (g) Calculate the chemical amount (in mol or mmol) of nitric acid that reacts with the
 5.000 g sample of this mineral.
 
-You would tell me:
+你应该回复我：
 
 A sample of a different mineral is analysed by the same methods. This mineral also contains only Pb2, CO3, OH, and O2 ions.
 When a 5.000 g sample of this mineral is treated with 25.00 mL of 2.000 mol L nitric acid
@@ -1161,29 +1187,31 @@ When subjected to thermal decomposition, 5.000 g of this mineral loses 0.5926 g.
 
 ---
 
-Here is the question: {{extracted_question}}
-Here is the extracted text: {{output_extraction}}
+题目如下：{{extracted_question}}
+提取出的原文如下：{{output_extraction}}
 
 ---
 
-Do not include any filler like "here is the improved question". Include only the relevant information and the question itself. Include all answer choices if applicable.
-Do not include the solution if you see it. This is an exam, so you should NOT include the final answer in the question.
+不要包含“下面是改进后的题目”之类的填充语。只写相关信息和题目本身。如果有选项，要列出全部选项。
+如果你看到了答案，也不要写进去。这是考试，所以绝对不能在题目中给出最终答案。
 ```
 
 *图 22：**问题精炼提示词**。*
 
 ```text
-Format your response as below:
-QUESTION: "the question from the text and all relevant context excluding the answer and choices" (i.e. if the question is "What was Elvis Presley's (a) favorite sandwich? (b) most hated song? (c) birthday?" You should have a question "QUESTION: What was Elvis Presley's favorite sandwich..." and then another question "QUESTION: What was Elvis Presley's most hated song?..."  etc.)
-ANSWER CHOICES: "answer choice 1" ||| "answer choice 2" ... (if no answer choices are available just say "free response", if answer choices are available please write them out i.e. "A: 0.57 ||| B: John Hancock ||| ..." etc.)
-SOLUTION: "correct answer choice" or "free response answer". If you cannot determine the correct solution say "NO ANSWER DETECTED"
+从下面这份 pdf 中提取出的文本里，抽取题目、答案选项和答案。
 
-It is important that each QUESTION: is self contained, meaning, if you were to read "QUESTION: ..." by itself, you should be able to answer it. Given the example "What was Elvis Presley's (a) favorite sandwich? (b) most hated song? (c) birthday?", you should NOT say "QUESTION: favorite sandwich?" as this makes no sense. Instead you should say "QUESTION: What was Elvis Presley's favorite sandwich?"
-To be clear. All questions with subquestions should be restated as individual questions themselves with all relevant information required to answer them.
-Only break up the subquestions.  I.E. only break up questions that have (a) (b) and (c) or (1) (2) and (3), do not break up questions that do not have markers indicating they have parts or subquestions please.
-We are creating a bank of questions that are automatically extracted from pdfs, so it is imperative you get this right.
+按以下格式回复：
+QUESTION: “文本中的题目及所有相关上下文，不含答案和选项”（例如，如果题目是“Elvis Presley (a) 最喜欢的三明治是什么？(b) 最讨厌的歌是哪首？(c) 生日是哪天？”，你就应该写出一道题“QUESTION: Elvis Presley 最喜欢的三明治是什么……”，再写出另一道题“QUESTION: Elvis Presley 最讨厌的歌是哪首？……”，依此类推。）
+ANSWER CHOICES: “选项 1” ||| “选项 2” ……（如果没有选项，就写 "free response"；如果有选项，请把它们写出来，例如 "A: 0.57 ||| B: John Hancock ||| ..." 等。）
+SOLUTION: “正确的选项”或“自由作答题的答案”。如果无法确定正确答案，就写 "NO ANSWER DETECTED"
+
+重要的是，每个 QUESTION: 都必须自成一体，也就是说，单独读到 "QUESTION: ..." 时，你也应该能够回答它。以“Elvis Presley (a) 最喜欢的三明治是什么？(b) 最讨厌的歌是哪首？(c) 生日是哪天？”为例，你不应该写“QUESTION: 最喜欢的三明治？”，因为这样没有意义，而应该写“QUESTION: Elvis Presley 最喜欢的三明治是什么？”
+说清楚一点：所有带子问题的题目，都要拆开重述成一道道独立的题，并附上回答每道题所需的全部相关信息。
+只拆分子问题。也就是说，只拆分带有 (a) (b) 和 (c) 或 (1) (2) 和 (3) 这类标记的题目；没有标记表明包含多个部分或子问题的题目，请不要拆分。
+我们正在建立一个从 pdf 中自动提取题目的题库，所以务必做对。
 ---
-Extracted Text:
+提取出的文本：
 
 {{output_extraction}}
 ```
@@ -1191,6 +1219,7 @@ Extracted Text:
 *图 23：**问题提取提示词**。*
 
 ```text
+提取这份 PDF 中的全部文本，包括图片中的所有文字。提取结果的示例可能像这样：
 html><body><table><tr><td>2</td><td>1 1</td><td>1 6</td><td>-14</td></tr><tr><td rowspan="2"></td><td>2 3</td><td>7</td><td>14 0</td></tr><tr><td>1</td><td></td><td></td></tr></table></body></html>
 
 Notice that the final sum is zero, telling us that 2 is a zero.  But the nice thing about synthetic division, is that long division, the other coefficients are the coefficients of the quotient polynomial.
@@ -1215,36 +1244,38 @@ It is obvious in any polynomial that $\mathrm(0)$ is the y-intercept and equally
 11. How any times does the graph of $f(x)=x^(3)-x^(2)+2x+4$ cross the $\mathbf(X)$ axis?
 12. Madison's dog chewed on her homework before she could finish it.  The fragment saved from the horrible canine's mouth reveal only the two terms of highest degree of the polynomial $\mathfrak(p)(\ensuremath\mathbf(x)))$
 
-Now please give me your extraction of all text, including text in images.
+现在请给出你提取的全部文本，包括图片中的文字。
 ```
 
 *图 24：**Gemini OCR 提示词**。*
 
 ```text
-included in the Biology, Physics or Chemistry Olympiad.
-Text: {{text}}
+请把下面这段数学文本改写成一道答案可量化或可验证的题目，例如可以
+出现在生物、物理或化学奥林匹克竞赛中的题目。
+文本：{{text}}
 
-Include only the new question or task. Do not include anything like "Here is the instruction". You can either extract a
-question from the text or form a new one based on the text. Make the question sound like what a human would ask a language model.
+只写出新的问题或任务，不要包含“下面是指令”之类的话。你可以从文本中
+提取一道题，也可以根据文本另拟一道新题。让题目听起来像是人类会向语言模型提出的问题。
 ```
 
 *图 25：**用于生成科学问题的提示词**。*
 
 ```text
-included in the Biology, Physics or Chemistry Olympiad.
-Text: {{abstract}}
+请把下面这段数学文本改写成一道答案可量化或可验证的题目，例如可以
+出现在生物、物理或化学奥林匹克竞赛中的题目。
+文本：{{abstract}}
 
-Include only the new question or task. Do not include anything like "Here is the instruction". You can either extract a
-question from the text or form a new one based on the text. Make the question sound like what a human would ask a language model.
+只写出新的问题或任务，不要包含“下面是指令”之类的话。你可以从文本中
+提取一道题，也可以根据文本另拟一道新题。让题目听起来像是人类会向语言模型提出的问题。
 ```
 
 *图 26：**用于生成科学问题的提示词**。*
 
-### R.2 问题过滤策略的相关信息
+#### R.2 问题过滤策略的相关信息
 
 接下来，我们将更详细地介绍所用的问题过滤策略。
 
-#### R.2.1 FastText 细节
+##### R.2.1 FastText 细节
 
 下面补充介绍我们所用 FastText 过滤器的一些细节。
 
@@ -1254,7 +1285,7 @@ question from the text or form a new one based on the text. Make the question so
 - 我们使用二元语法（bigram），即 n = 2。
 - 我们使用的最小 n-gram 计数为 3。
 
-#### R.2.2 代码过滤策略
+##### R.2.2 代码过滤策略
 
 下面给出我们代码过滤策略的更多细节。
 
@@ -1274,48 +1305,51 @@ question from the text or form a new one based on the text. Make the question so
 - **基于嵌入的选择**：使用 OpenAI 的嵌入模型 text-embedding-3-large，对一组正样本和一组负样本进行嵌入，其中正样本为 CodeForces，负样本为 bugdaryan/sql-create-context-instruction。首先，对给定问题进行嵌入，并计算其与正样本的平均余弦相似度以及与负样本的平均余弦相似度，然后通过取二者之差生成最终得分。
 
 ```text
-Here is the standard:
-A 10-point scale for ICPC problems could be structured as follows, where level 1 represents the easiest problems and level 10 represents the most challenging:
-Level 1: Basic implementation problems requiring simple input/output handling and straightforward calculations. Typically solvable with a single loop or basic conditional statements. Examples include summing numbers or finding the maximum in an array.
-Level 2: Problems involving basic data structures like arrays and strings, requiring simple algorithms like linear search or basic sorting. May include simple mathematical concepts like prime numbers or basic geometry.
-Level 3: Problems requiring knowledge of standard algorithms like binary search, complete sorting algorithms, or basic graph traversal (DFS/BFS). May include simple dynamic programming problems with clear state transitions.
-Level 4: Problems combining multiple basic concepts, requiring careful implementation and moderate optimization. Includes medium-difficulty dynamic programming problems and basic graph algorithms like shortest paths.
-Level 5: Problems requiring solid understanding of data structures like segment trees, binary indexed trees, or disjoint set unions. May include more complex graph algorithms like minimum spanning trees or network flow basics.
-Level 6: Advanced dynamic programming problems with non-obvious state representations. Problems requiring combination of multiple algorithms or data structures. May include basic game theory or basic number theory concepts.
-Level 7: Problems requiring advanced algorithmic knowledge like heavy-light decomposition, suffix arrays, or advanced geometric algorithms. Includes complex optimization problems and harder network flow applications.
-Level 8: Problems requiring deep mathematical insights combined with complex algorithmic implementations. May include advanced number theory, complex geometric algorithms, or problems requiring multiple non-obvious observations.
-Level 9: Problems requiring extensive knowledge of advanced algorithms and mathematical concepts, often needing multiple key insights to solve. May include advanced string algorithms like suffix automata, or complex mathematical optimizations.
-Level 10: The most challenging problems, often requiring novel approaches or insights not covered in standard competitive programming material. These problems might combine multiple advanced concepts in non-obvious ways, require complex proofs for correctness, or need highly optimized implementations to meet strict time limits.
-This scale corresponds roughly to the difficulty progression you might see from early regional contests (levels 1-4) through regional finals (levels 4-7) to world finals problems (levels 7-10).
-Problem to be labeled: {{question}}."
+你会拿到一道编程题。你的任务是按照 ICPC 标准，给它评定 1-10 级的难度。
+标准如下：
+ICPC 题目的 10 级难度量表可以这样划分，其中 1 级代表最简单的题，10 级代表最难的题：
+1 级：基础实现题，只需简单的输入/输出处理和直接的计算。通常用一个循环或基本的条件语句就能解决。例如对一组数求和，或找出数组中的最大值。
+2 级：涉及数组、字符串等基本数据结构的题，需要线性查找或基础排序之类的简单算法。可能包含素数或基础几何之类的简单数学概念。
+3 级：需要掌握标准算法的题，如二分查找、完整的排序算法或基本的图遍历（DFS/BFS）。可能包含状态转移清晰的简单动态规划题。
+4 级：综合多个基础概念的题，需要细致的实现和适度的优化。包括中等难度的动态规划题和最短路之类的基本图算法。
+5 级：需要扎实掌握线段树、树状数组或并查集等数据结构的题。可能包含最小生成树或网络流基础之类较复杂的图算法。
+6 级：状态表示不明显的高级动态规划题；需要组合多种算法或数据结构的题。可能包含基础博弈论或基础数论概念。
+7 级：需要高级算法知识的题，如树链剖分、后缀数组或高级几何算法。包括复杂的优化问题和更难的网络流应用。
+8 级：需要深刻的数学洞察并结合复杂算法实现的题。可能包含高级数论、复杂的几何算法，或需要多个不明显观察的题。
+9 级：需要广泛掌握高级算法和数学概念的题，往往需要多个关键洞察才能解出。可能包含后缀自动机之类的高级字符串算法，或复杂的数学优化。
+10 级：最难的题，往往需要标准竞赛编程资料中没有的新方法或新洞察。这类题可能以不明显的方式组合多个高级概念，需要复杂的正确性证明，或需要高度优化的实现才能满足严格的时间限制。
+这个量表大致对应从早期区域赛（1-4 级）到区域决赛（4-7 级）再到世界总决赛题目（7-10 级）的难度递进。
+待标注的题目：{{question}}."
 ```
 
 *图 27：**代码难度过滤的提示词**。这段文本是代码难度过滤所用的提示词。*
 
 ```text
-Positive Questions
+我想请你判断下面这道题更像给出的正例，还是更像负例。下面是几道正例题目：
+
+正例题目
 1. A plane contains $40$ lines, no $2$ of which are parallel. Suppose that there are $3$ points where exactly $3$ lines intersect, $4$ points where exactly $4$ lines intersect, $5$ points where exactly $5$ lines intersect, $6$ points where exactly $6$ lines intersect, and no points where more than $6$ lines intersect. Find the number of points where exactly $2$ lines intersect.
 2. A spin-half particle is in a linear superposition0.8|\uparrow\rangle+0.6|\downarrow\rangle of its spin-up and spin-down states. If |\uparrow\rangle and |\downarrow\rangle are the eigenstates of \sigma_{z} , then what is the expectation value up to one decimal place, of the operator 10\sigma_{z}+5\sigma_{x} ? Here, symbols have their usual meanings.
 3. An established group of scientists are working on finding solution to NP hard problems. They claim Subset Sum as an NP-hard problem. The problem is to determine whether there exists a subset of a given set S whose sum is a given number K. You are a computer engineer and you claim to solve this problem given that all numbers in the set are non-negative. Given a set S of size N of non-negative integers, find whether there exists a subset whose sum is K. Input First line of input contains T, the number of test cases. T test cases follow. Each test case contains 2 lines. First line contains two integers N and K. Next line contains N space separated non-negative integers (each less than 100000). 0 < T < 1000 0 < N < 1000 0 < K < 1000 Output Output T lines, one for each test case. Every line should be either 0 or 1 depending on whether such a subset exists or not. Example Input: 2 5 10 3 4 6 1 9 3 2 1 3 4 Output: 1 0
 4. Let $S$ be the set of positive integer divisors of $20^9.$ Three numbers are chosen independently and at random with replacement from the set $S$ and labeled $a_1,a_2,$ and $a_3$ in the order they are chosen. The probability that both $a_1$ divides $a_2$ and $a_2$ divides $a_3$ is $\tfrac{m}{n},$ where $m$ and $n$ are relatively prime positive integers. Find $m.$
 5. What is the concentration of calcium ions in a solution containing 0.02 M stoichiometric Ca-EDTA complex (we assume that the pH is ideal, T = 25C). KCa-EDTA = 5x10\^10.
 
-Negative Questions:
+负例题目：
 1. Solve 0 = 19*z - 17*z for z.
 2. Simplify ((-2*(-2*sqrt(1210) - sqrt(1210) - sqrt(20)/sqrt(2)*-6))/((sqrt(1800)*2 + sqrt(1800) + sqrt(1800) + sqrt(1800))*-1)*3)**2.\n
 3. Given a list of objects that have an `is_organized` method that returns a boolean value, write a Python function that takes the list and returns a new list of those objects for which `is_organized` returns True.
 4. Can you provide a Python code snippet that demonstrates how to use a decorator to log the execution time of a function?
 5. Is sodium hydroxide (NaOH) an acid or base?
 
-Here is your question:
+下面是你要判断的题目：
 {{question}}
 
-Return a score between 1 and 100, where 100 means exactly like the positive questions whereas 1 is exactly like the negative questions.
+返回一个 1 到 100 之间的分数，100 表示和正例完全一样，1 表示和负例完全一样。
 ```
 
 *图 28：**AskLLM 过滤的提示词**。这段文本是 AskLLM 过滤所用的提示词。*
 
-#### R.2.3 数学问题过滤
+##### R.2.3 数学问题过滤
 
 - **基于长度的选择（GPT-4.1-nano）**：使用 GPT-4.1-Nano 标注问题，并保留回答最长的问题。
 - **AskLLM 选择**：让 GPT-4o-mini 在 1 到 100 的范围内打分，评估一个问题与一组优质问题有多相似、与一组劣质问题有多不同。在让 GPT-4o-mini 协助进行问题过滤时，我们仅将温度设为 1.0。我们没有设置其他采样超参数。AskLLM 过滤所用的提示词见图 28。我们使用结构化解码从 GPT-4o-mini 中提取数值回答。对于 AskLLM 过滤，我们要求返回一个整数形式的数值回答，以及一个字符串形式的推理回答。
@@ -1333,7 +1367,8 @@ Return a score between 1 and 100, where 100 means exactly like the positive ques
 - **FastText 选择（正例：Numina；负例：Lap1official）**：使用 FastText 分类器对问题进行分类，训练该分类器所用的正样本为 AI-MO/NuminaMath-CoT 的“amc\_aime”和“olympiads”子集，负样本即来自 Lap1official/Math\_small\_corpus 的问题。更多信息见第 R.2.1 节。
 
 ```text
-Here is the standard: \
+你会拿到一道数学题。你的任务是按照 AoPS 标准，给它评定 1-10 级的难度。 \
+标准如下： \
 All levels are estimated and refer to averages. The following is a rough standard based on the USA tier system AMC 8 - AMC 10 - AMC 12 - AIME - USAMO/USAJMO - IMO, \
 representing Middle School - Junior High - High School - Challenging High School - Olympiad levels. Other contests can be interpolated against this. \
 Notes: \
@@ -1369,12 +1404,12 @@ Determine all integers $n\geq 3$ for which there exists a balanced centre-free s
 9: Let $k$ be a positive integer and let $S$ be a finite set of odd prime numbers. Prove that there is at most one way (up to rotation and reflection) to place the elements of $S$ around the circle such that the product of any two neighbors is of the form $x^2+x+k$ for some positive integer $x$. (IMO 2022/3) \
 10: Prove that there exists a positive constant $c$ such that the following statement is true: Consider an integer $n > 1$, and a set $\mathcal S$ of $n$ points in the plane such that the distance between any two different points in $\mathcal S$ is at least 1. It follows that there is a line $\ell$ separating $\mathcal S$ such that the distance from any point of $\mathcal S$ to $\ell$ is at least $cn^{-1/3}$. \
 (A line $\ell$ separates a set of points S if some segment joining two points in $\mathcal S$ crosses $\ell$.) (IMO 2020/6)
-Problem to be labeled: {{question}}"
+待标注的题目：{{question}}"
 ```
 
 *图 29：**数学难度过滤的提示词**。这段文本是数学难度过滤所用的提示词。*
 
-#### R.2.4 科学问题过滤
+##### R.2.4 科学问题过滤
 
 - **FastText（正例：ExpertQA；负例：Arxiv）**：使用 FastText 分类器对问题进行分类，训练该分类器所用的正样本为来自 katielink/expertqa 的问题，负样本为来自 AdapterOcean/biology\_dataset\_standardized\_unified 的问题。更多信息见第 R.2.1 节。
 - **基于长度的选择（GPT-4o-mini）**：使用 GPT-4o-mini 标注问题，并保留回答最长的问题。
@@ -1388,33 +1423,34 @@ Problem to be labeled: {{question}}"
 - **基于难度的选择**：让 GPT-4o-mini 依据针对科学奥林匹克竞赛题目的评分标准，在 1 到 10 的范围内为问题评分，并选出被评为最难的题目。在让 GPT-4o-mini 协助进行问题过滤时，我们仅将温度设为 1.0。我们没有设置其他采样超参数。难度过滤所用的提示词见图 30。我们使用结构化解码从 GPT-4o-mini 中提取数值回答。对于 AskLLM 过滤，我们要求返回一个整数形式的数值回答，以及一个字符串形式的推理回答。
 
 ```text
-Here is the standard: \
-A 10-point scale for international science olympiad problems could be structured as follows, where level 1 represents the easiest problems and level 10 represents the most challenging:
-Level 1: Basic Knowledge Application - Straightforward recall of fundamental scientific facts and principles. Simple calculations requiring only basic formulas. Direct application of a single scientific concept. Problems typically solvable in 1-2 steps. Content typically covered in standard high school curriculum. Examples include identifying simple chemical compounds, basic circuit calculations, or classifying organisms.
-Level 2: Multi-Step Basic Applications - Problems requiring 2-3 distinct steps to solve. Application of multiple basic concepts within a single field. Basic data interpretation from graphs or tables. Simple laboratory techniques and measurements. Content typically found in advanced high school courses. Examples include stoichiometry calculations, basic kinematics problems, or analyzing simple biological processes.
-Level 3: Advanced Application of Standard Concepts - Integration of multiple scientific concepts. Moderate quantitative reasoning with multi-step calculations. Interpretation of experimental data requiring analytical thinking. Problems requiring deeper understanding beyond memorization. Typical of challenging high school science competition questions. Examples include problems combining thermodynamics and kinetics, multi-step mechanics problems, or ecological relationship analysis.
-Level 4: Early National Olympiad Level - Problems requiring specialized knowledge in specific scientific domains. Application of advanced concepts not typically covered in regular curriculum. Moderate laboratory techniques and experimental design understanding. Analytical thinking with non-obvious solution paths. Typical of early rounds in national science olympiads. Examples include chemical equilibrium problems with multiple variables, circuit analysis with non-ideal components, or molecular biology mechanisms.
-Level 5: National Olympiad Standard - Problems integrating concepts across multiple scientific domains. Creative application of standard principles in non-standard contexts. Analysis of complex experimental setups and data. Multiple conceptual hurdles requiring insight. Typical of national olympiad final rounds. Examples include complex organic synthesis pathways, non-ideal thermodynamic systems, or advanced genetics problems.
-Level 6: Advanced National/Early International Level - Problems requiring deep conceptual understanding beyond standard curriculum. Integration of theoretical knowledge with practical laboratory techniques. Creative problem-solving with multiple possible approaches. Application of mathematical models to complex scientific phenomena. Typical of international olympiad preparation camps. Examples include quantum mechanical models, complex biochemical pathways, or statistical analysis of biological systems.
-Level 7: International Olympiad Standard - Problems at the level of IChO, IPhO, or IBO theoretical examinations. Requires specialized knowledge combined with creative insight. Complex quantitative modeling of scientific phenomena. Integration of concepts across scientific disciplines. Multiple conceptual layers requiring systematic analysis. Examples include advanced spectroscopy interpretation, complex physical systems with multiple forces, or detailed biochemical mechanism analysis.
-Level 8: Advanced International Olympiad - Problems requiring both breadth and depth of scientific knowledge. Novel applications of scientific principles not typically taught. Sophisticated experimental design and analysis. Multiple solution pathways requiring evaluation and selection. Typical of challenging international olympiad problems. Examples include challenging quantum chemistry problems, advanced laboratory protocols with multiple variables, or complex evolutionary or ecological models.
-Level 9: Elite International Olympiad - Problems requiring exceptional scientific insight and creativity. Integration of cutting-edge scientific knowledge. Multiple conceptual breakthroughs needed for solution. Problems that challenge even the most talented students. Reserved for the most difficult questions in international competitions. Examples include novel applications of physical principles, complex multi-step synthesis with stereochemical considerations, or systems biology analysis.
-Level 10: Historically Challenging Problems - Problems of legendary difficulty in science competitions. Requires innovative approaches beyond standard methodologies. May integrate advanced university-level concepts. Problems that very few competitors worldwide can solve completely. Often remembered as particularly challenging in olympiad history. Examples include problems that required creation of new approaches or that stumped almost all participants in a given year.
+你会拿到一道科学题。你的任务是按照国际科学奥林匹克竞赛的标准，给它评定 1-10 级的难度。 \
+标准如下： \
+国际科学奥林匹克竞赛题目的 10 级难度量表可以这样划分，其中 1 级代表最简单的题，10 级代表最难的题：
+1 级：基础知识应用——直接回忆基本的科学事实和原理；只需基本公式的简单计算；直接应用单一的科学概念；题目通常 1-2 步就能解出；内容通常属于标准高中课程。例如识别简单的化合物、基础电路计算或对生物进行分类。
+2 级：多步骤的基础应用——需要 2-3 个不同步骤才能解出的题；在单一领域内应用多个基础概念；从图表中做基本的数据解读；简单的实验技术和测量；内容通常出现在高中进阶课程中。例如化学计量计算、基础运动学题，或分析简单的生物过程。
+3 级：标准概念的进阶应用——综合多个科学概念；包含多步计算的中等定量推理；需要分析性思维的实验数据解读；需要超越记忆的深入理解；是有挑战性的高中科学竞赛题的典型水平。例如结合热力学与动力学的题、多步骤的力学题，或生态关系分析。
+4 级：国家级奥赛初期水平——需要特定科学领域专门知识的题；应用常规课程通常不涉及的进阶概念；中等水平的实验技术和对实验设计的理解；解题路径不明显、需要分析性思维；是国家科学奥赛早期轮次的典型水平。例如含多个变量的化学平衡题、含非理想元件的电路分析，或分子生物学机制。
+5 级：国家级奥赛标准——综合多个科学领域概念的题；在非标准情境中创造性地应用标准原理；分析复杂的实验装置和数据；有多个需要洞察力的概念难点；是国家奥赛决赛的典型水平。例如复杂的有机合成路线、非理想热力学体系，或高级遗传学问题。
+6 级：国家级高阶/国际级入门水平——需要超出标准课程的深刻概念理解的题；把理论知识与实际实验技术结合起来；有多种可行思路的创造性解题；把数学模型应用于复杂的科学现象；是国际奥赛集训营的典型水平。例如量子力学模型、复杂的生化途径，或生物系统的统计分析。
+7 级：国际奥赛标准——达到 IChO、IPhO 或 IBO 理论考试水平的题；需要专门知识与创造性洞察相结合；对科学现象进行复杂的定量建模；跨学科地综合概念；有多个需要系统分析的概念层次。例如高级光谱解析、受多种力作用的复杂物理系统，或详细的生化机制分析。
+8 级：国际奥赛高阶——需要兼具广度和深度的科学知识的题；以通常不会教授的新颖方式应用科学原理；精巧的实验设计与分析；有多条需要评估和取舍的解题路径；是有挑战性的国际奥赛题的典型水平。例如有难度的量子化学题、含多个变量的高级实验方案，或复杂的进化或生态模型。
+9 级：国际奥赛精英水平——需要非凡科学洞察力和创造力的题；融合前沿科学知识；解题需要多个概念上的突破；连最有天赋的学生也会觉得有挑战；只出现在国际竞赛最难的题目中。例如物理原理的新颖应用、需要考虑立体化学的复杂多步合成，或系统生物学分析。
+10 级：历史级难题——科学竞赛中难度传奇的题；需要超越标准方法论的创新思路；可能融合大学阶段的高级概念；全世界只有极少数参赛者能完整解出；常作为奥赛史上的特别难题被人记住。例如需要开创新方法的题，或在某一年难倒了几乎所有参赛者的题。
 
-This scale corresponds roughly to the difficulty progression you might see from school science competitions (levels 1-3) through national selection rounds (levels 4-5) to international olympiad problems (levels 6-10).
+这个量表大致对应从校级科学竞赛（1-3 级）到国家选拔赛（4-5 级）再到国际奥赛题目（6-10 级）的难度递进。
 
-Subject-Specific Notes:
-Physics (IPhO): Levels 1-3 cover standard high school physics content (mechanics, electricity, thermodynamics); Levels 4-6 include advanced topics like wave optics, basic quantum physics, and non-ideal systems; Levels 7-10 incorporate university-level content including quantum mechanics, statistical physics, and relativity.
+分学科说明：
+物理（IPhO）：1-3 级涵盖标准的高中物理内容（力学、电学、热力学）；4-6 级包括波动光学、基础量子物理和非理想系统等进阶主题；7-10 级纳入大学水平的内容，包括量子力学、统计物理和相对论。
 
-Chemistry (IChO): Levels 1-3 cover basic inorganic, organic, and analytical chemistry concepts; Levels 4-6 include complex reaction mechanisms, advanced analytical methods, physical chemistry; Levels 7-10 incorporate sophisticated laboratory methods, quantum chemistry, and cutting-edge chemical concepts.
+化学（IChO）：1-3 级涵盖无机、有机和分析化学的基本概念；4-6 级包括复杂的反应机理、高级分析方法和物理化学；7-10 级纳入精密的实验方法、量子化学和前沿的化学概念。
 
-Biology (IBO): Levels 1-3 cover basic cellular, molecular, and organismal biology; Levels 4-6 include advanced cellular processes, genetics, evolutionary biology, and ecology; Levels 7-10 incorporate complex experimental design, advanced biochemistry, systems biology, and bioinformatics.
-Problem to be labeled: {{question}}."
+生物（IBO）：1-3 级涵盖细胞、分子和生物个体层面的基础生物学；4-6 级包括高级细胞过程、遗传学、进化生物学和生态学；7-10 级纳入复杂的实验设计、高级生物化学、系统生物学和生物信息学。
+待标注的题目：{{question}}."
 ```
 
 *图 30：**科学难度过滤的提示词**。这段文本是科学难度过滤所用的提示词。*
 
-### R.3 去重与教师模型采样
+#### R.3 去重与教师模型采样
 
 执行去重的方法有多种。我们选择使用 Indel 相似度来衡量两个问题之间的相似性。该相似度指的是，要使一个样本与另一个样本相匹配，需要在其中插入或删除的字符数，并且是相对于样本长度来计算的。更准确地说，我们考虑一对字符串之间的归一化 Indel 相似度得分，它通过最长公共子序列（LCS）度量来计算：
 
@@ -1422,11 +1458,11 @@ Problem to be labeled: {{question}}."
 \text{indel}_{\text{sim}}=100\times\frac{\text{LCS}_{\text{length}}(s_{1},s_{2})}{\max(|s_{1}|,|s_{2}|)} \qquad (2)
 ```
 
-### R.4 问答过滤
+#### R.4 问答过滤
 
 下面我们讨论每种问答过滤方法的细节。
 
-#### R.4.1 数学问答过滤
+##### R.4.1 数学问答过滤
 
 - **完整大规模数据集**：不经过滤，取全部 63,200 个回答构成一个数据集。这一设置没有控制计算量。
 - **随机过滤**：随机过滤问答对。
@@ -1439,43 +1475,46 @@ Problem to be labeled: {{question}}."
 - **移除长段落**：向 GPT-4o-mini 询问所给答案是否不含长段落。采样超参数如下：温度为 0.0，top\_p 为 1.0，存在惩罚为 1.0。我们使用结构化解码来获取一个布尔值形式的回答，以及一个字符串形式的推理。完整的提示词见图 35。
 
 ```text
-They are candidate solutions to a problem.
+我会给你 16 份数学题解答的最后几句话。
+它们是同一道题的候选解答。
 
-They will typically contain the solution to a math problem. I want you to return the indices of the responses with the most common final numerical answer.
-Only the final numerical answer matters.
+它们通常包含一道数学题的答案。请返回最终数值答案最常见的那些回答的索引。
+只有最终的数值答案才算数。
 
-Question: What is 3 x 5?
+问题：3 x 5 等于多少？
 
-Solution 0:
-answer is 15.
+解答 0：
+答案是 15。
 
-Solution 1:
-15.0 is the solution to this problem.
+解答 1：
+15.0 是这道题的解。
 
-Solution 2:
-The answer is 14.
+解答 2：
+答案是 14。
 
-You would return: [0, 1] since they are both saying 15 is the same answer and only one response is saying 14 is the answer.
+你应该返回：[0, 1]，因为它们都说答案是 15，只有一份回答说答案是 14。
 
-Here is your question:
+下面是你的问题：
 {{question}}
 
-Here are your candidate solutions:
+下面是候选解答：
 {{list of all solutions}}
 
- Now tell me the solutions. Please remember to zero index these solutions. Do not include the number 16 as an index.
+ 现在告诉我是哪些解答。请记住，这些解答的索引从零开始。不要把数字 16 当作索引。
 ```
 
 *图 31：**数学问答多数一致验证的提示词**。这段文本是数学问答多数一致验证所用的提示词。*
 
 ```text
-Question: {{question}}
-Response: {{answer}}
+给出的回答是下面这道题的正确解答吗？
+
+问题：{{question}}
+回答：{{answer}}
 ```
 
 *图 32：**数学问答 GPT 验证的提示词**。这段文本是数学问答 GPT 验证所用的提示词。*
 
-#### R.4.2 代码问答过滤
+##### R.4.2 代码问答过滤
 
 - **FastText 选择**：使用 FastText 过滤器对问答对进行分类。按以下格式构造查询字符串："Question: {question} \\nAnswer: {answer\_column}"。无论是训练还是使用 FastText 分类器，我们都采用这一格式。该分类器的正样本为 CodeForces，其中包含来自 DeepSeek R1 的回答。该分类器的负样本为用 GPT-4o-mini 标注的 CodeForces。更多信息见第 R.2.1 节。
 - **完整大规模数据集**：不经过滤，取全部 63,200 个回答构成一个数据集。这一设置没有控制计算量。
@@ -1488,7 +1527,7 @@ Response: {{answer}}
 - **随机过滤**：随机过滤问答对。
 - **移除长段落**：向 GPT-4o-mini 询问所给答案是否不含长段落。采样超参数如下：温度为 0.0，top\_p 为 1.0，存在惩罚为 1.0。我们使用结构化解码来获取一个布尔值形式的回答，以及一个字符串形式的推理。完整的提示词见图 35。
 
-#### R.4.3 科学问答过滤
+##### R.4.3 科学问答过滤
 
 - **FastText 选择**：使用 FastText 过滤器对问答对进行分类。按以下格式构造查询字符串："Question: {question} \\nAnswer: {answer\_column}"。无论是训练还是使用 FastText 分类器，我们都采用这一格式。该分类器的正样本为 S1.1，其中包含来自 DeepSeek R1 的回答。该分类器的负样本来自用 GPT-4o-mini 标注的 mlfoundations-dev/stratos\_verified\_mix。更多信息见第 R.2.1 节。
 - **完整大规模数据集**：不经过滤，取全部 63,200 个回答构成一个数据集。这一设置没有控制计算量。
@@ -1501,57 +1540,64 @@ Response: {{answer}}
 - **GPT 验证**：向 GPT-4o-mini 询问所给答案是否为所给问题的正确答案。采样超参数如下：温度为 0.0，top\_p 为 1.0，存在惩罚为 1.0。我们使用结构化解码来获取一个布尔值形式的回答，以及一个字符串形式的推理。完整的提示词见图 32。
 
 ```text
-Question: {{question}}
-Response: {{answer}}
+给出的代码片段是下面这道题的正确解答吗？
+
+问题：{{question}}
+回答：{{answer}}
 ```
 
 *图 33：**代码问答 GPT 验证的提示词**。这段文本是代码问答 GPT 验证所用的提示词。*
 
 ```text
-Question: {{question}}
-Response: {{answer}}
+给出的回答是否只使用了一种语言？
+
+问题：{{question}}
+回答：{{answer}}
 ```
 
 *图 34：**英语验证的提示词**。这段文本是英语验证所用的提示词。*
 
 ```text
-A paragraph is any block of text separated by a blank line.
-A paragraph is *too long* if it has **>750 words**.
+给出的回答中是否没有任何过长的段落？
+段落是指用空行隔开的任意一块文本。
+如果一个段落有 **>750 个词**，它就*过长*。
 
-Question: {{question}}
-Response: {{answer}}
+问题：{{question}}
+回答：{{answer}}
 ```
 
 *图 35：**长段落验证的提示词**。这段文本是长段落验证所用的提示词。*
 
 ```text
-They are candidate solutions to a problem.
+我会给你 16 份科学题解答的最后几句话。
+它们是同一道题的候选解答。
 
-They will typically contain the solution to a science problem. I want you to return the indices of the responses with the most common answer.
+它们通常包含一道科学题的答案。请返回答案最常见的那些回答的索引。
 
 
-Here is your question:
+下面是你的问题：
 {{question}}
 
-Here are your candidate solutions:
+下面是候选解答：
 {{list of all solutions}}
 
-Now tell me the solutions. Please remember to zero index these solutions. Do not include the number 16 as an index.
+现在告诉我是哪些解答。请记住，这些解答的索引从零开始。不要把数字 16 当作索引。
 ```
 
 *图 36：**科学问答多数一致验证的提示词**。这段文本是科学多数一致验证所用的提示词。*
 
 ```text
-They are candidate solutions to a coding problem.
+我会给你 16 个 code_samples。
+它们是同一道编程题的候选解答。
 
-I want you to compare all of the code samples functionally and return a list of indices corresponding to
-the samples that constitute the most common solutions that are functionally equivalent. If there are sets
-of solutions that are of the same size, pick one of the sets at random. I want you to also provide your reasoning
-for the indices you respond being functionally equivalent. Here is an example:
+请从功能上比较所有代码样本，并返回一个索引列表，对应于
+构成最常见的、功能等价的那组解答的样本。如果有多组
+解答的规模相同，就随机选其中一组。同时请说明你的理由，
+解释为什么你返回的这些索引对应的解答功能等价。下面是一个示例：
 
-Question: Solve fizzbuzz.
+问题：实现 fizzbuzz。
 
-Solution 0:
+解答 0：
 def fizzbuzz1(n):
     for i in range(1, n + 1):
         output = ''
@@ -1563,7 +1609,7 @@ def fizzbuzz1(n):
 
         print(output or i)
 
-Solution 1:
+解答 1：
 def fizzbuzz2(n):
     for i in range(1, n + 1):
         if i % 3 == 0 and i % 5 == 0:
@@ -1575,35 +1621,35 @@ def fizzbuzz2(n):
         else:
             print(i)
 
-Solution 2:
+解答 2：
 def fizzbuzz3(n):
     for i in range(1, n + 1):
-        # Multiple logical errors:
-        if i % 3 == 0:  # Notice no brackets needed for simple if statements
+        # 多处逻辑错误：
+        if i % 3 == 0:  # 注意：简单的 if 语句不需要括号
             print('Fizz')
         elif i % 5 == 0:
             print('Buzz')
-        elif i % 3 == 0 or i % 5 == 0:  # Wrong logic order and operator
+        elif i % 3 == 0 or i % 5 == 0:  # 逻辑顺序和运算符都错了
             print('FizzBuzz')
         else:
             print(i)
 
-You would return: [0, 1] since they are functionally equivalent but the third response is different.
+你应该返回：[0, 1]，因为它们功能等价，而第三份回答不同。
 
- Here is your question:
+ 下面是你的问题：
 {{question}}
 
-Here are your candidate solutions:
+下面是候选解答：
 {{list of all solutions}}
 ```
 
 *图 37：**代码问答多数一致验证的提示词**。这段文本是代码问答多数一致验证所用的提示词。*
 
-## 附录 S 流水线实验的扩展结果
+### 附录 S 流水线实验的扩展结果
 
 由于篇幅所限，我们没有在正文中展示所有表格和所有数据策略。我们在此进一步展开，并给出完整结果。
 
-### S.1 问题来源
+#### S.1 问题来源
 
 我们针对代码问题来源的消融实验结果见表 32。针对数学问题来源的消融实验结果见表 33。针对科学问题来源的消融实验结果见表 34。表现最好的数据集与表现最差的数据集之间差距很大。在代码数据领域，这一差距平均为 17.2 分
 
@@ -1688,7 +1734,7 @@ Here are your candidate solutions:
 
 *表 34：**科学问题来源的完整消融实验**。*
 
-### S.2 混合问题生成策略
+#### S.2 混合问题生成策略
 
 我们针对代码问题混合的消融实验结果见表 35。针对数学问题混合的消融实验结果见表 36。针对科学问题混合的消融实验结果见表 37。“混合越少越好”这一趋势在所有领域中都成立。
 
@@ -1725,7 +1771,7 @@ Here are your candidate solutions:
 
 *表 37：**科学问题来源混合的完整消融实验**。*
 
-### S.3 问题过滤
+#### S.3 问题过滤
 
 我们针对代码问题过滤的消融实验结果见表 38。针对数学问题过滤的消融实验结果见表 39。针对科学问题过滤的消融实验结果见表 40。对于每个数据领域，我们都尝试了第 R.2 节中的每一种问题过滤策略。这些消融实验包含 FastText 正负样本的不同组合。它们还涵盖了基于长度的过滤所用的多种模型，例如 GPT-4o-mini、GPT-4.1-mini 和 GPT-4.1-nano。在科学和数学领域，使用 GPT-4.1 系列模型进行基于长度的过滤效果都很好。在每个数据领域中，大约一半的过滤策略优于随机过滤。在所有数据领域中，AskLLM 过滤和基于难度的过滤效果都相对较好。
 
@@ -1787,7 +1833,7 @@ Here are your candidate solutions:
 
 *表 40：**科学问题过滤的完整消融实验**。*
 
-### S.4 去重与多次采样
+#### S.4 去重与多次采样
 
 我们针对代码去重与多次采样的消融实验结果见表 41。针对数学去重与多次采样的消融实验结果见表 42。针对科学去重与多次采样的消融实验结果见表 43。在所有数据领域中，精确去重或不去重都优于模糊去重。此外，多次采样的表现与每个问题只标注一次相当或持平。这里的主要例外是表 42，其中每个问题只标注 1 次的效果更好。不过，从实验结果来看，次优策略是精确去重加 16× 采样。16× 采样为 OpenThoughts3-1.2M 提供了一个进一步扩展数据规模的维度，因此我们在最终流水线中选择了这一标注策略。
 
@@ -1834,7 +1880,7 @@ Here are your candidate solutions:
 
 *表 43：**科学去重与多次采样的完整消融实验**。*
 
-### S.5 问答过滤
+#### S.5 问答过滤
 
 我们针对代码问答过滤的消融实验结果见表 44。针对数学问答过滤的消融实验结果见表 45。针对科学问答过滤的消融实验结果见表 46。在所有数据领域中，完全不进行过滤的表现与最佳问答过滤策略相近或更优。
 
@@ -1884,7 +1930,7 @@ Here are your candidate solutions:
 
 *表 46：**科学问答过滤的完整消融实验**。*
 
-### S.6 教师模型实验
+#### S.6 教师模型实验
 
 我们针对代码的教师模型消融实验结果见表 47。针对数学的教师模型消融实验结果见表 48。针对科学的教师模型消融实验结果见表 49。在所有数据领域中，QwQ-32B 都是最好的教师模型，且领先幅度具有统计显著性。
 
