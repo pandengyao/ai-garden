@@ -105,7 +105,7 @@ on-policy 蒸馏（OPD）在从当前学生 $`\pi_\theta`$ 采样得到的轨迹
 
 与采样词元 OPD 相比，这会产生更密集的梯度，代价是对批大小 $`B`$、序列长度 $`T`$ 和词表大小 $`M = |\mathcal{V}|`$ 需要 $`O(BTM)`$ 的显存。
 
-**Top-$`k`$ OPD。** Top-$`k`$ OPD 通过把散度计算限制在子集 $`S_t \subseteq \mathcal{V}`$ 上，在采样词元 OPD 与全词表 OPD 之间提供了一种折中设计。这里我们关注学生 top-$`k`$ 变体，它选取学生赋予最高概率的 $`k`$ 个词元，即 $`S_t = \operatorname{TopK}(p_t, k)`$。定义 $`S_t`$ 上重新归一化的学生与教师分布为：
+**Top-$`k`$ OPD。** Top-$`k`$ OPD 通过把散度计算限制在子集 $`S_t \subseteq \mathcal{V}`$ 上，在采样词元 OPD 与全词表 OPD 之间提供了一种折中设计。这里我们关注学生 top-$`k`$ 变体，它选取学生赋予最高概率的 $`k`$ 个词元，即 $`S_t = \mathrm{TopK}(p_t, k)`$。定义 $`S_t`$ 上重新归一化的学生与教师分布为：
 
 ```math
 \bar{p}_t^{(S_t)}(v) = \frac{p_t(v)\,\mathbf{1}[v \in S_t]}{\sum_{u \in S_t} p_t(u)}, \qquad \bar{q}_t^{(S_t)}(v) = \frac{q_t(v)\,\mathbf{1}[v \in S_t]}{\sum_{u \in S_t} q_t(u)}
@@ -121,7 +121,7 @@ on-policy 蒸馏（OPD）在从当前学生 $`\pi_\theta`$ 采样得到的轨迹
 
 #### 2.3 动态指标
 
-我们把学生和教师在第 $`t`$ 步的 top-$`k`$ 集合分别定义为 $`S_t^{(p)} = \operatorname{TopK}(p_t, k)`$ 和 $`S_t^{(q)} = \operatorname{TopK}(q_t, k)`$。以下指标将在后续实验中贯穿 OPD 训练全过程进行监控。
+我们把学生和教师在第 $`t`$ 步的 top-$`k`$ 集合分别定义为 $`S_t^{(p)} = \mathrm{TopK}(p_t, k)`$ 和 $`S_t^{(q)} = \mathrm{TopK}(q_t, k)`$。以下指标将在后续实验中贯穿 OPD 训练全过程进行监控。
 
 **重叠率。** 该指标量化学生与教师候选空间之间的对齐程度。它被定义为同时出现在学生和教师 top-$`k`$ 集合中的词元所占的平均比例：
 

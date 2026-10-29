@@ -105,7 +105,7 @@ Since $`\mathbb{E}_{\hat{y}_t \sim p_t}[\ell_t^{\mathrm{sample}}] = D_{\mathrm{K
 
 This yields denser gradients compared to sampled-token OPD, at the cost of $`O(BTM)`$ memory for batch size $`B`$, sequence length $`T`$ and vocabulary size $`M = |\mathcal{V}|`$.
 
-**Top-$`k`$ OPD.** Top-$`k`$ OPD provides an intermediate design between sampled-token and full-vocabulary OPD by restricting the divergence computation to a subset $`S_t \subseteq \mathcal{V}`$. Here we focus on the student top-$`k`$ variant, which selects the $`k`$ tokens assigned the highest probability under the student, namely $`S_t = \operatorname{TopK}(p_t, k)`$. Define the renormalized student and teacher distributions on $`S_t`$ as:
+**Top-$`k`$ OPD.** Top-$`k`$ OPD provides an intermediate design between sampled-token and full-vocabulary OPD by restricting the divergence computation to a subset $`S_t \subseteq \mathcal{V}`$. Here we focus on the student top-$`k`$ variant, which selects the $`k`$ tokens assigned the highest probability under the student, namely $`S_t = \mathrm{TopK}(p_t, k)`$. Define the renormalized student and teacher distributions on $`S_t`$ as:
 
 ```math
 \bar{p}_t^{(S_t)}(v) = \frac{p_t(v)\,\mathbf{1}[v \in S_t]}{\sum_{u \in S_t} p_t(u)}, \qquad \bar{q}_t^{(S_t)}(v) = \frac{q_t(v)\,\mathbf{1}[v \in S_t]}{\sum_{u \in S_t} q_t(u)}
@@ -121,7 +121,7 @@ This formulation discards mass outside $`S_t`$ and therefore remains an approxim
 
 #### 2.3 Dynamic Metrics
 
-We define the student's and teacher's top-$`k`$ sets at step $`t`$ as $`S_t^{(p)} = \operatorname{TopK}(p_t, k)`$ and $`S_t^{(q)} = \operatorname{TopK}(q_t, k)`$, respectively. The following metrics are monitored throughout OPD training in later experiments.
+We define the student's and teacher's top-$`k`$ sets at step $`t`$ as $`S_t^{(p)} = \mathrm{TopK}(p_t, k)`$ and $`S_t^{(q)} = \mathrm{TopK}(q_t, k)`$, respectively. The following metrics are monitored throughout OPD training in later experiments.
 
 **Overlap Ratio.** This metric quantifies the alignment between the student's and teacher's candidate spaces. It is defined as the average proportion of tokens that appear simultaneously in both the student's and the teacher's top-$`k`$ sets:
 
