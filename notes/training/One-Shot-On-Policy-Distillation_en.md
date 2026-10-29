@@ -76,7 +76,7 @@ In the full-distribution form, OPD minimizes a per-token KL divergence on visite
 \mathbb{E}_{x\sim\mathcal{D},\,y\sim\pi_\theta}
 \left[
     \sum_{i=1}^{L}
-    \operatorname{KL}\!\left(
+    \mathrm{KL}\!\left(
         \pi_\theta(\cdot\mid s_i)
         \,\Vert\,
         \pi_T(\cdot\mid s_i)
@@ -104,7 +104,7 @@ A_i^{\text{top-}k}
 \right]
 ```
 
-where $`\mathcal{V}_i = \operatorname{TopK}(\pi_\theta(\cdot \mid s), k)`$ and $`\tilde{\pi}_\theta`$ is $`\pi_\theta`$ renormalized over that set. It truncates the divergence to $`k`$ terms rather than estimating it from one sampled token, trading the distribution's tail for lower variance. Section 3.1 states which form each run uses. The alignment metrics below are diagnostics computed from the two policies' logged distributions, so they are available under either form.
+where $`\mathcal{V}_i = \mathrm{TopK}(\pi_\theta(\cdot \mid s), k)`$ and $`\tilde{\pi}_\theta`$ is $`\pi_\theta`$ renormalized over that set. It truncates the divergence to $`k`$ terms rather than estimating it from one sampled token, trading the distribution's tail for lower variance. Section 3.1 states which form each run uses. The alignment metrics below are diagnostics computed from the two policies' logged distributions, so they are available under either form.
 
 #### 2.3 Dynamic Metrics
 
@@ -112,7 +112,7 @@ where $`\mathcal{V}_i = \operatorname{TopK}(\pi_\theta(\cdot \mid s), k)`$ and $
 
 **Full-data recovery.** When the reference is full-data OPD rather than the teacher, we normalize by the gain of full-data OPD instead. Let $`M_F`$ denote the full-data OPD score at the same optimization step. The full-data recovery ratio is $`\frac{M_t-M_0}{M_F-M_0}\times100\%`$. A value approaching $`100\%`$ means that a reduced query set nearly matches the gain of full-data OPD while a value above $`100\%`$ means it surpasses it.
 
-**Top-$`k`$ token overlap ratio.** This metric measures agreement between the two policies' high-probability token sets. Let $`S_t^\theta(s)=\operatorname{TopK}(\pi_{\theta_t}(\cdot\mid s),k)`$ and $`S^T(s)=\operatorname{TopK}(\pi_T(\cdot\mid s),k)`$. The overlap at optimization step $`t`$ is (Equation 4):
+**Top-$`k`$ token overlap ratio.** This metric measures agreement between the two policies' high-probability token sets. Let $`S_t^\theta(s)=\mathrm{TopK}(\pi_{\theta_t}(\cdot\mid s),k)`$ and $`S^T(s)=\mathrm{TopK}(\pi_T(\cdot\mid s),k)`$. The overlap at optimization step $`t`$ is (Equation 4):
 
 ```math
 O_t^{(k)}

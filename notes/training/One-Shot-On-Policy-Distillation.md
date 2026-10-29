@@ -76,7 +76,7 @@ $`^{1}`$Tsinghua University, $`^{2}`$University of Chinese Academy of Sciences, 
 \mathbb{E}_{x\sim\mathcal{D},\,y\sim\pi_\theta}
 \left[
     \sum_{i=1}^{L}
-    \operatorname{KL}\!\left(
+    \mathrm{KL}\!\left(
         \pi_\theta(\cdot\mid s_i)
         \,\Vert\,
         \pi_T(\cdot\mid s_i)
@@ -104,7 +104,7 @@ A_i^{\text{top-}k}
 \right]
 ```
 
-其中 $`\mathcal{V}_i = \operatorname{TopK}(\pi_\theta(\cdot \mid s), k)`$，而 $`\tilde{\pi}_\theta`$ 是 $`\pi_\theta`$ 在该集合上重新归一化后的结果。它把散度截断成 $`k`$ 项，而不是用一个采样得到的 token 去估计，以分布的尾部换取更低的方差。每次运行使用哪一种形式，见第 3.1 节。下面的对齐指标是由两个策略记录下来的分布算出的诊断量，因此在两种形式下都可以得到。
+其中 $`\mathcal{V}_i = \mathrm{TopK}(\pi_\theta(\cdot \mid s), k)`$，而 $`\tilde{\pi}_\theta`$ 是 $`\pi_\theta`$ 在该集合上重新归一化后的结果。它把散度截断成 $`k`$ 项，而不是用一个采样得到的 token 去估计，以分布的尾部换取更低的方差。每次运行使用哪一种形式，见第 3.1 节。下面的对齐指标是由两个策略记录下来的分布算出的诊断量，因此在两种形式下都可以得到。
 
 #### 2.3 动态指标
 
@@ -112,7 +112,7 @@ A_i^{\text{top-}k}
 
 **全量数据回收率。** 当参照对象是全量数据 OPD 而不是教师时，我们改用全量数据 OPD 的增益来归一化。记 $`M_F`$ 为同一优化步下全量数据 OPD 的分数，则全量数据回收率为 $`\frac{M_t-M_0}{M_F-M_0}\times100\%`$。取值接近 $`100\%`$ 表示一个精简的查询集几乎达到了全量数据 OPD 的增益，高于 $`100\%`$ 则表示超过了它。
 
-**Top-$`k`$ token 重叠率。** 这个指标衡量两个策略的高概率 token 集合之间的一致程度。记 $`S_t^\theta(s)=\operatorname{TopK}(\pi_{\theta_t}(\cdot\mid s),k)`$，$`S^T(s)=\operatorname{TopK}(\pi_T(\cdot\mid s),k)`$，则第 $`t`$ 步的重叠率为（式 4）：
+**Top-$`k`$ token 重叠率。** 这个指标衡量两个策略的高概率 token 集合之间的一致程度。记 $`S_t^\theta(s)=\mathrm{TopK}(\pi_{\theta_t}(\cdot\mid s),k)`$，$`S^T(s)=\mathrm{TopK}(\pi_T(\cdot\mid s),k)`$，则第 $`t`$ 步的重叠率为（式 4）：
 
 ```math
 O_t^{(k)}
