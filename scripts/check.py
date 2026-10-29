@@ -30,6 +30,10 @@ Checks on files changed vs origin/main (--all: every tracked file):
    are too private to commit themselves. A missing file is a WARN, so a fresh clone still works.
 7. Files over 5 MB get a WARN (changed files only).
 8. markdownlint, configured by .markdownlint-cli2.jsonc, passes on the .md files.
+9. GitHub can render the math in the .md files: no ```math block or inline $`...`$ formula
+   uses a macro GitHub's renderer refuses (\\operatorname among them: write \\mathrm{...}) or
+   one from a MathJax package it switches off (\\newcommand, \\def, \\href, ...), and neither a
+   formula nor the page holds more '{' than GitHub renders.
 """
 import glob
 import os
@@ -89,6 +93,74 @@ def load_private_patterns():
                 raise SystemExit(f"{PRIVATE_PATTERNS}:{n}: expected 'ERROR|WARN<TAB>regex<TAB>label'")
             (errors if parts[0] == "ERROR" else warns).append((parts[1], parts[2]))
     return errors, warns, None
+
+
+# What GitHub's math renderer does with a formula (its math-renderer element, read 2026-10-29).
+# It refuses these macros outright, showing "The following macros are not allowed" instead,
+GITHUB_MATH_REFUSED = ("operatorname", "DeclareMathOperator", "DeclarePairedDelimiters",
+                       "newtagform", "renewtagform", "colorbox", "fcolorbox", "definecolor",
+                       "phantom", "hphantom", "vphantom", "mathchoice", "Newextarrow",
+                       "unicode", "mmlToken")
+# switches off these MathJax packages, so their macros do not render either,
+GITHUB_MATH_OFF = {
+    "newcommand": ("newcommand", "renewcommand", "newenvironment", "renewenvironment", "def", "let"),
+    "require": ("require",),
+    "html": ("href", "class", "style", "cssId"),
+    "bbox": ("bbox",),
+    "action": ("toggle", "mathtip", "texttip"),
+    "colortbl": ("cellcolor", "rowcolor", "columncolor"),
+}
+GITHUB_MATH_PACKAGE = {macro: pkg for pkg, macros in GITHUB_MATH_OFF.items() for macro in macros}
+GITHUB_MATH_OFF_RE = re.compile(r"\\(%s)(?![A-Za-z])" % "|".join(GITHUB_MATH_PACKAGE))
+# and charges each formula its '{' count plus one. A formula over 1,000 prints "Unable to render
+# expression." instead, and once the page passes 2,000 so does every formula from there on.
+GITHUB_MATH_MAX_ONE, GITHUB_MATH_MAX_PAGE = 1000, 2000
+MATH_INLINE_RE = re.compile(r"\$`([^`\n]+)`\$")
+
+
+def math_formulas(body):
+    """(line, TeX) for every formula GitHub renders: each ```math block and inline $`...`$."""
+    found, fence, start, block = [], None, 0, []
+    for n, line in enumerate(body.split("\n"), 1):
+        s = line.lstrip()
+        if s.startswith("```"):
+            if fence is None:
+                fence, start, block = s[3:].strip().lower(), n, []
+            else:
+                if fence == "math":
+                    found.append((start, "\n".join(block)))
+                fence = None
+        elif fence is not None:
+            block.append(line)
+        else:
+            # A $`...`$ inside a longer code span (`` ... ``) is code, not math.
+            code_free = re.sub(r"(`{2,}).+?\1", "", line)
+            found += [(n, m.group(1)) for m in MATH_INLINE_RE.finditer(code_free)]
+    return found
+
+
+def github_math_errors(rel, body):
+    """Formulas GitHub would show as an error box instead of rendering them."""
+    errors, cost = [], 0
+    for line, tex in math_formulas(body):
+        for name in GITHUB_MATH_REFUSED:
+            # GitHub's own test: the formula contains \name, \$name or \${name.
+            if any(f"\\{p}{name}" in tex for p in ("", "$", "${")):
+                hint = r" - write \mathrm{...}" if name == "operatorname" else ""
+                errors.append(f"{rel}:{line}: GitHub math refuses \\{name}{hint}")
+        for name in dict.fromkeys(GITHUB_MATH_OFF_RE.findall(tex)):
+            errors.append(f"{rel}:{line}: GitHub math switches off MathJax's "
+                          f"{GITHUB_MATH_PACKAGE[name]} package, so \\{name} does not render")
+        one = tex.count("{") + 1
+        if one > GITHUB_MATH_MAX_ONE:
+            errors.append(f"{rel}:{line}: formula costs {one} ('{{' count plus one); "
+                          f"GitHub renders none over {GITHUB_MATH_MAX_ONE}")
+        if cost <= GITHUB_MATH_MAX_PAGE < cost + one:
+            errors.append(f"{rel}:{line}: the page's math passes GitHub's budget of "
+                          f"{GITHUB_MATH_MAX_PAGE} ('{{' count plus one per formula) here, "
+                          f"so no formula from here on renders - split the note")
+        cost += one
+    return errors
 
 
 def markdownlint(md_files):
@@ -237,6 +309,8 @@ def run_checks(scan_all, staged):
     lint_errors, lint_warns = markdownlint(lint_targets)
     errors += lint_errors
     warns += lint_warns
+    for f in lint_targets:
+        errors += github_math_errors(f, read(f))
 
     priv_errors, priv_warns, note = load_private_patterns()
     if note:

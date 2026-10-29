@@ -55,6 +55,7 @@ markdownlint enforces most of this.
 - No raw HTML. Put identifiers and anything with angle brackets in backticks.
 - Table delimiter rows have spaces: `| --- | --- |`.
 - An image is `![alt](./img/x.png)`, then a blank line, then an italic caption that ends with punctuation.
+- Write math as `` $`...`$ `` inline and in a ```` ```math ```` block. GitHub's math renderer refuses some macros, `\operatorname` among them (write `\mathrm{TopK}`), switches off MathJax's `newcommand`, `html`, `require`, `bbox`, `action` and `colortbl` packages, and stops rendering once a formula holds about 1,000 `{` or a page about 2,000. The checker fails on all three.
 - No YAML frontmatter. GitHub shows it on the page, so metadata goes in the list at the top.
 
 ## Never
