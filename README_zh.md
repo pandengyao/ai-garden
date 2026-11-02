@@ -59,6 +59,10 @@
 
 ### 训练 (Training)
 
+- [on-policy 蒸馏（OPD）论文调研：2026 年 8–10 月的新论文与 GitHub 论文合集](./notes/training/On-Policy-Distillation-Literature-Review.md) · 2026-11-02
+  - 2026 年 8–10 月 arXiv 上有 540 篇核心 OPD 论文（8 月 128 篇，10 月 212 篇），另有 35 篇工业技术报告用到 OPD。这一季的主线是追问 OPD 到底在起什么作用，多数结论和直觉相反：1～8 条 prompt 就能接近全量数据，只监督 0.05%～1% 的 token 就能追平全 token，反向 KL 的 OPD 传技能不传事实，17 组师生对里有 14 组用初始学生离线采样的数据反而更好。同模型自蒸馏（OPSD）论文最多，特权信息的作用也被十余篇分析论文质疑；先 OPD 后 RL 优于联合训练；多教师 OPD 已是工业界合并专家模型的常用做法，但在受控对比中并不比 SFT 合并更准。GitHub 上 chrisliu298、thinkwee、nick7nlp 三个大合集对近三个月论文只共同收录了 42 篇，而且都还没收 10 月中下旬的论文。
+  - 配套页面：[论文清单（540 篇核心论文与 136 篇相关工作）](./notes/training/On-Policy-Distillation-Literature-Review-Papers.md)
+
 - [训练数据中的思维链合成：方法、证据与开放问题（文献综述）](./notes/training/CoT-Data-Synthesis-Literature-Review.md) · 2026-10-22
   - 系统检索 13,589 篇候选、纳入 1,527 篇、精读 237 份来源后的结论：用于 SFT 与蒸馏的推理数据，重心已从“多找题”转向“每题多采样、再按学生挑选”，2026 年又快速转向 on-policy 蒸馏（摘要提及它的纳入文献从 2025 年下半年的 2 篇增至 2026 年上半年的 79 篇）；代码与智能体数据的瓶颈在任务与环境的多样性。“教师越强越好”“答案正确的轨迹更好”“数据越多越好”“验证一定有益”四条直觉都有受控实验给出的反例，成立与否取决于学生规模、师生分布距离与训练预算。以答案为条件的生成、长度惩罚与递归自训练，会以答案正确率察觉不到的方式损害数据。
   - 分节页面：[第 4 节](./notes/training/CoT-Data-Synthesis-Literature-Review-Ch04.md) · [第 5 节](./notes/training/CoT-Data-Synthesis-Literature-Review-Ch05.md) · [第 6 节](./notes/training/CoT-Data-Synthesis-Literature-Review-Ch06.md) · [第 7 节](./notes/training/CoT-Data-Synthesis-Literature-Review-Ch07.md) · [第 8 节](./notes/training/CoT-Data-Synthesis-Literature-Review-Ch08.md) · [第 9 节](./notes/training/CoT-Data-Synthesis-Literature-Review-Ch09.md) · [第 10 节](./notes/training/CoT-Data-Synthesis-Literature-Review-Ch10.md)
