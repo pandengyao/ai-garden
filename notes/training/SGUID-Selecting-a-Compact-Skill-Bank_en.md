@@ -59,7 +59,7 @@ My reading is this: the reference solution sets the direction (correct rollouts 
 **Optional: the formulas for support, the threshold and the answer check.** You can skip this without losing the thread. Let the difference between the teacher's and the student's log probabilities at token $`n`$ be
 
 ```math
-\Delta_n=\log P_T(\hat y_n\mid x,s,\hat y_{<n})-\log P_S(\hat y_n\mid x,\hat y_{<n})
+\Delta_n=\log P_T(\hat y_n\mid x,s,\hat y_{< n})-\log P_S(\hat y_n\mid x,\hat y_{< n})
 ```
 
 The support $`\tilde a`$ is roughly the average of $`\Delta_n`$ over the whole rollout (the actual computation masks irrelevant tokens and clips extreme values). The threshold is $`|\tilde a|>\kappa`$ with $`\kappa=0.05`$; the answer check is $`\mathrm{sign}(r\cdot\tilde a)`$, with $`r=+1`$ for a correct rollout and $`r=-1`$ for a wrong one.

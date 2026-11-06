@@ -98,7 +98,7 @@ Now solve the target problem independently.
 **Optional: the training objective both methods share.** You can skip it without losing the thread. The paper's Eq. (4) is:
 
 ```math
-\mathcal{L}_m(\theta)=\mathbb{E}_{(x_i,y_i^\star)\sim\mathcal{D}}\;\mathbb{E}_{\hat y_i\sim p_S(\cdot\mid x_i)}\left[\frac{1}{|\hat y_i|}\sum_{t=1}^{|\hat y_i|}D\Big(p_T^{m}(\cdot\mid x_i,c_i^{m},\hat y_{i,<t})\,\Big\|\,p_S(\cdot\mid x_i,\hat y_{i,<t})\Big)\right]
+\mathcal{L}_m(\theta)=\mathbb{E}_{(x_i,y_i^\star)\sim\mathcal{D}}\;\mathbb{E}_{\hat y_i\sim p_S(\cdot\mid x_i)}\left[\frac{1}{|\hat y_i|}\sum_{t=1}^{|\hat y_i|}D\Big(p_T^{m}(\cdot\mid x_i,c_i^{m},\hat y_{i,< t})\,\Big\|\,p_S(\cdot\mid x_i,\hat y_{i,< t})\Big)\right]
 ```
 
 - $`x_i`$ is the target problem, $`\hat y_i`$ is the response the student wrote itself, and $`\hat y_{i,<t}`$ is the first $`t-1`$ tokens of that response;

@@ -120,13 +120,13 @@ SDPO 默认的规则是：学生这次做对了、同组又没有另一份做对
 把老师的概率除以学生的概率，记作比值 $`\tau`$：
 
 ```math
-\tau^t_v=\frac{\pi_{\theta_{\text{old}}}(v\mid x,\,y_{<t},\,c,\,r,\,\mathcal{P},\,\mathcal{B}(x))}{\pi_\theta(v\mid x,\,y_{<t})}
+\tau^t_v=\frac{\pi_{\theta_{\text{old}}}(v\mid x,\,y_{< t},\,c,\,r,\,\mathcal{P},\,\mathcal{B}(x))}{\pi_\theta(v\mid x,\,y_{< t})}
 ```
 
 分子是老师：参数 $`\theta_{\text{old}}`$，看题目 $`x`$、学生回答的前 $`t-1`$ 个 token $`y_{<t}`$、反馈 $`c`$、反思 $`r`$、错题本 $`\mathcal{P}`$ 和存档 $`\mathcal{B}(x)`$，给出第 $`t`$ 个位置写 token $`v`$ 的概率。分母是学生，只看题目和前文。训练目标（论文式 1）是：
 
 ```math
-\mathcal{L}_{\text{SD}}(\theta)=\mathbb{E}_{x,\;y\sim\pi_\theta}\Big[\sum_{t=1}^{T}\sum_{v\in\mathcal{V}}\pi_\theta(v\mid x,y_{<t})\,f(\tilde\tau^t_v)\Big]
+\mathcal{L}_{\text{SD}}(\theta)=\mathbb{E}_{x,\;y\sim\pi_\theta}\Big[\sum_{t=1}^{T}\sum_{v\in\mathcal{V}}\pi_\theta(v\mid x,y_{< t})\,f(\tilde\tau^t_v)\Big]
 ```
 
 - $`\tilde\tau`$ 是截断后的比值，下限 0.2（Manufactoria-Has 另设上限 5），防止个别 token 的比值太极端，把训练带偏。

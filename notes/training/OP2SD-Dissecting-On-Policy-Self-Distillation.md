@@ -98,7 +98,7 @@ OP²SD 的老师看到：
 **选读：两种方法共用的训练目标。** 不看也不影响理解。论文式 (4) 是：
 
 ```math
-\mathcal{L}_m(\theta)=\mathbb{E}_{(x_i,y_i^\star)\sim\mathcal{D}}\;\mathbb{E}_{\hat y_i\sim p_S(\cdot\mid x_i)}\left[\frac{1}{|\hat y_i|}\sum_{t=1}^{|\hat y_i|}D\Big(p_T^{m}(\cdot\mid x_i,c_i^{m},\hat y_{i,<t})\,\Big\|\,p_S(\cdot\mid x_i,\hat y_{i,<t})\Big)\right]
+\mathcal{L}_m(\theta)=\mathbb{E}_{(x_i,y_i^\star)\sim\mathcal{D}}\;\mathbb{E}_{\hat y_i\sim p_S(\cdot\mid x_i)}\left[\frac{1}{|\hat y_i|}\sum_{t=1}^{|\hat y_i|}D\Big(p_T^{m}(\cdot\mid x_i,c_i^{m},\hat y_{i,< t})\,\Big\|\,p_S(\cdot\mid x_i,\hat y_{i,< t})\Big)\right]
 ```
 
 - $`x_i`$ 是目标题，$`\hat y_i`$ 是学生自己写的回答，$`\hat y_{i,<t}`$ 是这份回答的前 $`t-1`$ 个 token；

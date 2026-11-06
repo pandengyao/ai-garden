@@ -129,7 +129,7 @@ Appendix Figure 22 is another example, which shows clearly how the teacher "offe
 **Optional: the loss function and the advantage.** You can skip this without losing the thread. Write the problem as $`x`$, the student's response as $`y`$, the feedback as $`f`$ and the model as $`\pi_\theta`$. The student's "next-token distribution" at position $`t`$ is $`\pi_\theta(\cdot \mid x, y_{<t})`$, and the teacher's is $`\pi_\theta(\cdot \mid x, f, y_{<t})`$. Both use the same parameters; the only difference is whether $`f`$ is in the input. SDPO makes the two distributions as close as possible at every position, and measures the gap with the KL divergence:
 
 ```math
-\mathcal{L}_{\mathrm{SDPO}}(\theta)=\sum_{t} \mathrm{KL}\Big(\pi_\theta(\cdot \mid x, y_{<t}) \,\Vert\, \mathrm{stopgrad}\big(\pi_\theta(\cdot \mid x, f, y_{<t})\big)\Big)
+\mathcal{L}_{\mathrm{SDPO}}(\theta)=\sum_{t} \mathrm{KL}\Big(\pi_\theta(\cdot \mid x, y_{< t}) \,\Vert\, \mathrm{stopgrad}\big(\pi_\theta(\cdot \mid x, f, y_{< t})\big)\Big)
 ```
 
 $`\mathrm{stopgrad}`$ means no gradient is computed on the teacher side, which serves only as a reference. Otherwise, optimization would also pull the teacher toward the student, which amounts to ignoring the feedback.
@@ -139,7 +139,7 @@ The authors prove that the gradient of this objective is a kind of policy gradie
 ```math
 A^{\mathrm{GRPO}}_{i,t} = r_i - \mathrm{mean}(r_1,\dots,r_G),
 \qquad
-A^{\mathrm{SDPO}}_{i,t}(\hat y) = \log \frac{\pi_\theta(\hat y \mid x, f_i, y_{i,<t})}{\pi_\theta(\hat y \mid x, y_{i,<t})}
+A^{\mathrm{SDPO}}_{i,t}(\hat y) = \log \frac{\pi_\theta(\hat y \mid x, f_i, y_{i,< t})}{\pi_\theta(\hat y \mid x, y_{i,< t})}
 ```
 
 Here $`r_i`$ is the score of the $`i`$-th response, $`G`$ is the number of attempts per problem, and $`\hat y`$ is a candidate token at position $`t`$. GRPO's score is the same at every position of a response; SDPO's score varies with the position and the candidate token: positive when the teacher favors the token more, negative when it favors it less, and 0 when they agree. Because only the way the advantage is computed changes, SDPO fits into existing GRPO training code with small changes.

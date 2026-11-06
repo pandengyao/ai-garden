@@ -111,7 +111,7 @@ Compared with several common approaches (I put this table together from the pape
 **Optional: the formula for the training objective and a worked example.** You can skip it without losing the thread. Equations (1), (6) and (8) of the paper combine into:
 
 ```math
-\mathcal L_{\text{OPSD}}(\theta)=\mathbb E_{(x,y^\star)\sim\mathcal S}\;\mathbb E_{\hat y\sim p_S(\cdot\mid x)}\Big[\frac{1}{|\hat y|}\sum_{n=1}^{|\hat y|} D\big(p_T(\cdot\mid x,y^\star,\hat y_{<n})\,\big\Vert\,p_S(\cdot\mid x,\hat y_{<n})\big)\Big]
+\mathcal L_{\text{OPSD}}(\theta)=\mathbb E_{(x,y^\star)\sim\mathcal S}\;\mathbb E_{\hat y\sim p_S(\cdot\mid x)}\Big[\frac{1}{|\hat y|}\sum_{n=1}^{|\hat y|} D\big(p_T(\cdot\mid x,y^\star,\hat y_{< n})\,\big\Vert\,p_S(\cdot\mid x,\hat y_{< n})\big)\Big]
 ```
 
 - $`\mathcal S=\{(x_i,y_i^\star)\}_{i=1}^N`$ is the dataset. $`x`$ is the problem, $`y^\star`$ is the reference solution, and $`\hat y`$ is the response the student sampled, of length $`|\hat y|`$, at most 1024 tokens during training; $`\hat y_{<n}`$ is the first $`n-1`$ tokens the student wrote.
@@ -129,7 +129,7 @@ Worked example (an illustration I made up, not from the paper): continuing the e
 
 ```math
 \mathcal L_{\text{Supervised}}(\theta)=\mathbb E_{(x,y)\sim\mathcal S}\big[D(p_T\Vert p_S)(y\mid x)\big],\qquad
-D(p_T\Vert p_S)(y\mid x)=\frac{1}{|y|}\sum_{n=1}^{|y|}D\big(p_T(\cdot\mid y_{<n},x)\,\Vert\,p_S(\cdot\mid y_{<n},x)\big)
+D(p_T\Vert p_S)(y\mid x)=\frac{1}{|y|}\sum_{n=1}^{|y|}D\big(p_T(\cdot\mid y_{< n},x)\,\Vert\,p_S(\cdot\mid y_{< n},x)\big)
 ```
 
 ```math
@@ -153,8 +153,8 @@ Section 3.2 of the paper also gives another implementation of OPSD, and uses it 
 **Optional: the sampled-token objective (Equation (9)).** You can skip it without losing the thread.
 
 ```math
-A_n(x,\hat y)=\log p_T(\hat y_n\mid x,y^\star,\hat y_{<n})-\log p_S(\hat y_n\mid x,\hat y_{<n}),\qquad
-\mathcal L(\theta)=-\mathbb E_{(x,y^\star)\sim\mathcal S}\Big[\mathbb E_{\hat y\sim p_S(\cdot\mid x)}\Big[\frac{1}{|\hat y|}\sum_{n=1}^{|\hat y|}A_n(x,\hat y)\,\log p_S(\hat y_n\mid x,\hat y_{<n})\Big]\Big]
+A_n(x,\hat y)=\log p_T(\hat y_n\mid x,y^\star,\hat y_{< n})-\log p_S(\hat y_n\mid x,\hat y_{< n}),\qquad
+\mathcal L(\theta)=-\mathbb E_{(x,y^\star)\sim\mathcal S}\Big[\mathbb E_{\hat y\sim p_S(\cdot\mid x)}\Big[\frac{1}{|\hat y|}\sum_{n=1}^{|\hat y|}A_n(x,\hat y)\,\log p_S(\hat y_n\mid x,\hat y_{< n})\Big]\Big]
 ```
 
 - $`\hat y_n`$ is the token the student actually sampled at position $`n`$; $`A_n`$ is how much more the teacher prefers this token than the student does (the difference in log probabilities), treated as a constant when computing gradients.
@@ -175,7 +175,7 @@ A_i=\frac{r_i-\mathrm{mean}(\{r_j\}_{j=1}^G)}{\mathrm{std}(\{r_j\}_{j=1}^G)}
 
 ```math
 \mathcal L_{\text{GRPO}}(\theta)=\mathbb E_{\substack{x\sim\mathcal S\\ o_1,\dots,o_G\sim\pi_\theta(\cdot\mid x)}}\Big[\frac1G\sum_{i=1}^G\frac{1}{|o_i|}\sum_{n=1}^{|o_i|}\min\big(\rho_i^n A_i,\ \mathrm{clip}(\rho_i^n,1-\varepsilon,1+\varepsilon)A_i\big)-\beta D_{\mathrm{KL}}\big[\pi_\theta(\cdot\mid x)\Vert\pi_{\text{ref}}(\cdot\mid x)\big]\Big],\qquad
-\rho_i^n=\frac{\pi_\theta(o_i^n\mid x,o_i^{<n})}{\pi_{\theta_{\text{old}}}(o_i^n\mid x,o_i^{<n})}
+\rho_i^n=\frac{\pi_\theta(o_i^n\mid x,o_i^{< n})}{\pi_{\theta_{\text{old}}}(o_i^n\mid x,o_i^{< n})}
 ```
 
 - $`\rho_i^n`$ is the importance ratio, and $`\pi_{\theta_{\text{old}}}`$ is the model before this update; $`\varepsilon`$ is the clipping range for the ratio; $`\beta`$ is the coefficient of the reverse KL penalty toward the reference model $`\pi_{\text{ref}}`$ (set to 0 for GRPO in this paper; see Table 6 in Section 9). This expression is an objective to be maximized.
@@ -190,7 +190,7 @@ J_{\text{STaR}}(\theta)=\sum_{i=1}^N\mathbb E_{(r,y)\sim p_\theta(\cdot\mid x_i)
 ```
 
 ```math
-r_n(x,\hat y)\triangleq\log p_T(\hat y_n\mid x,y^\star,\hat y_{<n})-\log p_S(\hat y_n\mid x,\hat y_{<n}),\qquad
+r_n(x,\hat y)\triangleq\log p_T(\hat y_n\mid x,y^\star,\hat y_{< n})-\log p_S(\hat y_n\mid x,\hat y_{< n}),\qquad
 J_{\text{OPSD}}(\theta)=\mathbb E_{(x,y^\star)\sim\mathcal S}\Big[\mathbb E_{\hat y\sim p_S(\cdot\mid x)}\Big[\frac1{|\hat y|}\sum_{n=1}^{|\hat y|}r_n(x,\hat y)\Big]\Big]
 ```
 

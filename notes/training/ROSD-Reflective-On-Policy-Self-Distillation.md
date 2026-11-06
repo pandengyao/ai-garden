@@ -145,7 +145,7 @@ m_t=\begin{cases}0, & t < k\\ 1, & t \ge k\end{cases}
 学生和老师的分布分别是：
 
 ```math
-p^{S}_t=\pi_\theta(\cdot\mid x,y_{<t}),\qquad p^{T}_t=\pi_\theta(\cdot\mid x,e,y_{<t})
+p^{S}_t=\pi_\theta(\cdot\mid x,y_{< t}),\qquad p^{T}_t=\pi_\theta(\cdot\mid x,e,y_{< t})
 ```
 
 最终的损失是：

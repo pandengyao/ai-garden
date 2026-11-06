@@ -120,13 +120,13 @@ You can skip this without losing the thread.
 Divide the teacher's probability by the student's probability and call the ratio $`\tau`$:
 
 ```math
-\tau^t_v=\frac{\pi_{\theta_{\text{old}}}(v\mid x,\,y_{<t},\,c,\,r,\,\mathcal{P},\,\mathcal{B}(x))}{\pi_\theta(v\mid x,\,y_{<t})}
+\tau^t_v=\frac{\pi_{\theta_{\text{old}}}(v\mid x,\,y_{< t},\,c,\,r,\,\mathcal{P},\,\mathcal{B}(x))}{\pi_\theta(v\mid x,\,y_{< t})}
 ```
 
 The numerator is the teacher: with parameters $`\theta_{\text{old}}`$, it looks at the problem $`x`$, the first $`t-1`$ tokens of the student's response $`y_{<t}`$, the feedback $`c`$, the reflection $`r`$, the mistake notebook $`\mathcal{P}`$ and the archive $`\mathcal{B}(x)`$, and gives the probability of writing token $`v`$ at position $`t`$. The denominator is the student, which sees only the problem and the preceding text. The training objective (Equation 1 in the paper) is:
 
 ```math
-\mathcal{L}_{\text{SD}}(\theta)=\mathbb{E}_{x,\;y\sim\pi_\theta}\Big[\sum_{t=1}^{T}\sum_{v\in\mathcal{V}}\pi_\theta(v\mid x,y_{<t})\,f(\tilde\tau^t_v)\Big]
+\mathcal{L}_{\text{SD}}(\theta)=\mathbb{E}_{x,\;y\sim\pi_\theta}\Big[\sum_{t=1}^{T}\sum_{v\in\mathcal{V}}\pi_\theta(v\mid x,y_{< t})\,f(\tilde\tau^t_v)\Big]
 ```
 
 - $`\tilde\tau`$ is the ratio after clipping, with a lower bound of 0.2 (Manufactoria-Has also sets an upper bound of 5), which keeps the ratio of an individual token from becoming too extreme and throwing training off course.

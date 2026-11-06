@@ -130,7 +130,7 @@ For each picked step $`i`$, the same model plays two roles:
 Both roles read the same text: the action $`a_i`$ that the student actually wrote at the time. At each token, each side gives a probability distribution over "what the next token is". Training pulls the student's distribution toward the teacher's:
 
 ```math
-\mathcal{L} = \sum_{i\in\mathcal{I}} \sum_{t=1}^{|a_i|} D_\mathrm{KL}\Big(\pi_\theta(\cdot \mid h_i, a_{i,<t}) \;\Big\|\; \texttt{sg}\big(\pi_\theta(\cdot \mid h_i, f_i, a_{i,<t})\big)\Big)
+\mathcal{L} = \sum_{i\in\mathcal{I}} \sum_{t=1}^{|a_i|} D_\mathrm{KL}\Big(\pi_\theta(\cdot \mid h_i, a_{i,< t}) \;\Big\|\; \texttt{sg}\big(\pi_\theta(\cdot \mid h_i, f_i, a_{i,< t})\big)\Big)
 ```
 
 Term by term:

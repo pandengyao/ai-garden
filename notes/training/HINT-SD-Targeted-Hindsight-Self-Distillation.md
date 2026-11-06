@@ -130,7 +130,7 @@
 两个角色读的是同一段文字：学生当时实际写出的动作 $`a_i`$。读到每个 token 时，两边各给出一个"下一个 token 是什么"的概率分布。训练就是让学生的分布向老师靠拢：
 
 ```math
-\mathcal{L} = \sum_{i\in\mathcal{I}} \sum_{t=1}^{|a_i|} D_\mathrm{KL}\Big(\pi_\theta(\cdot \mid h_i, a_{i,<t}) \;\Big\|\; \texttt{sg}\big(\pi_\theta(\cdot \mid h_i, f_i, a_{i,<t})\big)\Big)
+\mathcal{L} = \sum_{i\in\mathcal{I}} \sum_{t=1}^{|a_i|} D_\mathrm{KL}\Big(\pi_\theta(\cdot \mid h_i, a_{i,< t}) \;\Big\|\; \texttt{sg}\big(\pi_\theta(\cdot \mid h_i, f_i, a_{i,< t})\big)\Big)
 ```
 
 逐项看：

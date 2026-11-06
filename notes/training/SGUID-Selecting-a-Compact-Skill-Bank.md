@@ -59,7 +59,7 @@
 **选读：支持度、门槛和对答案的公式。** 不看也不影响理解。设第 $`n`$ 个 token 上老师和学生的对数概率之差为
 
 ```math
-\Delta_n=\log P_T(\hat y_n\mid x,s,\hat y_{<n})-\log P_S(\hat y_n\mid x,\hat y_{<n})
+\Delta_n=\log P_T(\hat y_n\mid x,s,\hat y_{< n})-\log P_S(\hat y_n\mid x,\hat y_{< n})
 ```
 
 支持度 $`\tilde a`$ 大致是 $`\Delta_n`$ 在整份解答上的平均值（实际计算时会屏蔽无关 token、截掉极端值）。门槛是 $`|\tilde a|>\kappa`$，$`\kappa=0.05`$；对答案是 $`\mathrm{sign}(r\cdot\tilde a)`$，做对时 $`r=+1`$，做错时 $`r=-1`$。

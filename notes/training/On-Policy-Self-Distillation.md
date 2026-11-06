@@ -111,7 +111,7 @@ GRPO 的问题在这篇论文的设置里很具体：每题做 8 遍、每遍最
 **选读：训练目标的公式和一个算例。** 不看也不影响理解。论文的式 (1)、(6)、(8) 合起来是：
 
 ```math
-\mathcal L_{\text{OPSD}}(\theta)=\mathbb E_{(x,y^\star)\sim\mathcal S}\;\mathbb E_{\hat y\sim p_S(\cdot\mid x)}\Big[\frac{1}{|\hat y|}\sum_{n=1}^{|\hat y|} D\big(p_T(\cdot\mid x,y^\star,\hat y_{<n})\,\big\Vert\,p_S(\cdot\mid x,\hat y_{<n})\big)\Big]
+\mathcal L_{\text{OPSD}}(\theta)=\mathbb E_{(x,y^\star)\sim\mathcal S}\;\mathbb E_{\hat y\sim p_S(\cdot\mid x)}\Big[\frac{1}{|\hat y|}\sum_{n=1}^{|\hat y|} D\big(p_T(\cdot\mid x,y^\star,\hat y_{< n})\,\big\Vert\,p_S(\cdot\mid x,\hat y_{< n})\big)\Big]
 ```
 
 - $`\mathcal S=\{(x_i,y_i^\star)\}_{i=1}^N`$ 是数据集。$`x`$ 是题目，$`y^\star`$ 是参考解答，$`\hat y`$ 是学生采样的回答，长度 $`|\hat y|`$，训练时最多 1024 个 token；$`\hat y_{<n}`$ 是学生写下的前 $`n-1`$ 个 token。
@@ -129,7 +129,7 @@ GRPO 的问题在这篇论文的设置里很具体：每题做 8 遍、每遍最
 
 ```math
 \mathcal L_{\text{Supervised}}(\theta)=\mathbb E_{(x,y)\sim\mathcal S}\big[D(p_T\Vert p_S)(y\mid x)\big],\qquad
-D(p_T\Vert p_S)(y\mid x)=\frac{1}{|y|}\sum_{n=1}^{|y|}D\big(p_T(\cdot\mid y_{<n},x)\,\Vert\,p_S(\cdot\mid y_{<n},x)\big)
+D(p_T\Vert p_S)(y\mid x)=\frac{1}{|y|}\sum_{n=1}^{|y|}D\big(p_T(\cdot\mid y_{< n},x)\,\Vert\,p_S(\cdot\mid y_{< n},x)\big)
 ```
 
 ```math
@@ -153,8 +153,8 @@ D(p_T\Vert p_S)(y\mid x)=\frac{1}{|y|}\sum_{n=1}^{|y|}D\big(p_T(\cdot\mid y_{<n}
 **选读：只看采样 token 的目标（式 (9)）。** 不看也不影响理解。
 
 ```math
-A_n(x,\hat y)=\log p_T(\hat y_n\mid x,y^\star,\hat y_{<n})-\log p_S(\hat y_n\mid x,\hat y_{<n}),\qquad
-\mathcal L(\theta)=-\mathbb E_{(x,y^\star)\sim\mathcal S}\Big[\mathbb E_{\hat y\sim p_S(\cdot\mid x)}\Big[\frac{1}{|\hat y|}\sum_{n=1}^{|\hat y|}A_n(x,\hat y)\,\log p_S(\hat y_n\mid x,\hat y_{<n})\Big]\Big]
+A_n(x,\hat y)=\log p_T(\hat y_n\mid x,y^\star,\hat y_{< n})-\log p_S(\hat y_n\mid x,\hat y_{< n}),\qquad
+\mathcal L(\theta)=-\mathbb E_{(x,y^\star)\sim\mathcal S}\Big[\mathbb E_{\hat y\sim p_S(\cdot\mid x)}\Big[\frac{1}{|\hat y|}\sum_{n=1}^{|\hat y|}A_n(x,\hat y)\,\log p_S(\hat y_n\mid x,\hat y_{< n})\Big]\Big]
 ```
 
 - $`\hat y_n`$ 是学生在位置 $`n`$ 实际采样到的 token；$`A_n`$ 是老师比学生更偏好这个 token 的程度（对数概率之差），算梯度时当作常数。
@@ -175,7 +175,7 @@ A_i=\frac{r_i-\mathrm{mean}(\{r_j\}_{j=1}^G)}{\mathrm{std}(\{r_j\}_{j=1}^G)}
 
 ```math
 \mathcal L_{\text{GRPO}}(\theta)=\mathbb E_{\substack{x\sim\mathcal S\\ o_1,\dots,o_G\sim\pi_\theta(\cdot\mid x)}}\Big[\frac1G\sum_{i=1}^G\frac{1}{|o_i|}\sum_{n=1}^{|o_i|}\min\big(\rho_i^n A_i,\ \mathrm{clip}(\rho_i^n,1-\varepsilon,1+\varepsilon)A_i\big)-\beta D_{\mathrm{KL}}\big[\pi_\theta(\cdot\mid x)\Vert\pi_{\text{ref}}(\cdot\mid x)\big]\Big],\qquad
-\rho_i^n=\frac{\pi_\theta(o_i^n\mid x,o_i^{<n})}{\pi_{\theta_{\text{old}}}(o_i^n\mid x,o_i^{<n})}
+\rho_i^n=\frac{\pi_\theta(o_i^n\mid x,o_i^{< n})}{\pi_{\theta_{\text{old}}}(o_i^n\mid x,o_i^{< n})}
 ```
 
 - $`\rho_i^n`$ 是重要性比值，$`\pi_{\theta_{\text{old}}}`$ 是本次更新前的模型；$`\varepsilon`$ 是比值的截断范围；$`\beta`$ 是对参考模型 $`\pi_{\text{ref}}`$ 的 reverse KL 惩罚系数（本文 GRPO 设为 0，见第 9 节的表 6）。这个式子是要最大化的目标。
@@ -190,7 +190,7 @@ J_{\text{STaR}}(\theta)=\sum_{i=1}^N\mathbb E_{(r,y)\sim p_\theta(\cdot\mid x_i)
 ```
 
 ```math
-r_n(x,\hat y)\triangleq\log p_T(\hat y_n\mid x,y^\star,\hat y_{<n})-\log p_S(\hat y_n\mid x,\hat y_{<n}),\qquad
+r_n(x,\hat y)\triangleq\log p_T(\hat y_n\mid x,y^\star,\hat y_{< n})-\log p_S(\hat y_n\mid x,\hat y_{< n}),\qquad
 J_{\text{OPSD}}(\theta)=\mathbb E_{(x,y^\star)\sim\mathcal S}\Big[\mathbb E_{\hat y\sim p_S(\cdot\mid x)}\Big[\frac1{|\hat y|}\sum_{n=1}^{|\hat y|}r_n(x,\hat y)\Big]\Big]
 ```
 

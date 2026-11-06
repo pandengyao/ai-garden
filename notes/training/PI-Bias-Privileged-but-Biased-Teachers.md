@@ -62,7 +62,7 @@
 **选读：自蒸馏的损失（论文式 (1)）。** 不看也不影响理解。
 
 ```math
-\mathcal{L}_{\text{SD}}(\theta)=\mathbb{E}_{(x,r)}\,\mathbb{E}_{\hat y\sim \mathrm{sg}(p_S)}\left[\frac{1}{|\hat y|}\sum_{t=1}^{|\hat y|} D\Big(\mathrm{sg}\big(p_T(\cdot\mid x,r,\hat y_{<t})\big)\;\Big\|\;p_S(\cdot\mid x,\hat y_{<t})\Big)\right]
+\mathcal{L}_{\text{SD}}(\theta)=\mathbb{E}_{(x,r)}\,\mathbb{E}_{\hat y\sim \mathrm{sg}(p_S)}\left[\frac{1}{|\hat y|}\sum_{t=1}^{|\hat y|} D\Big(\mathrm{sg}\big(p_T(\cdot\mid x,r,\hat y_{< t})\big)\;\Big\|\;p_S(\cdot\mid x,\hat y_{< t})\Big)\right]
 ```
 
 - $`x`$ 是题目，$`r`$ 是 PI，$`\hat y`$ 是学生自己写的解答。
@@ -202,7 +202,7 @@
 **选读：PI 偏差分数的公式（论文式 (2)）。** 不看也不影响理解。
 
 ```math
-\mathrm{PS}_t(w)=\frac{1}{K}\sum_{k=1}^{K}\log\frac{p_T(w_k\mid x,y^\star,y_{<t})}{p_S(w_k\mid x,y_{<t})}
+\mathrm{PS}_t(w)=\frac{1}{K}\sum_{k=1}^{K}\log\frac{p_T(w_k\mid x,y^\star,y_{< t})}{p_S(w_k\mid x,y_{< t})}
 ```
 
 作者拿四种候选文字来测（论文图 3；图上直接标了数值，这里保留两位小数）：

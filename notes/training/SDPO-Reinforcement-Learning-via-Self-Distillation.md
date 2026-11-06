@@ -129,7 +129,7 @@ RLVR 只取其中的"0 分"，其余信息都扔掉了。作者把"保留这段�
 **选读：损失函数和优势值。** 不看也不影响理解。记题目为 $`x`$，学生答案为 $`y`$，反馈为 $`f`$，模型为 $`\pi_\theta`$。学生在第 $`t`$ 个位置的"下一个词概率表"是 $`\pi_\theta(\cdot \mid x, y_{<t})`$，老师的是 $`\pi_\theta(\cdot \mid x, f, y_{<t})`$，两者是同一套参数，区别只在输入里有没有 $`f`$。SDPO 让两张表在每个位置都尽量接近，差距用 KL 散度衡量：
 
 ```math
-\mathcal{L}_{\mathrm{SDPO}}(\theta)=\sum_{t} \mathrm{KL}\Big(\pi_\theta(\cdot \mid x, y_{<t}) \,\Vert\, \mathrm{stopgrad}\big(\pi_\theta(\cdot \mid x, f, y_{<t})\big)\Big)
+\mathcal{L}_{\mathrm{SDPO}}(\theta)=\sum_{t} \mathrm{KL}\Big(\pi_\theta(\cdot \mid x, y_{< t}) \,\Vert\, \mathrm{stopgrad}\big(\pi_\theta(\cdot \mid x, f, y_{< t})\big)\Big)
 ```
 
 $`\mathrm{stopgrad}`$ 表示老师那一侧不求梯度、只当参照。否则优化时老师也会被拉向学生，等于不看反馈了。
@@ -139,7 +139,7 @@ $`\mathrm{stopgrad}`$ 表示老师那一侧不求梯度、只当参照。否则�
 ```math
 A^{\mathrm{GRPO}}_{i,t} = r_i - \mathrm{mean}(r_1,\dots,r_G),
 \qquad
-A^{\mathrm{SDPO}}_{i,t}(\hat y) = \log \frac{\pi_\theta(\hat y \mid x, f_i, y_{i,<t})}{\pi_\theta(\hat y \mid x, y_{i,<t})}
+A^{\mathrm{SDPO}}_{i,t}(\hat y) = \log \frac{\pi_\theta(\hat y \mid x, f_i, y_{i,< t})}{\pi_\theta(\hat y \mid x, y_{i,< t})}
 ```
 
 这里 $`r_i`$ 是第 $`i`$ 个答案的得分，$`G`$ 是每题作答次数，$`\hat y`$ 是第 $`t`$ 个位置上的某个候选词。GRPO 的分数在一个答案的所有位置上都一样；SDPO 的分数随位置和候选词变化：老师更认可就是正数，更不认可就是负数，看法一致就是 0。因为只是换了优势值的算法，SDPO 能套进现有的 GRPO 训练代码，改动不大。

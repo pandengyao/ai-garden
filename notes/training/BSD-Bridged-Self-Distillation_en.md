@@ -140,7 +140,7 @@ In other words, **each token's penalty is adjusted by at most ±10%, and this ra
 **Link to OPD** (Proposition 1 in Appendix C): when $`\delta_t`$ is small, BSD's gradient is approximately GRPO's gradient plus an OPD-style correction term that acts only on wrong responses (with the self-teacher in place of the teacher):
 
 ```math
-g_{\text{BSD}} \approx g_{\text{GRPO}} + \lambda\, \mathbb{E}\Big[\sum_t \mathbb{1}\{A<0\}\, |A|\, \delta_t\, \nabla_\theta \log \pi_\theta(y_t \mid x, y_{<t})\Big]
+g_{\text{BSD}} \approx g_{\text{GRPO}} + \lambda\, \mathbb{E}\Big[\sum_t \mathbb{1}\{A<0\}\, |A|\, \delta_t\, \nabla_\theta \log \pi_\theta(y_t \mid x, y_{< t})\Big]
 ```
 
 The authors stress that this is only one interpretation: it guarantees neither that training is stable nor that the penalties land on the tokens that are actually wrong.

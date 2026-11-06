@@ -145,7 +145,7 @@ m_t=\begin{cases}0, & t < k\\ 1, & t \ge k\end{cases}
 The student's and teacher's distributions are:
 
 ```math
-p^{S}_t=\pi_\theta(\cdot\mid x,y_{<t}),\qquad p^{T}_t=\pi_\theta(\cdot\mid x,e,y_{<t})
+p^{S}_t=\pi_\theta(\cdot\mid x,y_{< t}),\qquad p^{T}_t=\pi_\theta(\cdot\mid x,e,y_{< t})
 ```
 
 The final loss is:

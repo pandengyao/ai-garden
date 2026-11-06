@@ -140,7 +140,7 @@ w_t = (1-\lambda) + \lambda \cdot \mathrm{clip}_{[1-\epsilon,\ 1+\epsilon]}\left
 **和 OPD 的联系**（附录 C 的命题 1）：$`\delta_t`$ 很小时，BSD 的梯度约等于 GRPO 的梯度，再加上一项只作用在做错答卷上的 OPD 式修正（老师换成自教师）：
 
 ```math
-g_{\text{BSD}} \approx g_{\text{GRPO}} + \lambda\, \mathbb{E}\Big[\sum_t \mathbb{1}\{A<0\}\, |A|\, \delta_t\, \nabla_\theta \log \pi_\theta(y_t \mid x, y_{<t})\Big]
+g_{\text{BSD}} \approx g_{\text{GRPO}} + \lambda\, \mathbb{E}\Big[\sum_t \mathbb{1}\{A<0\}\, |A|\, \delta_t\, \nabla_\theta \log \pi_\theta(y_t \mid x, y_{< t})\Big]
 ```
 
 作者特别说明，这只是一种解读，既不保证训练稳定，也不保证扣分落在真正出错的 token 上。

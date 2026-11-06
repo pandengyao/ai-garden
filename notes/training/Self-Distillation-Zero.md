@@ -130,11 +130,11 @@ P_r=\begin{cases}\text{Let me rephrase the above solution.} & r=1\\ \text{Wait, 
 第一阶段的两个损失，$`y_{\text{init}}`$ 是初稿，$`y_{\text{revised}}`$ 是改对的修改稿（省略了对数据集求平均）：
 
 ```math
-\mathcal{L}_{\text{revision}}=-\sum_{t}\log \pi_\theta\big(y'_t \mid x,\,y_{\text{init}},\,P_r,\,y'_{<t}\big),\qquad y'=y_{\text{revised}}
+\mathcal{L}_{\text{revision}}=-\sum_{t}\log \pi_\theta\big(y'_t \mid x,\,y_{\text{init}},\,P_r,\,y'_{< t}\big),\qquad y'=y_{\text{revised}}
 ```
 
 ```math
-\mathcal{L}_{\text{generation}}=-\sum_{t}\log \pi_\theta\big(y'_t \mid x,\,y'_{<t}\big),\qquad y'=[\,y_{\text{init}},\,P_r,\,y_{\text{revised}}\,]
+\mathcal{L}_{\text{generation}}=-\sum_{t}\log \pi_\theta\big(y'_t \mid x,\,y'_{< t}\big),\qquad y'=[\,y_{\text{init}},\,P_r,\,y_{\text{revised}}\,]
 ```
 
 ```math
@@ -144,7 +144,7 @@ P_r=\begin{cases}\text{Let me rephrase the above solution.} & r=1\\ \text{Wait, 
 第二阶段，学生参数 $`\theta`$ 从 SRT 模型的参数 $`\theta_{\text{SRT}}`$ 出发，老师固定为 $`\theta_{\text{SRT}}`$：
 
 ```math
-\mathcal{L}_{\text{SD}}(\theta)=\mathbb{E}_{(x,a)}\,\mathbb{E}_{y\sim\pi_\theta(\cdot\mid x)}\sum_{t=1}^{|y|}\mathrm{KL}\Big(\pi_\theta(\cdot\mid x,\,y_{<t})\;\Big\|\;\pi_{\theta_{\text{SRT}}}(\cdot\mid x,\,y,\,P_r,\,y_{<t})\Big)
+\mathcal{L}_{\text{SD}}(\theta)=\mathbb{E}_{(x,a)}\,\mathbb{E}_{y\sim\pi_\theta(\cdot\mid x)}\sum_{t=1}^{|y|}\mathrm{KL}\Big(\pi_\theta(\cdot\mid x,\,y_{< t})\;\Big\|\;\pi_{\theta_{\text{SRT}}}(\cdot\mid x,\,y,\,P_r,\,y_{< t})\Big)
 ```
 
 KL 左边是学生只看题目、写到第 $`t`$ 个位置时的"下一个 token 概率表"；右边是老师看过整份答案 $`y`$ 和提示语 $`P_r`$ 后，重读到同一位置时的概率表。训练开始时两边参数相同，差别只在老师的输入多了 $`y`$ 和 $`P_r`$。附录表 6 显示，实现时用的是 top-K 蒸馏（K = 64），即每个位置只细算概率最高的 64 个候选 token。
@@ -152,7 +152,7 @@ KL 左边是学生只看题目、写到第 $`t`$ 个位置时的"下一个 token
 论文分析时把每个位置单独拿出来看，定义了 Token KL Reward：
 
 ```math
-\log \pi_\theta(y_t\mid x,y_{<t})-\log \pi_{\theta_{\text{SRT}}}(y_t\mid x,y,P_r,y_{<t})
+\log \pi_\theta(y_t\mid x,y_{< t})-\log \pi_{\theta_{\text{SRT}}}(y_t\mid x,y,P_r,y_{< t})
 ```
 
 它是正数，说明学生比老师更相信自己写下的这个 token，也就是老师不认同，训练会压低它；是负数，说明老师更认同，训练会抬高它。名字里虽然有 Reward，数值越大反而代表老师越不认同，读图 4 时别弄反。

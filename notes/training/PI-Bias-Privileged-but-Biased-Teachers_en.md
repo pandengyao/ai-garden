@@ -62,7 +62,7 @@ The approaches side by side (I put this table together from Sections 1 and 2 of 
 **Optional: the self-distillation loss (Eq. (1) in the paper).** You can skip it without losing the thread.
 
 ```math
-\mathcal{L}_{\text{SD}}(\theta)=\mathbb{E}_{(x,r)}\,\mathbb{E}_{\hat y\sim \mathrm{sg}(p_S)}\left[\frac{1}{|\hat y|}\sum_{t=1}^{|\hat y|} D\Big(\mathrm{sg}\big(p_T(\cdot\mid x,r,\hat y_{<t})\big)\;\Big\|\;p_S(\cdot\mid x,\hat y_{<t})\Big)\right]
+\mathcal{L}_{\text{SD}}(\theta)=\mathbb{E}_{(x,r)}\,\mathbb{E}_{\hat y\sim \mathrm{sg}(p_S)}\left[\frac{1}{|\hat y|}\sum_{t=1}^{|\hat y|} D\Big(\mathrm{sg}\big(p_T(\cdot\mid x,r,\hat y_{< t})\big)\;\Big\|\;p_S(\cdot\mid x,\hat y_{< t})\Big)\right]
 ```
 
 - $`x`$ is the question, $`r`$ is the PI, and $`\hat y`$ is the solution the student wrote itself.
@@ -202,7 +202,7 @@ The authors designed the PI bias score to measure how much more willing the mode
 **Optional: the formula for the PI bias score (Eq. (2) in the paper).** You can skip it without losing the thread.
 
 ```math
-\mathrm{PS}_t(w)=\frac{1}{K}\sum_{k=1}^{K}\log\frac{p_T(w_k\mid x,y^\star,y_{<t})}{p_S(w_k\mid x,y_{<t})}
+\mathrm{PS}_t(w)=\frac{1}{K}\sum_{k=1}^{K}\log\frac{p_T(w_k\mid x,y^\star,y_{< t})}{p_S(w_k\mid x,y_{< t})}
 ```
 
 The authors test four kinds of candidate text (Figure 3 of the paper; the values are printed on the figure, kept here to two decimal places):

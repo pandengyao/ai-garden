@@ -130,11 +130,11 @@ P_r=\begin{cases}\text{Let me rephrase the above solution.} & r=1\\ \text{Wait, 
 The two first-stage losses, where $`y_{\text{init}}`$ is the first draft and $`y_{\text{revised}}`$ is the correct revision (averaging over the dataset is omitted):
 
 ```math
-\mathcal{L}_{\text{revision}}=-\sum_{t}\log \pi_\theta\big(y'_t \mid x,\,y_{\text{init}},\,P_r,\,y'_{<t}\big),\qquad y'=y_{\text{revised}}
+\mathcal{L}_{\text{revision}}=-\sum_{t}\log \pi_\theta\big(y'_t \mid x,\,y_{\text{init}},\,P_r,\,y'_{< t}\big),\qquad y'=y_{\text{revised}}
 ```
 
 ```math
-\mathcal{L}_{\text{generation}}=-\sum_{t}\log \pi_\theta\big(y'_t \mid x,\,y'_{<t}\big),\qquad y'=[\,y_{\text{init}},\,P_r,\,y_{\text{revised}}\,]
+\mathcal{L}_{\text{generation}}=-\sum_{t}\log \pi_\theta\big(y'_t \mid x,\,y'_{< t}\big),\qquad y'=[\,y_{\text{init}},\,P_r,\,y_{\text{revised}}\,]
 ```
 
 ```math
@@ -144,7 +144,7 @@ The two first-stage losses, where $`y_{\text{init}}`$ is the first draft and $`y
 In the second stage, the student's parameters $`\theta`$ start from the SRT model's parameters $`\theta_{\text{SRT}}`$, and the teacher is fixed at $`\theta_{\text{SRT}}`$:
 
 ```math
-\mathcal{L}_{\text{SD}}(\theta)=\mathbb{E}_{(x,a)}\,\mathbb{E}_{y\sim\pi_\theta(\cdot\mid x)}\sum_{t=1}^{|y|}\mathrm{KL}\Big(\pi_\theta(\cdot\mid x,\,y_{<t})\;\Big\|\;\pi_{\theta_{\text{SRT}}}(\cdot\mid x,\,y,\,P_r,\,y_{<t})\Big)
+\mathcal{L}_{\text{SD}}(\theta)=\mathbb{E}_{(x,a)}\,\mathbb{E}_{y\sim\pi_\theta(\cdot\mid x)}\sum_{t=1}^{|y|}\mathrm{KL}\Big(\pi_\theta(\cdot\mid x,\,y_{< t})\;\Big\|\;\pi_{\theta_{\text{SRT}}}(\cdot\mid x,\,y,\,P_r,\,y_{< t})\Big)
 ```
 
 The left side of the KL is the student's "next-token distribution" when it sees only the problem and has written up to position $`t`$; the right side is the teacher's distribution when, after seeing the whole response $`y`$ and the prompt phrase $`P_r`$, it rereads up to the same position. At the start of training both sides have the same parameters; the only difference is that the teacher's input also contains $`y`$ and $`P_r`$. Appendix Table 6 shows that the implementation uses top-K distillation (K = 64), that is, at each position only the 64 candidate tokens with the highest probability are computed in detail.
@@ -152,7 +152,7 @@ The left side of the KL is the student's "next-token distribution" when it sees 
 For its analysis, the paper looks at each position separately and defines the Token KL Reward:
 
 ```math
-\log \pi_\theta(y_t\mid x,y_{<t})-\log \pi_{\theta_{\text{SRT}}}(y_t\mid x,y,P_r,y_{<t})
+\log \pi_\theta(y_t\mid x,y_{< t})-\log \pi_{\theta_{\text{SRT}}}(y_t\mid x,y,P_r,y_{< t})
 ```
 
 A positive value means the student believes in the token it wrote more than the teacher does, that is, the teacher disagrees, and training will push the token down; a negative value means the teacher agrees more, and training will push it up. Although the name contains Reward, a larger value actually means the teacher disagrees more, so don't get it backwards when reading Figure 4.
