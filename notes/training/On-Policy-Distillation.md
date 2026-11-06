@@ -440,6 +440,8 @@ Qwen 团队还报告，同策略蒸馏只用了 RL 十分之一的成本，就�
 
 **以下为原文旁注，按原顺序转为脚注。**
 
+**排版说明：为兼容 GitHub 的脚注显示，以下脚注中的公式以原 LaTeX 直接渲染为 SVG，公式内容未改动。**
+
 [^1]: **[《Alpaca：一个强大、可复现的指令遵循模型》](https://crfm.stanford.edu/2023/03/13/alpaca.html)（Taori 等，2021）。**
 
 [^2]: **[《OpenThoughts：推理模型的数据配方》](https://arxiv.org/abs/2506.04178)（Guha 等，2025）。**
@@ -486,9 +488,9 @@ Qwen 团队还报告，同策略蒸馏只用了 RL 十分之一的成本，就�
 
 [^23]: **150 步对应约 7.7 万条提示；训练时每条提示使用 4 个样本。**
 
-[^24]: $`\mathrm{CE}=\frac{\mathrm{Student}_{\mathrm{OPD}}+\mathrm{Teacher}_{\mathrm{OPD}}}{\mathrm{Student}_{\mathrm{SFT}}}`$。 **译注：原文用绿色方块标记同策略蒸馏的学生和教师成本，用蓝色方块标记 SFT 的学生成本；此处改用下标表达相同对应关系，并照录原式的分子、分母方向，不将其倒置为正文所述的成本降低倍数。**
+[^24]: ![CE：同策略蒸馏的学生与教师成本之和除以 SFT 学生成本](./img/On-Policy-Distillation-fn24-formula.svg)。 **译注：原文用绿色方块标记同策略蒸馏的学生和教师成本，用蓝色方块标记 SFT 的学生成本；此处改用下标表达相同对应关系，并照录原式的分子、分母方向，不将其倒置为正文所述的成本降低倍数。**
 
-[^25]: $`\mathrm{CE}=\frac{\mathrm{Student}_{\mathrm{OPD}}+\mathrm{Teacher}_{\mathrm{OPD}}}{\mathrm{Student}_{\mathrm{SFT}}+\mathrm{Teacher}_{\mathrm{SFT}}}`$。 **译注：原文的绿色方块和蓝色方块分别对应同策略蒸馏与 SFT；这里同样用下标区分，并保留原式方向。**
+[^25]: ![CE：同策略蒸馏总成本除以 SFT 总成本](./img/On-Policy-Distillation-fn25-formula.svg)。 **译注：原文的绿色方块和蓝色方块分别对应同策略蒸馏与 SFT；这里同样用下标区分，并保留原式方向。**
 
 [^26]: **[《不熟悉的微调样本决定语言模型如何产生幻觉》](https://arxiv.org/abs/2403.05612)（Kang 等，2024）。**
 
@@ -520,7 +522,7 @@ Qwen 团队还报告，同策略蒸馏只用了 RL 十分之一的成本，就�
 
 [^40]: **不过，[《仅用一个训练样本对大语言模型进行推理强化学习》](https://arxiv.org/abs/2504.20571)（Wang 等，2025）在某些设置中报告了正面的结果。**
 
-[^41]: **提示：“计算极限：** $`\lim_{x \to \infty} \sqrt{x} \left( \sqrt[3]{x+1} - \sqrt[3]{x-1} \right)`$ **”。**
+[^41]: **提示：“计算极限：** ![x 趋于无穷时，根号 x 乘以 x 加一与 x 减一的立方根之差的极限](./img/On-Policy-Distillation-fn41-formula.svg) **”。**
 
 [^42]: **引自 Rich Sutton 的[《苦涩的教训》](http://www.incompleteideas.net/IncIdeas/BitterLesson.html)：“最终带来突破性进展的，是另一种相反的方法：通过搜索和学习来扩大计算规模。”**
 
@@ -530,4 +532,4 @@ Qwen 团队还报告，同策略蒸馏只用了 RL 十分之一的成本，就�
 
 [^45]: **[《RL 的剃刀：为什么在线强化学习遗忘得更少》](https://arxiv.org/abs/2509.04259)（Shenfeld 等，2025）。**
 
-[^46]: **我们在此前的博文[《克服大语言模型推理中的非确定性》](https://thinkingmachines.ai/blog/defeating-nondeterminism-in-llm-inference/)中，也讨论了“真正同策略”、** $`\mathrm{KL}=0`$ **的数据的重要性。**
+[^46]: **我们在此前的博文[《克服大语言模型推理中的非确定性》](https://thinkingmachines.ai/blog/defeating-nondeterminism-in-llm-inference/)中，也讨论了“真正同策略”、** ![KL 等于零](./img/On-Policy-Distillation-fn46-formula.svg) **的数据的重要性。**

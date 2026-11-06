@@ -440,6 +440,8 @@ At Thinking Machines, our mission is to empower people with AI models that combi
 
 **The original sidenotes follow, converted to footnotes in their original order.**
 
+**Typesetting note: For compatibility with GitHub footnotes, formulas in the following notes are rendered directly from their original LaTeX as SVG, without changing the formulas.**
+
 [^1]: **[Alpaca: A Strong, Replicable Instruction-Following Model](https://crfm.stanford.edu/2023/03/13/alpaca.html) (Taori et al, 2021)**
 
 [^2]: **[OpenThoughts: Data Recipes for Reasoning Models](https://arxiv.org/abs/2506.04178) (Guha et al, 2025)**
@@ -462,7 +464,7 @@ At Thinking Machines, our mission is to empower people with AI models that combi
 
 [^11]: **See Agarwal et al. for an analysis of various loss function choices.**
 
-[^12]: **Although more mathematically correct, we do not find discount factors $`>0`$ to improve performance in practice, so we choose zero for simplicity.**
+[^12]: **Although more mathematically correct, we do not find positive discount factors to improve performance in practice, so we choose zero for simplicity.**
 
 [^13]: **See [Eric Jang’s post](https://blog.evjang.com/2016/08/variational-bayes.html) for more discussion of mode seeking behaviors.**
 
@@ -486,9 +488,9 @@ At Thinking Machines, our mission is to empower people with AI models that combi
 
 [^23]: **150 steps corresponds to about 77K prompts; we train with 4 samples per prompt.**
 
-[^24]: $`\mathrm{CE}=\frac{\mathrm{Student}_{\mathrm{OPD}}+\mathrm{Teacher}_{\mathrm{OPD}}}{\mathrm{Student}_{\mathrm{SFT}}}`$. **Translator’s note: The original uses green squares for the on-policy student and teacher costs and blue for the SFT student cost. Subscripts express the same mapping here. The original numerator and denominator are retained, not inverted into the cost-reduction multiple stated in the prose.**
+[^24]: ![CE: OPD student plus teacher cost divided by SFT student cost](./img/On-Policy-Distillation-fn24-formula.svg). **Translator’s note: The original uses green squares for the on-policy student and teacher costs and blue for the SFT student cost. Subscripts express the same mapping here. The original numerator and denominator are retained, not inverted into the cost-reduction multiple stated in the prose.**
 
-[^25]: $`\mathrm{CE}=\frac{\mathrm{Student}_{\mathrm{OPD}}+\mathrm{Teacher}_{\mathrm{OPD}}}{\mathrm{Student}_{\mathrm{SFT}}+\mathrm{Teacher}_{\mathrm{SFT}}}`$. **Translator’s note: Green and blue squares in the original denote on-policy distillation and SFT, respectively. Subscripts make the distinction while preserving the direction of the original formula.**
+[^25]: ![CE: total OPD cost divided by total SFT cost](./img/On-Policy-Distillation-fn25-formula.svg). **Translator’s note: Green and blue squares in the original denote on-policy distillation and SFT, respectively. Subscripts make the distinction while preserving the direction of the original formula.**
 
 [^26]: **[Unfamiliar Finetuning Examples Control How Language Models Hallucinate](https://arxiv.org/abs/2403.05612) (Kang et al, 2024)**
 
@@ -520,7 +522,7 @@ At Thinking Machines, our mission is to empower people with AI models that combi
 
 [^40]: **[”Reinforcement Learning for Reasoning in Large Language Models with One Training Example”](https://arxiv.org/abs/2504.20571) (Wang et al, 2025) presents a positive result, however, in some settings.**
 
-[^41]: **Prompt: “Evaluate the limit: $`\lim_{x \to \infty} \sqrt{x} \left( \sqrt[3]{x+1} - \sqrt[3]{x-1} \right)`$”**
+[^41]: **Prompt: “Evaluate the limit: ![Limit as x tends to infinity of square root x times the difference of the cube roots of x plus one and x minus one](./img/On-Policy-Distillation-fn41-formula.svg)”**
 
 [^42]: **From [The Bitter Lesson](http://www.incompleteideas.net/IncIdeas/BitterLesson.html) (Rich Sutton): “breakthrough progress eventually arrives by an opposing approach based on scaling computation by search and learning”**
 
@@ -530,4 +532,4 @@ At Thinking Machines, our mission is to empower people with AI models that combi
 
 [^45]: **[”RL’s Razor: Why Online Reinforcement Learning Forgets Less”](https://arxiv.org/abs/2509.04259) (Shenfeld et al, 2025)**
 
-[^46]: **The importance of “truly on-policy”** $`\mathrm{KL}=0`$ **data was also explored in our previous post, [Defeating Nondeterminism in LLM Inference](https://thinkingmachines.ai/blog/defeating-nondeterminism-in-llm-inference/).**
+[^46]: **The importance of “truly on-policy”** ![KL equals zero](./img/On-Policy-Distillation-fn46-formula.svg) **data was also explored in our previous post, [Defeating Nondeterminism in LLM Inference](https://thinkingmachines.ai/blog/defeating-nondeterminism-in-llm-inference/).**
