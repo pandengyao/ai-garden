@@ -304,17 +304,17 @@ Below are points I noticed while reading the paper that it does not discuss at l
 
 ### How strong the evidence is
 
-- **The size of the lead in the main table depends heavily on which checkpoint is picked.** In the main table each method reports only the one checkpoint picked on the dev set. Figure 3d in the main text and Figure 8 in the appendix plot the test score at every checkpoint for 4 settings. I read the values off the plots (they match the corresponding points in the main table to within 0.3 points) and compared averages over 6 checkpoints. BSD leads on average in all 4 settings, so the direction agrees, but the margins are smaller than in the main table (Avg@4, %; the last column is read off the plots):
+- **The size of the lead in the main table depends heavily on which checkpoint is picked.** In the main table each method reports only the one checkpoint picked on the dev set. Figure 3d in the main text and Figure 8 in the appendix plot the test score at every checkpoint for 4 settings. Both figures are vector graphics in the PDF, so I took the coordinates of every point and converted them to scores (the checkpoints picked for the main table all match it), then compared averages over 6 checkpoints. BSD leads on average in all 4 settings, so the direction agrees, but the margins are smaller than in the main table (Avg@4, %):
 
 | Student + teacher | Main table: BSD's lead over the specialized method | Average over 6 checkpoints: BSD's lead over the specialized method |
 | --- | --- | --- |
-| Qwen3-4B + Qwen3-32B | 3.6 (63.9 vs 60.3) | about 0.4 (60.9 vs 60.6) |
-| Qwen3-4B + GPT-5.6 Luna | 2.2 (61.9 vs 59.7) | about 1.3 (62.2 vs 60.9) |
-| Qwen3-4B-Instruct + Qwen3-32B | 3.6 (45.8 vs 42.2) | about 1.2 (45.2 vs 44.0) |
-| Qwen3-4B-Instruct + GPT-5.6 Luna | 0.6 (46.4 vs 45.8) | about 0.3 (45.4 vs 45.2) |
+| Qwen3-4B + Qwen3-32B | 3.6 (63.9 vs 60.3) | 0.37 (60.93 vs 60.56) |
+| Qwen3-4B + GPT-5.6 Luna | 2.2 (61.9 vs 59.7) | 1.34 (62.22 vs 60.88) |
+| Qwen3-4B-Instruct + Qwen3-32B | 3.6 (45.8 vs 42.2) | 1.20 (45.23 vs 44.03) |
+| Qwen3-4B-Instruct + GPT-5.6 Luna | 0.6 (46.4 vs 45.8) | 0.28 (45.42 vs 45.14) |
 
 - **A gap of one or two points cannot be told apart from noise.** For reference: BSD's own score can differ by 5 points between two adjacent checkpoints (Qwen3-4B-Instruct + Qwen3-32B, 43.3 at step 100 and 48.3 at step 125); the three test sets have only 90 problems in total, and in the three-set average, turning all 4 samples of one problem from wrong to right adds only 1.1 points. I did not see any results from repeated training runs with different random seeds in the paper, so there is no way to judge how much of a one- or two-point gap is noise. In the ablation, BSD beats GRPO by 3.3 points, which is likewise a comparison of a single training run at a single checkpoint, and BSD's change to GRPO is itself very small (Section 4).
-- **The conclusion about SFT is not affected.** SFT's average score over checkpoints on Qwen3-4B + GPT-5.6 Luna is only about 26.5, far below the original's 59.2.
+- **The conclusion about SFT is not affected.** SFT's average score over checkpoints on Qwen3-4B + GPT-5.6 Luna is only 26.4, far below the original's 59.2.
 - **The same gains do not show up on Pass@4.** Appendix Table 14 reports Pass@4 for the same checkpoints, that is, the fraction of problems solved correctly in at least 1 of the 4 samples. BSD is below the original model in 3 of the 12 pairs and level in 1: Qwen3-4B solves 1 fewer problem when learning from Qwen3-32B and 3 fewer when learning from GPT-5.6 Luna; Qwen3-0.6B solves 1 fewer when learning from Nemotron. So for a stronger student such as Qwen3-4B, the gain comes mainly from "problems it could sometimes solve are now solved more often", not from solving problems it could not solve before. This is not unique to BSD: on this student, SFT and the OPD-type methods also beat the original model on Pass@4 only in the Nemotron pair. The smaller Qwen3-1.7B, by contrast, improves on Pass@4 in all three pairs (+2.2 to +7.8). The main text does not discuss the Pass@4 results.
 - **Qwen3-4B-Instruct's gains need to be seen from another angle.** To make it write a thinking process, the authors first fine-tuned it on 1,000 Nemotron solutions, and its score dropped from 46.4 to 44.4 (Appendix Table 9). BSD's +1.2 to 2.0 points are counted from 44.4, and its best result, 46.4, just gets back to the level before fine-tuning. That said, the model before fine-tuning wrote no thinking process and answered directly, so the two evaluations were not done in exactly the same way.
 

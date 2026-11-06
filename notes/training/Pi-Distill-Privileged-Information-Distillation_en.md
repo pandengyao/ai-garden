@@ -204,7 +204,7 @@ How the PI goes in: it is added to the task description in the system prompt, wr
 - Task scores are nearly the same with or without the penalty.
 - For the student, which does not see PI at deployment, the leak rate did not rise with training.
 
-**(3) Length penalty.** The model tends to write longer and longer, and trajectories often exceed the 25k-token context limit. The authors apply a length penalty only to successful trajectories (Appendix E.2): there is no deduction while a turn's reply stays within 2000 tokens; beyond that the penalty grows gradually along a cosine curve, taking about 0.1 off the reward near 5000 tokens and at most 0.2 for anything longer; the penalties of all turns are averaged, with a total deduction of at most 0.3. The main text's description of this penalty does not fully match the appendix; see Section 10.
+**(3) Length penalty.** The model tends to write longer and longer, and trajectories often exceed the 25k-token context limit. The authors apply a length penalty only to successful trajectories (Appendix E.2): there is no deduction while a turn's reply stays within 2000 tokens; beyond that the penalty grows gradually along a cosine curve, taking about 0.1 off the reward near 5000 tokens and at most 0.2 for anything longer; the penalties of all turns are averaged and added to the reward. The appendix also caps the total deduction at 0.3, but each turn loses at most 0.2, so the average never exceeds 0.2 and the cap is never reached. The main text's description of this penalty does not fully match the appendix; see Section 10.
 
 ## 8. Experimental Results
 
@@ -440,7 +440,7 @@ Below are points I noticed while reading the paper that it does not discuss at l
 - **The scatter points and dashed lines in Figures 5 and 8 disagree with Table 1 in several places.** For example, for OPSD on Qwen3-8B on τ-Bench, the best point in Figure 8 is about 25.9%, while Table 1 has 27.3%; for Qwen3-4B on Travel Planner, the SFT + RL dashed line is at about 28.4%, while Table 1 has 26.4%. The paper does not say which hyperparameters these figures use or how they were aggregated.
 - **The caption of Figure 7 has a wrong symbol.** It writes the teacher being trained as $`\pi^S`$; it should be $`\pi^T`$.
 - **The citation for STaR points to the wrong paper.** The related-work text says STaR, but the citation points to a different paper, START (Li et al. 2025, [arXiv 2503.04625](https://arxiv.org/abs/2503.04625)); the original STaR paper is Zelikman et al. (2022, [arXiv 2203.14465](https://arxiv.org/abs/2203.14465)).
-- **The two descriptions of the length penalty disagree.** The main text says trajectories longer than 15k tokens are penalized, while Appendix E.2 says the deduction starts once a turn exceeds 2000 tokens (see Section 7 (3)).
+- **The description of the length penalty has two problems.** The main text says trajectories longer than 15k tokens are penalized, while Appendix E.2 says the deduction starts once a turn exceeds 2000 tokens; and the 0.3 cap the appendix sets on the total deduction is never reached, because each turn loses at most 0.2 and the average cannot exceed 0.2 (see Section 7 (3)).
 - **The two accounts of how OPSD uses the KL differ.** Algorithm 2 folds the KL into the reward, while Appendix E.1 says the gradient is taken directly on the KL estimate.
 
 ## 11. If You Want to Run It Yourself

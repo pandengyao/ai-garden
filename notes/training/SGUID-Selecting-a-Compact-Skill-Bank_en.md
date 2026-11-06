@@ -315,7 +315,7 @@ Most of these are general problem-solving methods. I noticed that the other mode
 
 - "Pythagorean triple generation" from Qwen3-1.7B round 1: use integer parameters m > n to generate primitive Pythagorean triples, and verify the ratio of area to perimeter.
 - "Parity-balanced counting" from Qwen3-1.7B round 1: when the numbers of odd and even elements are equal, the minimum number of swaps is half the total number of elements.
-- "Planar triangulation and edge counting" from Olmo-3-7B round 2: in a triangulation of a convex n-gon, there are at most 2n − 4 interior triangles.
+- "Planar triangulation and edge counting" from Olmo-3-7B round 2: for a convex n-gon, the maximum number of internal triangles in a triangulation is T = 2n − 4.
 
 The last one is in fact stated incorrectly, and the selected skills may also overlap heavily with each other. Section 8 covers both points.
 
@@ -344,7 +344,7 @@ Below are points I noticed while reading the paper that it does not discuss at l
 ### The selection rules ignore skill content
 
 - **The rules look only at the training signal.** SGUID's rules look only at the training signal a skill gives when it acts as a teacher; they do not check whether the skill's content is correct, or whether it duplicates other skills. The paper does not discuss what this leads to, and the two examples below can be found in the appendix.
-- **A skill with wrong content can still be selected.** The last skill in Section 6.7 ("planar triangulation and edge counting" from Olmo-3-7B round 2) is stated incorrectly. A triangulation of a convex n-gon that only draws diagonals between vertices always yields exactly n − 2 triangles, however it is done. A square, for example, can only be split into 2 triangles, yet this skill's formula gives 4. In this round Olmo-3-7B's average score still rose from 40.9% to 41.3%, and the paper does not analyze the effect of this wrong skill.
+- **A skill with wrong content can still be selected.** The last skill in Section 6.7 ("planar triangulation and edge counting" from Olmo-3-7B round 2) is stated incorrectly. It says the maximum is 2n − 4, but a triangulation of a convex n-gon that only draws diagonals between vertices always yields exactly n − 2 triangles, however it is done. A square, for example, can only be split into 2 triangles, yet this skill's formula gives 4. In this round Olmo-3-7B's average score still rose from 40.9% to 41.3%, and the paper does not analyze the effect of this wrong skill.
 - **The selected skills may overlap heavily.** The 3 skills selected for Qwen3-8B in round 2 are "case analysis", "combinatorial counting" and "combinatorial analysis", and all of them are about systematically counting cases under constraints. The authors say selection can filter out duplicate skills, but the rules themselves do not compare how similar skills are to each other. Still, it was this very round that lifted Qwen3-8B from 64.3% to 66.3%, so overlap is not necessarily harmful.
 
 ### Small issues in the manuscript (none affect the main conclusions)
