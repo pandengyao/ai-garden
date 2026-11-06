@@ -64,7 +64,7 @@ TeacherGRPO 把相反的现象称为 Gap Curse：教师越复杂，其分布越�
 **谱系与机制。** On-policy 蒸馏（OPD）让学生在自己采样的前缀上接受教师的逐词元监督，训练数据不再是固定的轨迹集合（本文判断）。记学生为 $`\pi_\theta`$、教师为 $`\pi_T`$、教师额外可见的特权上下文为 $`c`$，其目标可写为（本文判断）：
 
 ```math
-\mathcal{L}(\theta)=\mathbb{E}_{x\sim\mathcal{Q},\;y\sim\pi_\theta(\cdot\mid x)}\Big[\textstyle\sum_{t} D\big(\pi_T(\cdot\mid x,c,y_{<t})\,\big\|\,\pi_\theta(\cdot\mid x,y_{<t})\big)\Big]
+\mathcal{L}(\theta)=\mathbb{E}_{x\sim\mathcal{Q},\;y\sim\pi_\theta(\cdot\mid x)}\Big[\textstyle\sum_{t} D\big(\pi_T(\cdot\mid x,c,y_{< t})\,\big\|\,\pi_\theta(\cdot\mid x,y_{< t})\big)\Big]
 ```
 
 其中 $`D`$ 可取前向 KL、反向 KL 或 JSD[^141]。$`c=\varnothing`$ 对应普通 OPD，$`c`$ 为最终答案或标准解答时即特权上下文 OPD[^145]。GKD 指出，自回归模型的常规蒸馏存在训练序列与学生推理时生成序列的分布错配，并让学生在自生成序列上接受教师反馈[^139]。G-OPD 与 Rethinking OPD 均把 GKD 作为 OPD 的先行工作引用[^142][^144]。G-OPD 证明 OPD 是奖励项与 KL 项权重恒等的稠密 KL 约束强化学习的特例，奖励缩放因子大于 1 时称为 ExOPD，实验中固定为 1.25[^142]。W2S-OPD 去掉教师至少与学生同等强的前提，用两个比学生小的模型的 logit 差作为能力方向，加到学生自身的基座上构成代理教师[^38]。OPSD 让同一模型兼任师生，教师在提示中看到标准解答，学生只看到题目[^141]。

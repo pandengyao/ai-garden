@@ -41,7 +41,7 @@ PAV 指出，Math-Shepherd 与 OmegaPRM 一类 PRM 学习的是未来成功概�
 隐式 PRM 进一步去掉了步骤标签[^157]。它把结果奖励参数化为策略模型与参考模型的对数似然比，在部分回答上计算同一比值即得过程奖励[^157]：
 
 ```math
-r_\theta(\mathbf{y})=\beta\log\frac{\pi_\theta(\mathbf{y})}{\pi_{\mathrm{ref}}(\mathbf{y})},\qquad q_\theta^{t}=\sum_{i=1}^{t}\beta\log\frac{\pi_\theta(y_i\mid\mathbf{y}_{<i})}{\pi_{\mathrm{ref}}(y_i\mid\mathbf{y}_{<i})},\qquad r_\theta^{t}=q_\theta^{t}-q_\theta^{t-1}
+r_\theta(\mathbf{y})=\beta\log\frac{\pi_\theta(\mathbf{y})}{\pi_{\mathrm{ref}}(\mathbf{y})},\qquad q_\theta^{t}=\sum_{i=1}^{t}\beta\log\frac{\pi_\theta(y_i\mid\mathbf{y}_{< i})}{\pi_{\mathrm{ref}}(y_i\mid\mathbf{y}_{< i})},\qquad r_\theta^{t}=q_\theta^{t}-q_\theta^{t-1}
 ```
 
 作者估算，按 Math-Shepherd 方式以前瞻采样收集步骤标签，所需 FLOPs 是训练 ORM 的 38.8 倍[^157]。训练数据为 UltraInteract 的 33K 道数学题，每题由 Llama-3.1-8B-Instruct 采样 8 个回答，只按最终答案标注[^157]。在三个生成器、N 取 4、16、64 的 Best-of-N 平均上，DPO 版隐式 PRM 为 50.4，同数据重实现的 Math-Shepherd 为 47.8[^157]。加入步骤标签做步骤级 KTO 没有收益，但作者提醒 MCTS 式步骤标签本身有噪声[^157]。

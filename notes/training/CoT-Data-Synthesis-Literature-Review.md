@@ -243,7 +243,7 @@ Wei 等人发现，在提示中给出一串中间推理步骤，能显著提升�
 按这一定义，训练的目标通常是最小化学生在保留轨迹上的负对数似然（本文判断）：
 
 ```math
-\mathcal{L}_{\mathrm{SFT}}(\theta) = -\mathbb{E}_{(q, r, a) \sim \mathcal{D}} \sum_{t} \log p_\theta\big(y_t \mid y_{<t}, q\big), \quad y = (r, a)
+\mathcal{L}_{\mathrm{SFT}}(\theta) = -\mathbb{E}_{(q, r, a) \sim \mathcal{D}} \sum_{t} \log p_\theta\big(y_t \mid y_{< t}, q\big), \quad y = (r, a)
 ```
 
 **On-policy 蒸馏改变了这一结构（本文判断）。** 轨迹不再由 $`\mathcal{G}`$ 预先生成，而是由学生自身采样。教师只在学生访问的状态上逐词元提供监督。On-policy 蒸馏综述指出，按参考答案或教师生成的回答训练时，学生是在另一来源提供的历史上学习，而生成时它依赖的是自己此前的预测[^225]。这正是 on-policy 方法要消除的错配[^225]。

@@ -32,8 +32,9 @@ Checks on files changed vs origin/main (--all: every tracked file):
 8. markdownlint, configured by .markdownlint-cli2.jsonc, passes on the .md files.
 9. GitHub can render the math in the .md files: no ```math block or inline $`...`$ formula
    uses a macro GitHub's renderer refuses (\\operatorname among them: write \\mathrm{...}) or
-   one from a MathJax package it switches off (\\newcommand, \\def, \\href, ...), and neither a
-   formula nor the page holds more '{' than GitHub renders.
+   one from a MathJax package it switches off (\\newcommand, \\def, \\href, ...), no ```math
+   block has a '<' right before a letter (write y_{< t}, not y_{<t}), and neither a formula
+   nor the page holds more '{' than GitHub renders.
 """
 import glob
 import os
@@ -115,11 +116,17 @@ GITHUB_MATH_OFF_RE = re.compile(r"\\(%s)(?![A-Za-z])" % "|".join(GITHUB_MATH_PAC
 # and charges each formula its '{' count plus one. A formula over 1,000 prints "Unable to render
 # expression." instead, and once the page passes 2,000 so does every formula from there on.
 GITHUB_MATH_MAX_ONE, GITHUB_MATH_MAX_PAGE = 1000, 2000
+# Not in that code, but seen on rendered pages: a '<' right before a letter (y_{<t}) breaks a
+# ```math block, which then shows a "missing close brace" error. On 2026-11-06, across 40 checked
+# pages, all 48 such blocks failed and no other block did; y_{< t} renders, since TeX ignores the
+# space. Inline $`...`$ formulas with "<t" rendered fine on the same pages, so they pass.
+GITHUB_MATH_BLOCK_LT_RE = re.compile(r"<(?=[A-Za-z])")
 MATH_INLINE_RE = re.compile(r"\$`([^`\n]+)`\$")
 
 
 def math_formulas(body):
-    """(line, TeX) for every formula GitHub renders: each ```math block and inline $`...`$."""
+    """(line, TeX, is_block) for every formula GitHub renders: each ```math block (line is its
+    opening fence) and inline $`...`$."""
     found, fence, start, block = [], None, 0, []
     for n, line in enumerate(body.split("\n"), 1):
         s = line.lstrip()
@@ -128,21 +135,21 @@ def math_formulas(body):
                 fence, start, block = s[3:].strip().lower(), n, []
             else:
                 if fence == "math":
-                    found.append((start, "\n".join(block)))
+                    found.append((start, "\n".join(block), True))
                 fence = None
         elif fence is not None:
             block.append(line)
         else:
             # A $`...`$ inside a longer code span (`` ... ``) is code, not math.
             code_free = re.sub(r"(`{2,}).+?\1", "", line)
-            found += [(n, m.group(1)) for m in MATH_INLINE_RE.finditer(code_free)]
+            found += [(n, m.group(1), False) for m in MATH_INLINE_RE.finditer(code_free)]
     return found
 
 
 def github_math_errors(rel, body):
     """Formulas GitHub would show as an error box instead of rendering them."""
     errors, cost = [], 0
-    for line, tex in math_formulas(body):
+    for line, tex, is_block in math_formulas(body):
         for name in GITHUB_MATH_REFUSED:
             # GitHub's own test: the formula contains \name, \$name or \${name.
             if any(f"\\{p}{name}" in tex for p in ("", "$", "${")):
@@ -151,6 +158,13 @@ def github_math_errors(rel, body):
         for name in dict.fromkeys(GITHUB_MATH_OFF_RE.findall(tex)):
             errors.append(f"{rel}:{line}: GitHub math switches off MathJax's "
                           f"{GITHUB_MATH_PACKAGE[name]} package, so \\{name} does not render")
+        if is_block:
+            for n, row in enumerate(tex.split("\n"), line + 1):
+                m = GITHUB_MATH_BLOCK_LT_RE.search(row)
+                if m:
+                    c = row[m.end()]
+                    errors.append(f"{rel}:{n}: GitHub cannot render a ```math block with '<' right "
+                                  f"before a letter ('<{c}') - add a space: '< {c}'")
         one = tex.count("{") + 1
         if one > GITHUB_MATH_MAX_ONE:
             errors.append(f"{rel}:{line}: formula costs {one} ('{{' count plus one); "

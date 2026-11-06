@@ -33,8 +33,8 @@ On top of answer-correctness filtering, the most common second signal is difficu
 Likelihood-based selection (naturalness selection) computes the average log probability that the model assigns to each sample and keeps those with high probability, assuming that they better match the model's inherent preferences[^21]. The Signal is in the Steps points out that the average log probability of the whole trace (GALP) works on short single-teacher responses but fails in settings with long traces and multiple teachers[^6]. On 817 LIMO questions with three teachers, DeepSeek-R1, Qwen3-32B and QwQ-32B, the traces of Qwen3-32B have the highest GALP under both the 7B and the 32B student, yet yield the worst training results[^6]. The paper proposes LALP, which splits a trace into steps, scores each step only within a small local window, and then averages over the steps[^6]. The two scores can be written in the following form (our assessment, notation based on [^21]):
 
 ```math
-s_{\mathrm{G}}(r)=\frac{1}{|r|}\sum_{t}\log p_\theta(y_t\mid y_{<t},q),\qquad
-s_{\mathrm{L}}(r)=\frac{1}{|\mathcal{S}|}\sum_{j}\frac{1}{|s_j|}\sum_{l}\log p_\theta\big(s_{j,l}\mid s_{j,<l},\,s_{j-k:j-1},\,q\big)
+s_{\mathrm{G}}(r)=\frac{1}{|r|}\sum_{t}\log p_\theta(y_t\mid y_{< t},q),\qquad
+s_{\mathrm{L}}(r)=\frac{1}{|\mathcal{S}|}\sum_{j}\frac{1}{|s_j|}\sum_{l}\log p_\theta\big(s_{j,l}\mid s_{j,< l},\,s_{j-k:j-1},\,q\big)
 ```
 
 Here $`\mathcal{S}`$ is the set of steps, and $`k`$ is the number of steps in the window (our assessment). In the setting where one trace per question is selected from the three-teacher pool, Qwen2.5-32B-Instruct trained on the data selected by LALP reaches a mean of 0.726, versus 0.632 for GALP and 0.651 for random selection[^6]; the authors argue that global likelihood here produces systematic misranking rather than noise[^6].

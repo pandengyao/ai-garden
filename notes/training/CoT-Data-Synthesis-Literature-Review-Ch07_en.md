@@ -41,7 +41,7 @@ PAV points out that PRMs of the Math-Shepherd and OmegaPRM kind learn the probab
 Implicit PRM goes further and removes step labels altogether[^157]. It parameterizes the outcome reward as the log-likelihood ratio between the policy model and the reference model, and computing the same ratio on partial responses yields the process reward[^157] as follows:
 
 ```math
-r_\theta(\mathbf{y})=\beta\log\frac{\pi_\theta(\mathbf{y})}{\pi_{\mathrm{ref}}(\mathbf{y})},\qquad q_\theta^{t}=\sum_{i=1}^{t}\beta\log\frac{\pi_\theta(y_i\mid\mathbf{y}_{<i})}{\pi_{\mathrm{ref}}(y_i\mid\mathbf{y}_{<i})},\qquad r_\theta^{t}=q_\theta^{t}-q_\theta^{t-1}
+r_\theta(\mathbf{y})=\beta\log\frac{\pi_\theta(\mathbf{y})}{\pi_{\mathrm{ref}}(\mathbf{y})},\qquad q_\theta^{t}=\sum_{i=1}^{t}\beta\log\frac{\pi_\theta(y_i\mid\mathbf{y}_{< i})}{\pi_{\mathrm{ref}}(y_i\mid\mathbf{y}_{< i})},\qquad r_\theta^{t}=q_\theta^{t}-q_\theta^{t-1}
 ```
 
 The authors estimate that collecting step labels with look-ahead sampling in the Math-Shepherd manner requires 38.8 times the FLOPs of training an ORM[^157]. The training data are 33K math questions from UltraInteract, with 8 responses per question sampled by Llama-3.1-8B-Instruct and labeled only by final answer[^157]. Averaged over Best-of-N with three generators and N of 4, 16 and 64, the DPO version of the implicit PRM scores 50.4, while Math-Shepherd reimplemented on the same data scores 47.8[^157]. Adding step labels for step-level KTO brings no gain, but the authors caution that MCTS-style step labels are themselves noisy[^157].

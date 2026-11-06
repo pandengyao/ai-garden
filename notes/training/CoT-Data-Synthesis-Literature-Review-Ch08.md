@@ -33,8 +33,8 @@ Light-R1 先按 DeepScaleR-1.5B-Preview 的通过率筛出约 76k 道题交给 D
 基于似然的选择（自然度选择）计算模型赋予每条样本的平均对数概率，保留概率高者，假定它们更贴合模型的固有偏好[^21]。The Signal is in the Steps 指出，整条轨迹的平均对数概率（GALP）在短的单教师回答上有效，在长轨迹、多教师的场景中失效[^6]。在 817 道 LIMO 题与 DeepSeek-R1、Qwen3-32B、QwQ-32B 三个教师上，Qwen3-32B 的轨迹在 7B 与 32B 学生下 GALP 都最高，训练效果却最差[^6]。该文提出 LALP，把轨迹切成步骤，每步只在小的局部窗口内打分，再对步骤取平均[^6]。两种打分可写成如下形式（本文判断，记号依据[^21]）：
 
 ```math
-s_{\mathrm{G}}(r)=\frac{1}{|r|}\sum_{t}\log p_\theta(y_t\mid y_{<t},q),\qquad
-s_{\mathrm{L}}(r)=\frac{1}{|\mathcal{S}|}\sum_{j}\frac{1}{|s_j|}\sum_{l}\log p_\theta\big(s_{j,l}\mid s_{j,<l},\,s_{j-k:j-1},\,q\big)
+s_{\mathrm{G}}(r)=\frac{1}{|r|}\sum_{t}\log p_\theta(y_t\mid y_{< t},q),\qquad
+s_{\mathrm{L}}(r)=\frac{1}{|\mathcal{S}|}\sum_{j}\frac{1}{|s_j|}\sum_{l}\log p_\theta\big(s_{j,l}\mid s_{j,< l},\,s_{j-k:j-1},\,q\big)
 ```
 
 其中 $`\mathcal{S}`$ 为步骤集合，$`k`$ 为窗口步数（本文判断）。在每题从三教师池中选一条的设置下，Qwen2.5-32B-Instruct 用 LALP 选出的数据训练后均值为 0.726，GALP 为 0.632，随机为 0.651[^6]；作者认为全局似然在此是系统性错排而非噪声[^6]。
