@@ -59,6 +59,9 @@
 
 ### 训练 (Training)
 
+- [OPD 中的 Forward KL 与 Reverse KL：直觉、公式与常见误区](./notes/training/Forward-and-Reverse-KL-in-OPD.md) · 2026-11-06
+  - Forward KL 按老师概率加权，防止漏掉老师认可的选择；Reverse KL 按学生概率加权，防止高估老师低概率的选择。用一个三 token 例子澄清两者的区别，并区分 KL 方向与 OPD 的轨迹来源。
+
 - [on-policy 蒸馏（OPD）论文调研：2026 年 8–10 月的新论文与 GitHub 论文合集](./notes/training/On-Policy-Distillation-Literature-Review.md) · 2026-11-02
   - 2026 年 8–10 月 arXiv 上有 540 篇核心 OPD 论文（8 月 128 篇，10 月 212 篇），另有 35 篇工业技术报告用到 OPD。这一季的主线是追问 OPD 到底在起什么作用，多数结论和直觉相反：1～8 条 prompt 就能接近全量数据，只监督 0.05%～1% 的 token 就能追平全 token，反向 KL 的 OPD 传技能不传事实，17 组师生对里有 14 组用初始学生离线采样的数据反而更好。同模型自蒸馏（OPSD）论文最多，特权信息的作用也被十余篇分析论文质疑；先 OPD 后 RL 优于联合训练；多教师 OPD 已是工业界合并专家模型的常用做法，但在受控对比中并不比 SFT 合并更准。GitHub 上 chrisliu298、thinkwee、nick7nlp 三个大合集对近三个月论文只共同收录了 42 篇，而且都还没收 10 月中下旬的论文。
   - 配套页面：[论文清单（540 篇核心论文与 136 篇相关工作）](./notes/training/On-Policy-Distillation-Literature-Review-Papers.md)

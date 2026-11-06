@@ -59,6 +59,9 @@ This is not a bookmark list but a garden. Each note is a plant: articles I read 
 
 ### Training
 
+- [Forward KL and Reverse KL in OPD: Intuition, Formulas, and Common Misconceptions](./notes/training/Forward-and-Reverse-KL-in-OPD_en.md) · 2026-11-06
+  - Forward KL weights by teacher probabilities to avoid missing teacher-favored choices; Reverse KL weights by student probabilities to avoid overestimating choices the teacher considers unlikely. A three-token example clarifies the distinction and separates KL direction from the source of OPD trajectories.
+
 - [On-Policy Distillation (OPD): New Papers from August to October 2026, and the GitHub Paper Lists](./notes/training/On-Policy-Distillation-Literature-Review_en.md) · 2026-11-02
   - arXiv had 540 core OPD papers in August–October 2026 (128 in August, 212 in October), and another 35 industrial technical reports use OPD. The quarter's through-line is the question of what OPD actually does, and most answers run against intuition: 1–8 prompts come close to full data, supervising only 0.05%–1% of tokens matches full-token training, reverse-KL OPD transfers skills but not facts, and in 14 of 17 teacher-student pairs distilling on offline samples from the initial student works better. On-policy self-distillation (OPSD) has the most papers, and more than ten analysis papers question what its privileged information adds; OPD followed by RL beats joint training; multi-teacher OPD has become a common way for industry to merge expert models, yet in a controlled comparison it is no more accurate than SFT merging. On GitHub, the three large lists (chrisliu298, thinkwee, nick7nlp) share only 42 of the last three months' papers, and none has added papers from mid-to-late October yet.
   - Companion page: [Paper catalog (540 core papers and 136 related works)](./notes/training/On-Policy-Distillation-Literature-Review-Papers_en.md)
