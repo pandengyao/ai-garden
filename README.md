@@ -59,6 +59,9 @@ This is not a bookmark list but a garden. Each note is a plant: articles I read 
 
 ### Training
 
+- [LLM Positional Encoding: An Illustrated Guide from Intuition to RoPE](./notes/training/LLM-Positional-Encoding-Illustrated_en.md) · 2026-11-06
+  - Eight original figures explain token order, positional injection points, sinusoidal frequencies, relative offsets, RoPE, ALiBi, position interpolation, and the KV cache. Hand-calculable vector and attention examples clarify translation invariance with fixed content and the limits of context extension.
+
 - [Forward KL and Reverse KL in OPD: Intuition, Formulas, and Common Misconceptions](./notes/training/Forward-and-Reverse-KL-in-OPD_en.md) · 2026-11-06
   - Forward KL weights by teacher probabilities to avoid missing teacher-favored choices; Reverse KL weights by student probabilities to avoid overestimating choices the teacher considers unlikely. A three-token example clarifies the distinction and separates KL direction from the source of OPD trajectories.
 

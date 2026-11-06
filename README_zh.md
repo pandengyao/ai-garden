@@ -59,6 +59,9 @@
 
 ### 训练 (Training)
 
+- [LLM 位置编码：从直觉到 RoPE 的图解详解](./notes/training/LLM-Positional-Encoding-Illustrated.md) · 2026-11-06
+  - 用 8 幅原创图说明词序、位置注入点、多频率正余弦、相对位移、RoPE 旋转、ALiBi、位置插值与 KV cache；配合可手算的向量与注意力例子，澄清固定内容下的平移性质和长上下文边界。
+
 - [OPD 中的 Forward KL 与 Reverse KL：直觉、公式与常见误区](./notes/training/Forward-and-Reverse-KL-in-OPD.md) · 2026-11-06
   - Forward KL 按老师概率加权，防止漏掉老师认可的选择；Reverse KL 按学生概率加权，防止高估老师低概率的选择。用一个三 token 例子澄清两者的区别，并区分 KL 方向与 OPD 的轨迹来源。
 
