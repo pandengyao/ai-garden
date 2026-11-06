@@ -54,7 +54,7 @@ For example, we may wish to train a compact model to solve math questions such a
 
 ***Figure 1: A mathematics prompt (no separate caption in the source).***
 
-**Figure text: prompt; “What is** $5+(2\times3)$ **?”**
+**Figure text: prompt; “What is** $`5+(2\times3)`$ **?”**
 
 We can do on-policy training via reinforcement learning, by grading each student rollout on whether it solves the question. This grading can be done by a human, or by a “teacher” model that reliably gets the correct answer.
 
@@ -62,7 +62,7 @@ We can do on-policy training via reinforcement learning, by grading each student
 
 ***Figure 2: Student trajectory and reward in reinforcement learning (no separate caption in the source).***
 
-**Figure text: student trajectory; “** $5+2=7$ **, and** $7\times3=21$ **.” reward: 0. The incorrect solution in the original figure is preserved.**
+**Figure text: student trajectory; “** $`5+2=7`$ **, and** $`7\times3=21`$ **.” reward: 0. The incorrect solution in the original figure is preserved.**
 
 The strength of on-policy training is that by training on samples from itself, the student learns to avoid mistakes in a more direct way. But RL has a major downside: it provides very sparse feedback, teaching a **[fixed number of bits per training episode](https://thinkingmachines.ai/blog/lora/#how-much-capacity-is-needed-by-supervised-and-reinforcement-learning)** regardless of the number of tokens used. In our example above, the student learns that “21” is the wrong answer and updates away from producing the rollout it tried. But it doesn’t learn where exactly the mistake was made, whether it got the order of operations wrong or erred in the arithmetic itself. This sparsity of feedback makes RL inefficient for many applications.
 
@@ -74,9 +74,9 @@ We can use a mechanism called **distillation:** training the student to match th
 
 ***Figure 3: Teacher trajectory and student probabilities in off-policy distillation (no separate caption in the source).***
 
-**Figure text: teacher trajectory; “** $2\times3=6$ **, add 5 to get 11.” student's conditional per-token probability.**
+**Figure text: teacher trajectory; “** $`2\times3=6`$ **, add 5 to get 11.” student's conditional per-token probability.**
 
-**The per-token probabilities from left to right are:** $20\%,80\%,95\%,40\%,99\%,99\%,30\%,70\%,40\%,50\%,95\%,95\%$.
+**The per-token probabilities from left to right are:** $`20\%,80\%,95\%,40\%,99\%,99\%,30\%,70\%,40\%,50\%,95\%,95\%`$.
 
 Distillation from large model teachers has proven effective in training small models to **[follow instructions](https://crfm.stanford.edu/2023/03/13/alpaca.html)** ,[^1] **[reason on math and science](https://arxiv.org/abs/2506.04178)** ,[^2] **[extract clinical information](https://arxiv.org/html/2501.00031v1)** [^3] from medical notes, and **[engage in multi-turn chat dialogues](https://arxiv.org/abs/2305.14233)** .[^4] The distillation datasets used for these and other applications are often open-sourced and published.
 
@@ -102,9 +102,9 @@ The core idea of on-policy distillation is to sample trajectories from the *stud
 
 ***Figure 5: Student trajectory and teacher probabilities in on-policy distillation (no separate caption in the source).***
 
-**Figure text: student trajectory; “** $5+2=7$ **, and** $7\times3=21$ **.” teacher’s conditional per-token probability. The incorrect solution in the original figure is preserved.**
+**Figure text: student trajectory; “** $`5+2=7`$ **, and** $`7\times3=21`$ **.” teacher’s conditional per-token probability. The incorrect solution in the original figure is preserved.**
 
-**The per-token probabilities from left to right are:** $40\%,80\%,5\%,15\%,99\%,99\%,40\%,80\%,90\%,99\%,70\%,99\%,99\%$.
+**The per-token probabilities from left to right are:** $`40\%,80\%,5\%,15\%,99\%,99\%,40\%,80\%,90\%,99\%,70\%,99\%,99\%`$.
 
 In this post, we explore the application of on-policy distillation for tasks such as training a model for math reasoning and training an assistant model that combines domain knowledge with instruction following. We apply on-policy distillation on models that have a foundation of capabilities from pre- and mid-training. We find that it is a cheap and powerful approach to post-training, combining the advantages of on-policy training with a dense reward signal.
 
@@ -122,11 +122,11 @@ You can follow along with each step of the implementation in the **[Tinker cookb
 
 ### Loss function: reverse KL
 
-On-policy distillation can use a variety of loss functions for grading the student’s trajectories.[^11] For simplicity, we choose the per-token reverse KL—the divergence between the student’s ($\pi_\theta$) and teacher’s ($\pi_\text{teacher}$) distribution for each token conditioned on the same prior trajectory:
+On-policy distillation can use a variety of loss functions for grading the student’s trajectories.[^11] For simplicity, we choose the per-token reverse KL—the divergence between the student’s ($`\pi_\theta`$) and teacher’s ($`\pi_\text{teacher}`$) distribution for each token conditioned on the same prior trajectory:
 
-$$
+```math
 \text{KL}\Bigl(\pi_\theta \lvert\rvert \pi_\text{teacher}\Bigr) = \mathbb{E}_{x \sim {\pi_\theta}} \Bigl[ \log \pi_\theta(x_{t+1} | x_{1..t}) - \log \pi_\text{teacher}(x_{t+1} | x_{1..t}) \Bigr]
-$$
+```
 
 Our reward function minimizes the reverse KL, which pushes the student to approximate the teacher’s behavior in every state the student finds itself in. When the student behaves identically to the teacher, reverse KL is zero. For simplicity, we use a discount factor of zero: at any given timestep,[^12] the student only optimizes the immediate next token, with no consideration for future tokens.
 
@@ -158,7 +158,7 @@ Below we see a real example of an incorrect student trajectory graded by a teach
 >
 > **So:**
 >
-> $4\ (\text{min 1})+5\ (\text{min 2})+11\ (\text{min 3})=20$.
+> $`4\ (\text{min 1})+5\ (\text{min 2})+11\ (\text{min 3})=20`$.
 >
 > **Note: The ice cubes are not removed during the process — the pan is "frying a crispy egg", but we are only counting how many were added. It seems the ice cubes stay in the pan after being added.**
 >
@@ -166,7 +166,7 @@ Below we see a real example of an incorrect student trajectory graded by a teach
 >
 > **Therefore, the total number of ice cubes in the pan at the end of the third minute is:**
 >
-> $4+5+11=20$.
+> $`4+5+11=20`$.
 >
 > **Final Answer:**
 >
@@ -181,8 +181,8 @@ Darker colors represent tokens that receive a higher penalty from the teacher mo
 We implement on-policy distillation on top of the **[RL script in Tinker](https://github.com/thinking-machines-lab/tinker-cookbook/blob/main/tinker_cookbook/rl/train.py)** , which already implements sampling, reward computation, and policy gradient-style training.[^16]
 
 1. *Initialize teacher client.* The Tinker API enables easily creating different clients for different models, without needing to worry about the utilization of model engines. We use a sampling client, as we do not need to propagate logprobs through the teacher model.
-1. *Sample trajectories.* We sample rollouts from the student exactly as we would in RL. During sampling, RL already computes the student’s logprobs $\log \pi_\theta(x)$ for use as part of the **[importance-sampling](https://tinker-docs.thinkingmachines.ai/losses#policy-gradient-importance_sampling)** loss.
-1. *Compute reward.* We query the teacher client with `compute_logprobs` on the sampled trajectories, which returns the teacher’s logprobs $\log \pi_\text{teacher}(x)$ on the tokens $x$ sampled by the student.[^17] We then use this to calculate the reverse KL.
+1. *Sample trajectories.* We sample rollouts from the student exactly as we would in RL. During sampling, RL already computes the student’s logprobs $`\log \pi_\theta(x)`$ for use as part of the **[importance-sampling](https://tinker-docs.thinkingmachines.ai/losses#policy-gradient-importance_sampling)** loss.
+1. *Compute reward.* We query the teacher client with `compute_logprobs` on the sampled trajectories, which returns the teacher’s logprobs $`\log \pi_\text{teacher}(x)`$ on the tokens $`x`$ sampled by the student.[^17] We then use this to calculate the reverse KL.
 1. *Train with RL.* We set the per-token advantage to the negative reverse KL, and call the RL importance-sampling loss function to perform the training update on the student model.
 
 ```python
@@ -257,10 +257,10 @@ Comparing compute costs across methods is nontrivial, as the ratio of training v
 
 | Method | AIME’24 | Teacher FLOPs | Student FLOPs | CE vs SFT-2M |
 | --- | --- | --- | --- | --- |
-| *Initialization: SFT-400K* | 60% | $8.5 \times 10^{20}$ | $3.8 \times 10^{20}$ | – |
-| SFT-2M (extrapolated) | ~70% (extrapolated) | $3.4 \times 10^{21}$ | $1.5 \times 10^{21}$ | 1× |
+| *Initialization: SFT-400K* | 60% | $`8.5 \times 10^{20}`$ | $`3.8 \times 10^{20}`$ | – |
+| SFT-2M (extrapolated) | ~70% (extrapolated) | $`3.4 \times 10^{21}`$ | $`1.5 \times 10^{21}`$ | 1× |
 | Reinforcement learning | 68% | - | - | ≈1× |
-| On-policy distillation | 70% | $8.4 \times 10^{19}$ | $8.2 \times 10^{19}$ | 9-30× |
+| On-policy distillation | 70% | $`8.4 \times 10^{19}`$ | $`8.2 \times 10^{19}`$ | 9-30× |
 
 We find a baseline cost reduction of 9x when the SFT dataset is given, as in our example with OpenThoughts-3, or is amortized across many training runs.[^24] In this case we do not count the cost of teacher FLOPs for off-policy training but do for on-policy, since we must run the teacher model to compute log-probs for the student’s trajectory. Since this computation can be cheaply parallelized across GPUs, the cost reduction in GPU hours is closer to 18x.
 
@@ -340,7 +340,7 @@ Distillation as a tool for integrating behaviors and knowledge has also been exp
 
 ### Dense supervision greatly improves compute efficiency
 
-Reinforcement learning and on-policy distillation both learn via reverse KL, pruning the space of actions present in the base policy. The difference is in the density of reward. In **[LoRA Without Regret](https://thinkingmachines.ai/blog/lora/)** we presented the information-theoretic perspective that reinforcement learning only teaches $O(1)$ bits per episode. In contrast, distillation teaches $O(N)$ bits per episode, where $N$ is the number of tokens. Can we quantify the training efficiency gained through denser reward?
+Reinforcement learning and on-policy distillation both learn via reverse KL, pruning the space of actions present in the base policy. The difference is in the density of reward. In **[LoRA Without Regret](https://thinkingmachines.ai/blog/lora/)** we presented the information-theoretic perspective that reinforcement learning only teaches $`O(1)`$ bits per episode. In contrast, distillation teaches $`O(N)`$ bits per episode, where $`N`$ is the number of tokens. Can we quantify the training efficiency gained through denser reward?
 
 We ran an experiment for making a direct comparison between the two:
 
@@ -352,7 +352,7 @@ We ran an experiment for making a direct comparison between the two:
 
 ***Figure 14: Starting from the same initialization, on-policy distillation can learns the RL-trained policy in approximately 7-10x fewer gradient steps, which corresponds to a compute efficiency of 50-100x.***
 
-**Figure text: title, “Self-distillation: Qwen3-8B-Base on DeepMath”; left, Sampling eval: AIME24, y-axis Accuracy; right, Training eval: reverse KL vs teacher, y-axis** $\mathrm{KL}(\pi_\theta\Vert\pi_\mathrm{teacher})$ **. X-axis: Step. Legend: RL (LoRA rank 128), and Distill (LoRA ranks 1, 32, 128).**
+**Figure text: title, “Self-distillation: Qwen3-8B-Base on DeepMath”; left, Sampling eval: AIME24, y-axis Accuracy; right, Training eval: reverse KL vs teacher, y-axis** $`\mathrm{KL}(\pi_\theta\Vert\pi_\mathrm{teacher})`$ **. X-axis: Step. Legend: RL (LoRA rank 128), and Distill (LoRA ranks 1, 32, 128).**
 
 We see that distillation reaches the teacher’s level of performance approximately 7-10x faster than RL with matched model architecture (LoRA rank 128). The reverse KL decreases to near-zero and the AIME score is recovered in under 10 gradient steps, while RL took 70 steps to reach that level.
 
@@ -375,7 +375,7 @@ We train on this prompt for 20 consecutive steps, each with a batch of 256 rollo
 
 ***Figure 15: In this example, multi-epoch training on top of one training example is sufficient to distill the teacher’s AIME’24 performance. Our default configuration (also used in the personalization experiments) runs on-policy distillation with 64 prompts / batch, and 4 samples / prompt. All methods shown are trained with 256 samples / batch. Note that the right chart is showing training KL, hence it is natural for 1 prompt total to outperform 1 prompt / batch.***
 
-**Figure text: title, “Data-constrained self-distillation: Qwen3-8B-Base on DeepMath with one prompt”; left, Sampling eval: AIME24, y-axis Accuracy; right, Training eval: reverse KL vs teacher, y-axis** $\mathrm{KL}(\pi_\theta\Vert\pi_\mathrm{teacher})$ **. X-axis: Step. Legend: RL (LoRA Rank 128), Distill (64 prompts / batch), Distill (1 prompt / batch), and Distill (1 prompt total).**
+**Figure text: title, “Data-constrained self-distillation: Qwen3-8B-Base on DeepMath with one prompt”; left, Sampling eval: AIME24, y-axis Accuracy; right, Training eval: reverse KL vs teacher, y-axis** $`\mathrm{KL}(\pi_\theta\Vert\pi_\mathrm{teacher})`$ **. X-axis: Step. Legend: RL (LoRA Rank 128), Distill (64 prompts / batch), Distill (1 prompt / batch), and Distill (1 prompt total).**
 
 ### RL searches in the space of semantic strategies
 
@@ -462,7 +462,7 @@ At Thinking Machines, our mission is to empower people with AI models that combi
 
 [^11]: **See Agarwal et al. for an analysis of various loss function choices.**
 
-[^12]: **Although more mathematically correct, we do not find discount factors $>0$ to improve performance in practice, so we choose zero for simplicity.**
+[^12]: **Although more mathematically correct, we do not find discount factors $`>0`$ to improve performance in practice, so we choose zero for simplicity.**
 
 [^13]: **See [Eric Jang’s post](https://blog.evjang.com/2016/08/variational-bayes.html) for more discussion of mode seeking behaviors.**
 
@@ -486,9 +486,9 @@ At Thinking Machines, our mission is to empower people with AI models that combi
 
 [^23]: **150 steps corresponds to about 77K prompts; we train with 4 samples per prompt.**
 
-[^24]: $\mathrm{CE}=\frac{\mathrm{Student}_{\mathrm{OPD}}+\mathrm{Teacher}_{\mathrm{OPD}}}{\mathrm{Student}_{\mathrm{SFT}}}$. **Translator’s note: The original uses green squares for the on-policy student and teacher costs and blue for the SFT student cost. Subscripts express the same mapping here. The original numerator and denominator are retained, not inverted into the cost-reduction multiple stated in the prose.**
+[^24]: $`\mathrm{CE}=\frac{\mathrm{Student}_{\mathrm{OPD}}+\mathrm{Teacher}_{\mathrm{OPD}}}{\mathrm{Student}_{\mathrm{SFT}}}`$. **Translator’s note: The original uses green squares for the on-policy student and teacher costs and blue for the SFT student cost. Subscripts express the same mapping here. The original numerator and denominator are retained, not inverted into the cost-reduction multiple stated in the prose.**
 
-[^25]: $\mathrm{CE}=\frac{\mathrm{Student}_{\mathrm{OPD}}+\mathrm{Teacher}_{\mathrm{OPD}}}{\mathrm{Student}_{\mathrm{SFT}}+\mathrm{Teacher}_{\mathrm{SFT}}}$. **Translator’s note: Green and blue squares in the original denote on-policy distillation and SFT, respectively. Subscripts make the distinction while preserving the direction of the original formula.**
+[^25]: $`\mathrm{CE}=\frac{\mathrm{Student}_{\mathrm{OPD}}+\mathrm{Teacher}_{\mathrm{OPD}}}{\mathrm{Student}_{\mathrm{SFT}}+\mathrm{Teacher}_{\mathrm{SFT}}}`$. **Translator’s note: Green and blue squares in the original denote on-policy distillation and SFT, respectively. Subscripts make the distinction while preserving the direction of the original formula.**
 
 [^26]: **[Unfamiliar Finetuning Examples Control How Language Models Hallucinate](https://arxiv.org/abs/2403.05612) (Kang et al, 2024)**
 
@@ -520,7 +520,7 @@ At Thinking Machines, our mission is to empower people with AI models that combi
 
 [^40]: **[”Reinforcement Learning for Reasoning in Large Language Models with One Training Example”](https://arxiv.org/abs/2504.20571) (Wang et al, 2025) presents a positive result, however, in some settings.**
 
-[^41]: **Prompt: “Evaluate the limit: $\lim_{x \to \infty} \sqrt{x} \left( \sqrt[3]{x+1} - \sqrt[3]{x-1} \right)$”**
+[^41]: **Prompt: “Evaluate the limit: $`\lim_{x \to \infty} \sqrt{x} \left( \sqrt[3]{x+1} - \sqrt[3]{x-1} \right)`$”**
 
 [^42]: **From [The Bitter Lesson](http://www.incompleteideas.net/IncIdeas/BitterLesson.html) (Rich Sutton): “breakthrough progress eventually arrives by an opposing approach based on scaling computation by search and learning”**
 
@@ -530,4 +530,4 @@ At Thinking Machines, our mission is to empower people with AI models that combi
 
 [^45]: **[”RL’s Razor: Why Online Reinforcement Learning Forgets Less”](https://arxiv.org/abs/2509.04259) (Shenfeld et al, 2025)**
 
-[^46]: **The importance of “truly on-policy”** $\mathrm{KL}=0$ **data was also explored in our previous post, [Defeating Nondeterminism in LLM Inference](https://thinkingmachines.ai/blog/defeating-nondeterminism-in-llm-inference/).**
+[^46]: **The importance of “truly on-policy”** $`\mathrm{KL}=0`$ **data was also explored in our previous post, [Defeating Nondeterminism in LLM Inference](https://thinkingmachines.ai/blog/defeating-nondeterminism-in-llm-inference/).**
