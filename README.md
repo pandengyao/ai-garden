@@ -142,6 +142,21 @@ This is not a bookmark list but a garden. Each note is a plant: articles I read 
 - [OpenThoughts: Data Recipes for Reasoning Models (full paper, with a Chinese translation)](./notes/training/OpenThoughts-Data-Recipes-for-Reasoning-Models_en.md) · 2025-06-04
   - Over 1,000 controlled experiments optimize a reasoning SFT data pipeline step by step, yielding OpenThoughts3-1.2M; the OpenThinker3-7B model trained on it reaches 53%, 51% and 54% on AIME 2025, LiveCodeBench 06/24-01/25 and GPQA Diamond. Main findings: having the teacher sample several answers per question grows the data by 16× or more; QwQ-32B, despite lower benchmark scores, is a better teacher than DeepSeek-R1; answer verification and filtering bring no clear gain; using one or two high-quality question sources beats chasing source diversity; and filtering questions by LLM-labeled difficulty or response length works better than pre-training data filters such as fastText and embeddings.
 
+- [OpenThoughts: Reasoning Data Recipes and Scaling Effects](./notes/training/OpenThoughts-Reasoning-Data-Scaling_en.md) · 2025-06-04
+  - Explains question sourcing, mixing, filtering, multiple-answer sampling, answer filtering, and teacher selection, using final evaluations and scaling curves to clarify recipe gains and the limits of saturation, cost, and decontamination.
+
+- [Distillation Scaling Laws: Teachers, Students, and Compute Budgets](./notes/training/Distillation-Scaling-Laws_en.md) · 2025-02-12
+  - Explains teacher–student capability matching, broken power laws, and four cost scenarios for full-distribution distillation; distinguishes real-data cross-entropy, teacher-imitation KL, fitted predictions, and measured behavior.
+
+- [Finetuning Scaling Laws: Data, Models, and Methods](./notes/training/LLM-Finetuning-Scaling-Laws_en.md) · 2024-02-27
+  - Studies data and model scaling for full-model tuning, prompt tuning, and LoRA, explaining multiplicative fits, held-out validation, and method selection while preserving task differences, extrapolation failures, and transfer limitations.
+
+- [Chinchilla: Allocating Models and Data Under the Same Compute Budget](./notes/training/Chinchilla-Compute-Optimal-Training_en.md) · 2022-03-29
+  - Uses training-curve envelopes, equal-compute comparisons, and parametric loss fitting to study model–data allocation under a fixed pretraining budget; separates predicted optima, actual model comparisons, and the rough twenty-tokens-per-parameter rule.
+
+- [Kaplan: Scaling Laws for Neural Language Models](./notes/training/Kaplan-Scaling-Laws-for-Neural-Language-Models_en.md) · 2020-01-23
+  - Describes language-model cross-entropy with parameter, data, and compute power laws, distinguishing resource bottlenecks, batch corrections, and compute-optimal allocation; explains the scope of empirical fits and why distant extrapolation can fail.
+
 ## How this garden is tended
 
 - Each note opens with its source link and date, so it can be traced back.

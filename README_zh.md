@@ -142,6 +142,21 @@
 - [OpenThoughts：推理模型的数据配方（论文全文翻译）](./notes/training/OpenThoughts-Data-Recipes-for-Reasoning-Models.md) · 2025-06-04
   - 用 1,000 多次受控实验逐步优化推理 SFT 数据流水线，得到 OpenThoughts3-1.2M；用它训练的 OpenThinker3-7B 在 AIME 2025、LiveCodeBench 06/24-01/25 和 GPQA Diamond 上分别达到 53%、51% 和 54%。主要发现：让教师模型给每个问题采样多个答案，能把数据扩大 16 倍以上；基准分数更低的 QwQ-32B 反而是比 DeepSeek-R1 更好的教师；答案验证与过滤没有带来明显收益；只用一两个高质量问题来源，好过追求来源多样；按 LLM 标注的难度或回答长度筛选问题，效果好于 fastText、embedding 这类预训练数据过滤方法。
 
+- [OpenThoughts：推理数据配方与规模效应](./notes/training/OpenThoughts-Reasoning-Data-Scaling.md) · 2025-06-04
+  - 逐步讲解选题、来源混合、问题筛选、多答案采样、答案过滤与教师选择，结合最终模型评测和规模曲线，说明推理数据配方的收益及饱和、成本和去污染边界。
+
+- [蒸馏缩放规律：教师、学生与计算预算](./notes/training/Distillation-Scaling-Laws.md) · 2025-02-12
+  - 解释完整概率分布蒸馏中的师生能力匹配、折断幂律和四种成本核算场景；区分真实数据交叉熵、模仿教师的 KL、拟合预测与实测现象。
+
+- [微调缩放规律：数据、模型与方法](./notes/training/LLM-Finetuning-Scaling-Laws.md) · 2024-02-27
+  - 研究全参数微调、Prompt Tuning 和 LoRA 的数据与模型缩放，解释乘法式拟合、留出验证与方法选择；保留任务差异、外推失败及迁移能力的限制。
+
+- [Chinchilla：同样算力如何分配模型与数据](./notes/training/Chinchilla-Compute-Optimal-Training.md) · 2022-03-29
+  - 通过训练曲线包络、等算力比较和参数化损失拟合，研究固定预训练预算下模型与数据的分配；区分预测最优点、实际模型对照及每参数约二十个 token 这一经验量级。
+
+- [Kaplan：语言模型缩放定律](./notes/training/Kaplan-Scaling-Laws-for-Neural-Language-Models.md) · 2020-01-23
+  - 用参数量、数据量和计算量的幂律描述语言模型交叉熵，区分资源瓶颈、批量校正与计算最优分配；解释经验拟合的适用范围及远距离外推为何会失效。
+
 ## 这座花园怎么打理
 
 - 每篇笔记开头记来源链接和日期，方便回溯。
