@@ -26,6 +26,9 @@ This is not a bookmark list but a garden. Each note is a plant: articles I read 
 
 ### Inference
 
+- [Mooncake and SGLang: An Architecture Walkthrough Centered on KVCache](./notes/inference/Mooncake-SGLang-KVCache-Architecture_en.md) · 2026-11-13
+  - The paper argues KVCache is worth reusing across machines: about 6 GB/s of load bandwidth suffices on an 8×A800 machine, but a cache that fits on one machine reaches less than half of the theoretical maximum hit rate (40%–66% in the paper) on most workloads, so a distributed pool is needed. SGLang uses Transfer Engine for PD transfer and Mooncake Store as the HiCache L3. Checked against the current code, the paper's Algorithm 1 has no open-source implementation: the routers pick instances by prefix match and load only, without estimating TTFT.
+
 - [DeepSeek V4.1 Flash Inference Deployment Q&A: the official DeepInfer doc, with a full Chinese translation](./notes/inference/DeepSeek-V4.1-Flash-Inference-Deployment-QA_en.md) · 2026-10-20
   - DeepSeek's own production deployment details: a single cluster serves 155 trillion tokens per day; prefill runs on 8-GPU machines with the smallest EP that fits, decode on 64–128-GPU supernodes with Wide-EP, and the block KV cache lives on a dedicated 3FS cluster of about 100 PiB (3–7 day TTL). Also covers EPLB and DP load-balancing settings, SWA bounded replay hits and recomputation, and DSpark variable-length verification (+4–7% throughput at the production operating point).
 

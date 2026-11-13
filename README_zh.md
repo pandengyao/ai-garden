@@ -26,6 +26,9 @@
 
 ### 推理优化 (Inference)
 
+- [Mooncake 与 SGLang：围绕 KVCache 的架构梳理](./notes/inference/Mooncake-SGLang-KVCache-Architecture.md) · 2026-11-13
+  - 论文论证 KVCache 值得跨机复用：8×A800 机器加载带宽约 6 GB/s 即可，但单机放得下的缓存在多数负载下拿不到理论最高命中率（论文中为 40%～66%）的一半，需要分布式池。SGLang 用 Transfer Engine 做 PD 传输、用 Mooncake Store 做 HiCache L3。对照当前代码，论文的 Algorithm 1 没有开源实现：路由器只按前缀匹配和负载选实例，不估算 TTFT。
+
 - [DeepSeek V4.1 Flash 推理部署 Q&A：DeepInfer 官方文档全文翻译](./notes/inference/DeepSeek-V4.1-Flash-Inference-Deployment-QA.md) · 2026-10-20
   - DeepSeek 官方的线上部署细节：单集群每天 155 万亿 tokens；Prefill 用 8 卡机器、尽量小的 EP，Decode 用 64–128 卡超节点做 Wide-EP，Block KVCache 存在约 100 PiB 的独立 3FS 集群上（TTL 3–7 天）。另含 EPLB 与 DP 负载均衡参数、SWA Bounded Replay 的命中与重算、DSpark 变长验证（生产点吞吐 +4–7%）。
 
