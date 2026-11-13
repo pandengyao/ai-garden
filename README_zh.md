@@ -29,6 +29,9 @@
 - [DeepSeek V4.1 Flash 推理部署 Q&A：DeepInfer 官方文档全文翻译](./notes/inference/DeepSeek-V4.1-Flash-Inference-Deployment-QA.md) · 2026-10-20
   - DeepSeek 官方的线上部署细节：单集群每天 155 万亿 tokens；Prefill 用 8 卡机器、尽量小的 EP，Decode 用 64–128 卡超节点做 Wide-EP，Block KVCache 存在约 100 PiB 的独立 3FS 集群上（TTL 3–7 天）。另含 EPLB 与 DP 负载均衡参数、SWA Bounded Replay 的命中与重算、DSpark 变长验证（生产点吞吐 +4–7%）。
 
+- [Mooncake：以更多存储换取更少计算（FAST 2025 论文全文翻译）](./notes/inference/Mooncake-KVCache-Centric-Serving.md) · 2025-02-25
+  - 将预填充／解码分离与全局 KVCache 复用结合：真实对话轨迹中，满足 SLO 的有效请求比例提高 59%–498%；全局缓存命中率最高为本地缓存的 2.36 倍，预填充计算时间最多减少 48%。含全部图表、算法和参考文献，区分生产统计与回放实验。
+
 - [Flash-Decoding: 长上下文推理加速](./notes/inference/Flash-Decoding.md) · 2023-10-12
   - 推理时 Query Length 只有 1，Batch 维度并行不起来；那就去并行 KV Cache 的序列长度维度，长序列解码最高快 8 倍。
 
