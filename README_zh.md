@@ -26,6 +26,9 @@
 
 ### 推理优化 (Inference)
 
+- [Mooncake Transfer Engine 源码阅读术语手册](./notes/inference/Mooncake-Transfer-Engine-Glossary.md) · 2026-11-20
+  - 读 Transfer Engine 源码前要懂的硬件、网络、RDMA verbs 和 TE 自身术语，每个配通俗解释和例子。关键一点：TE 的 RDMA 数据面是单边 WRITE/READ，接收端 CPU 全程不参与，“数据到了”要靠另一条消息通知。附一次 RDMA WRITE 从 `submitTransfer` 经 `ibv_post_send` 到 CQ 完成的调用链。
+
 - [Mooncake 与 SGLang：围绕 KVCache 的架构梳理](./notes/inference/Mooncake-SGLang-KVCache-Architecture.md) · 2026-11-13
   - 论文论证 KVCache 值得跨机复用：8×A800 机器加载带宽约 6 GB/s 即可，但单机放得下的缓存在多数负载下拿不到理论最高命中率（论文中为 40%～66%）的一半，需要分布式池。SGLang 用 Transfer Engine 做 PD 传输、用 Mooncake Store 做 HiCache L3。对照当前代码，论文的 Algorithm 1 没有开源实现：路由器只按前缀匹配和负载选实例，不估算 TTFT。
 

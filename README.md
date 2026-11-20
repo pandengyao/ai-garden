@@ -26,6 +26,9 @@ This is not a bookmark list but a garden. Each note is a plant: articles I read 
 
 ### Inference
 
+- [Mooncake Transfer Engine Source Code Reading Glossary](./notes/inference/Mooncake-Transfer-Engine-Glossary_en.md) · 2026-11-20
+  - The hardware, networking, RDMA verbs and TE-specific terms you need before reading the Transfer Engine source, each with a plain explanation and an example. The key point: TE's RDMA data path is one-sided WRITE/READ, the receiver's CPU never takes part, and "the data has arrived" has to come in a separate message. Includes the call chain of one RDMA WRITE from `submitTransfer` through `ibv_post_send` to the CQ completion.
+
 - [Mooncake and SGLang: An Architecture Walkthrough Centered on KVCache](./notes/inference/Mooncake-SGLang-KVCache-Architecture_en.md) · 2026-11-13
   - The paper argues KVCache is worth reusing across machines: about 6 GB/s of load bandwidth suffices on an 8×A800 machine, but a cache that fits on one machine reaches less than half of the theoretical maximum hit rate (40%–66% in the paper) on most workloads, so a distributed pool is needed. SGLang uses Transfer Engine for PD transfer and Mooncake Store as the HiCache L3. Checked against the current code, the paper's Algorithm 1 has no open-source implementation: the routers pick instances by prefix match and load only, without estimating TTFT.
 
