@@ -135,6 +135,7 @@ RDMA 的编程接口叫 **verbs**（动词接口），库是 libibverbs（属于
 
 | 术语 | 解释 |
 | --- | --- |
+| 发起方 / 目标方（initiator / target） | 一次传输里，主动提出读写请求的一方叫发起方，内存被读写的一方叫目标方，也叫对端（peer）。不管是 READ 还是 WRITE，都是发起方提交工单、按门铃、收回执，目标方只是被访问。例：Prefill 把 KV 写进 Decode，Prefill 是发起方；Decode 从存储节点读 KV，Decode 是发起方。源码里的 target（如 `target_id`、`target_offset`）就是指目标方，建连时发起方通常也是主动方。 |
 | 单边（one-sided） | READ/WRITE 只需要发起方动手，对方 CPU 不参与，也不知道数据被读写了。类比：你有对方仓库的门禁卡，自己进去放货或取货，仓库管理员并不知情。 |
 | 双边（two-sided） | SEND/RECV 需要双方配合：接收方先备好接收缓冲区（post recv），发送方的消息到达后，接收方会收到一条回执。类比：寄挂号信，对方要签收。 |
 | RDMA WRITE（RDMA 写） | 把本机内存的数据直接写进远端内存。例：Prefill 节点把算好的 KV 直接写进 Decode 节点的显存。 |

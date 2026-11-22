@@ -135,6 +135,7 @@ The RDMA programming interface is called **verbs**, its library is libibverbs (p
 
 | Term | Explanation |
 | --- | --- |
+| Initiator / target | In a transfer, the side that issues the read or write request is the initiator, and the side whose memory is read or written is the target, also called the peer. For both READ and WRITE, the initiator submits the work order, rings the doorbell and collects the receipt, while the target is only accessed. Example: when Prefill writes KV into Decode, Prefill is the initiator; when Decode reads KV from a storage node, Decode is the initiator. In the source, target (as in `target_id`, `target_offset`) means the target side, and the initiator is usually also the active side during connection setup. |
 | One-sided | READ/WRITE needs only the initiator to act; the other side's CPU takes no part and doesn't even know its data was read or written. Analogy: you hold an access card to the other side's warehouse and go in to drop off or pick up goods yourself, without the warehouse keeper knowing. |
 | Two-sided | SEND/RECV needs both sides to cooperate: the receiver first prepares a receive buffer (post recv), and when the sender's message arrives, the receiver gets a receipt. Analogy: registered mail, which the recipient has to sign for. |
 | RDMA WRITE | Writes data from local memory directly into remote memory. Example: a Prefill node writes the KV it computed directly into a Decode node's GPU memory. |
