@@ -88,7 +88,7 @@ TransferEngine                     对外 API（TE/include/transfer_engine.h）
 | ECMP（Equal-Cost Multi-Path，等价多路径）与 UDP 源端口 | 两台机器之间有多条一样好的路径时，交换机按包头算哈希决定走哪条。RoCEv2 的 UDP 源端口参与哈希，给不同连接设不同的源端口，流量就能分散到不同路径上。 |
 | Bonding（网卡绑定）/ LAG（Link Aggregation Group，链路聚合组） | 把网卡的两个物理口绑成一个逻辑口，带宽叠加，坏了一个口另一个还能用。 |
 | Rail（轨道） | 多网卡集群的一种接法：每台机器的第 i 块网卡都接到同一组交换机上，这一组叫第 i 条 rail。例：所有机器的 mlx5_0 在 rail 0，mlx5_1 在 rail 1。TE 源码里说的 rail 指“本地某块网卡到对端某块网卡”这条路径。 |
-| 多网卡（multi-NIC；NIC = Network Interface Card，网络接口卡） | 一台 GPU 服务器常配 4～8 块高速网卡，数据可以同时从多块网卡发出，带宽叠加。例：8 块 400 Gb/s 网卡合计约 400 GB/s。 |
+| 多网卡（multi-NIC；NIC = Network Interface Card，网络接口卡） | 一台 GPU 服务器常配 4～8 块高速网卡，数据可以同时从多块网卡发出，带宽叠加。例：每块 400 Gb/s 网卡约 50 GB/s，8 块合计约 400 GB/s。 |
 
 ---
 

@@ -88,7 +88,7 @@ Read Section 3 (RDMA) and Section 4 (TE's own concepts) first, then read the sou
 | ECMP (Equal-Cost Multi-Path) and the UDP source port | When there are several equally good paths between two machines, the switch hashes the packet header to choose one. RoCEv2's UDP source port goes into the hash, so giving different connections different source ports spreads the traffic over different paths. |
 | Bonding / LAG (Link Aggregation Group) | Binds two physical ports of a NIC into one logical port: the bandwidth adds up, and if one port fails the other still works. |
 | Rail | A way of wiring multi-NIC clusters: the i-th NIC of every machine connects to the same group of switches, called rail i. Example: every machine's mlx5_0 is on rail 0 and its mlx5_1 on rail 1. In the TE source, a rail means the path "a given local NIC to a given peer NIC". |
-| Multi-NIC (NIC = Network Interface Card) | A GPU server often has 4 to 8 high-speed NICs, and data can go out of several at once, adding up their bandwidth. Example: 8 NICs at 400 Gb/s total about 400 GB/s. |
+| Multi-NIC (NIC = Network Interface Card) | A GPU server often has 4 to 8 high-speed NICs, and data can go out of several at once, adding up their bandwidth. Example: each 400 Gb/s NIC is about 50 GB/s, so 8 of them total about 400 GB/s. |
 
 ---
 
