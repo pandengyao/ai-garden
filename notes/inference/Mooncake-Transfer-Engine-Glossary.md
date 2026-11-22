@@ -196,6 +196,7 @@ RDMA 的编程接口叫 **verbs**（动词接口），库是 libibverbs（属于
 | DeviceDesc（device descriptor，设备描述符） | 说明书里描述一块网卡的部分：网卡名、LID、GID。 |
 | BufferDesc（buffer descriptor，缓冲区描述符） | 说明书里描述一块 buffer 的部分：位置、起始地址、长度，以及它在每块网卡上的 lkey 和 rkey。例：一块 buffer 注册到了 4 块网卡上，就有 4 个 rkey。 |
 | 元数据后端（metadata backend）/ conn string（connection string，连接字符串） | 说明书存在哪。可以是 etcd、Redis、HTTP 这样的中心服务；也可以选 P2PHANDSHAKE，不设中心，谁需要就直接连到对方去要。例：SGLang PD 分离用的是 P2PHANDSHAKE。 |
+| P2PHANDSHAKE（peer-to-peer handshake，点对点握手模式） | 一种不需要中心元数据服务的模式：初始化时把元数据后端写成字符串 `P2PHANDSHAKE` 就会启用。这时段名就是 `IP:端口`，说明书不往任何地方发布，只留在本进程里。谁要访问你，就按段名里的 IP 和端口直接连到你的握手 daemon，双方当场交换说明书。类比：不去查电话簿，直接按名片上的号码打过去，通话时互相报上信息。好处是不用部署 etcd 这类服务；代价是每个进程都要开着一个能被对方连上的端口。例：SGLang PD 分离就用这种模式，D 的段名形如 `10.0.0.2:15123`，P 连到这个地址拿到 D 的说明书后开始写 KV。 |
 | 发布（publish） | 注册内存后，把更新后的说明书放到元数据后端，让别人查得到。 |
 | metacache（metadata cache，元数据缓存） | 把查到的对端说明书在本地缓存起来，不用每次传输都去查。对端新注册了内存时缓存会过期，要重新拉。 |
 | 握手（handshake） | 建 RDMA 连接前，双方通过 TCP 交换网卡地址和 QP 编号，内容是 JSON（JavaScript Object Notation，JavaScript 对象表示法）。例：A 说“我的 QP 是 101、102”，B 回“我的是 201、202”，双方再把各自的 QP 推进到 RTS。 |
