@@ -5,7 +5,7 @@
     python3 twin_audit.py --sync-fences <file> [...]     # first copy non-CJK fence lines zh -> en
 
 Either file of a pair may be named. Pairs are named by pair_of():
-    notes, ideas, news    X.md (Chinese)          <->  X_en.md (English)
+    notes                 X.md (Chinese)          <->  X_en.md (English)
     READMEs (any dir)     README_zh.md (Chinese)  <->  README.md (English, GitHub's default)
 
 ai-garden keeps every note and index in Chinese and English, written line for line:

@@ -11,10 +11,10 @@ unfinished files neither block the check nor slip into the commit. The flags com
 Exit 1 on any ERROR. WARN lines need a human look but do not fail.
 
 Whole-tree checks:
-1. Index links resolve, and every note is listed in the index of its own language:
-   notes/**/X.md in README_zh.md, notes/**/X_en.md in README.md; ideas/ and news/ notes in
-   that section's README_zh.md / README.md. README.md is the English index (GitHub's default
-   page), so a README_en.md is stale.
+1. Index links resolve. The root README.md / README_zh.md link every topic folder's index,
+   and every note is listed in its topic's index of its own language: notes/<topic>/X.md in
+   notes/<topic>/README_zh.md, notes/<topic>/X_en.md in notes/<topic>/README.md. README.md is
+   the English index (GitHub's default page), so a README_en.md is stale.
 2. Relative links and images inside notes resolve.
 3. No note carries a 成熟度 / 类型 / 作者 (Maturity / Type / Author) metadata line, and no index
    entry starts with a maturity emoji (🌱 / 🌿 / 🌳).
@@ -23,7 +23,7 @@ Whole-tree checks:
    language-switcher line under each title.
 
 Checks on files changed vs origin/main (--all: every tracked file):
-5. Notes are Markdown only: no .html / .htm / .pdf / .doc / .docx / .pptx under notes/, ideas/, news/.
+5. Notes are Markdown only: no .html / .htm / .pdf / .doc / .docx / .pptx under notes/.
 6. Text files hold no API keys, tokens or private keys (ERROR) and no confidentiality wording
    (WARN), plus the patterns in scripts/private-patterns.txt: a local, git-ignored file, one
    `ERROR|WARN <tab> regex <tab> label` per line, for markers that must never be published but
@@ -68,11 +68,9 @@ TEXT_EXT = {".md", ".html", ".htm", ".txt", ".json", ".csv", ".yaml", ".yml", ".
 LINK_RE = re.compile(r'\]\(([^)\s]+)(?:\s+"[^"]*")?\)')
 BIG = 5 * 1024 * 1024
 NON_MD_DOCS = (".html", ".htm", ".pdf", ".docx", ".doc", ".pptx")
-NOTE_DIRS = ("notes/", "ideas/", "news/")
+NOTE_DIRS = ("notes/",)
 EN = "_en.md"
-INDEX_FILES = ("README.md", "README_zh.md", "ideas/README.md", "ideas/README_zh.md",
-               "news/README.md", "news/README_zh.md")
-STALE_FILES = ("README_en.md", "ideas/README_en.md", "news/README_en.md")
+ROOT_INDEX = ("README.md", "README_zh.md")
 BANNED_META_RE = re.compile(r"(?m)^[-*]\s+\*\*(成熟度|类型|作者|Maturity|Type|Author)\*\*\s*[:：]")
 INDEX_EMOJI_RE = re.compile(r"(?m)^\s*[-*]\s+(🌱|🌿|🌳)\s*\[")
 LINT_CFG = os.path.join(REPO, ".markdownlint-cli2.jsonc")
@@ -234,12 +232,21 @@ def resolve(base_dir, target):
     return os.path.normpath(os.path.join(base_dir, target))
 
 
+def index_files():
+    """The root index pair plus each topic folder's index pair (notes/<topic>/README*.md)."""
+    topics = sorted(os.path.relpath(p, ROOT) for p in glob.glob(os.path.join(ROOT, "notes", "*"))
+                    if os.path.isdir(p))
+    return ROOT_INDEX + tuple(os.path.join(t, n) for t in topics for n in ROOT_INDEX)
+
+
 def index_for(rel):
-    """The index that must list note `rel`: the one in the note's own language."""
-    top = rel.split("/", 1)[0]
-    d = top if top in ("ideas", "news") else ""
+    """The index that must list `rel`: for a note, its topic's index in the note's own
+    language; for a topic index, the root index in the same language."""
+    d = os.path.dirname(rel)
+    if os.path.basename(rel) in ROOT_INDEX:
+        d = ""
     zh, en = pair_of(os.path.join(d, "README.md"))
-    return en if rel.endswith(EN) else zh
+    return en if is_english(rel) else zh
 
 
 def read(rel):
@@ -267,10 +274,11 @@ def local_links(rel, body):
 def run_checks(scan_all, staged):
     errors, warns = [], []
 
-    indexes = {rel: read(rel) for rel in INDEX_FILES if os.path.exists(os.path.join(ROOT, rel))}
-    for rel in STALE_FILES:
-        if os.path.exists(os.path.join(ROOT, rel)):
-            errors.append(f"{rel}: stale - README.md is the English index (Chinese: README_zh.md)")
+    indexes = {rel: read(rel) for rel in index_files() if os.path.exists(os.path.join(ROOT, rel))}
+    stale = sorted(os.path.relpath(p, ROOT) for p in glob.glob(os.path.join(ROOT, "README_en.md"))
+                   + glob.glob(os.path.join(ROOT, "notes", "**", "README_en.md"), recursive=True))
+    for rel in stale:
+        errors.append(f"{rel}: stale - README.md is the English index (Chinese: README_zh.md)")
     linked_from = {}
     for rel, body in indexes.items():
         for m in INDEX_EMOJI_RE.finditer(body):
@@ -282,11 +290,16 @@ def run_checks(scan_all, staged):
                 errors.append(f"{rel} link does not resolve: {t}")
         linked_from[rel] = targets
 
-    found = set(glob.glob(os.path.join(ROOT, "notes", "**", "*.md"), recursive=True)
-                + glob.glob(os.path.join(ROOT, "ideas", "*.md"))
-                + glob.glob(os.path.join(ROOT, "news", "*.md")))
+    for rel in indexes:
+        if rel in ROOT_INDEX:
+            continue
+        idx = index_for(rel)
+        if os.path.normpath(os.path.join(ROOT, rel)) not in linked_from.get(idx, set()):
+            errors.append(f"topic index not linked from {idx}: {rel}")
+
+    found = glob.glob(os.path.join(ROOT, "notes", "**", "*.md"), recursive=True)
     notes = sorted(r for r in (os.path.relpath(p, ROOT) for p in found)
-                   if r not in INDEX_FILES and r not in STALE_FILES)
+                   if os.path.basename(r) not in ROOT_INDEX + ("README_en.md",))
     bodies = dict(indexes)
     for rel in notes:
         body = bodies[rel] = read(rel)

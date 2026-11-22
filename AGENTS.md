@@ -12,12 +12,10 @@ A personal digital garden of AI notes: research, reading and thinking about AI, 
 
 | Path | Contents |
 | --- | --- |
-| `notes/<topic>/X.md`, `X_en.md` | Notes on articles, papers and reports, and original research. Topic folders are `snake_case`: `agent`, `inference`, `llm_api`, `multimodal` so far |
+| `notes/<topic>/X.md`, `X_en.md` | Notes on articles, papers and reports, and original research. Topic folders are `snake_case`: `agent`, `distillation`, `fundamentals`, `inference`, `llm_api`, `multimodal`, `scaling_laws`, `self_improvement`, `training_data` |
 | `notes/<topic>/img/` | Images for that topic. Name new ones `<File>-<what>.<ext>` |
-| `ideas/YYYY-MM-DD-<slug>.md`, `_en.md` | Short original ideas |
-| `news/YYYY-MM.md`, `_en.md` | AI news, one file per month, newest entry first |
-| `README.md`, `README_zh.md` | The English index (GitHub's front page) and the Chinese index |
-| `ideas/README*.md`, `news/README*.md` | Indexes for those sections, split the same way |
+| `notes/<topic>/README.md`, `README_zh.md` | The topic's index: every note in the folder, with a one-line summary |
+| `README.md`, `README_zh.md` | The home page in English (GitHub's front page) and Chinese: a table of topics and the latest additions |
 | `scripts/check.py`, `scripts/twin_audit.py` | The checker. Run it before every commit |
 | `scripts/private-patterns.txt` | Extra patterns for the checker. Local only and git-ignored, so never commit it |
 
@@ -27,7 +25,7 @@ Every note and index exists in Chinese and in English.
 
 - **Notes are Chinese-first**: `X.md` is the Chinese original and `X_en.md` its English translation, in the same folder.
 - **READMEs are the other way round**: `README.md` is English and `README_zh.md` is Chinese. There is no `README_en.md`.
-- **Indexes**: list each Chinese note in `README_zh.md` and its English twin in `README.md`, in the same section and position.
+- **Indexes**: list each Chinese note in its topic's `README_zh.md` and its English twin in the topic's `README.md`, in the same section and position.
 - **Language switcher**: the line right under each title is `中文 | [English](./<English file>)` in the Chinese file and `[中文](./<Chinese file>) | English` in the English one.
 - **Line for line**: line N of the English file translates line N of the Chinese one. Keep every blank line, heading level, list marker and indent, table shape, footnote id, URL and image path. Paragraphs are single lines, so this always works.
 - **Copy code, don't retype it**: a code line without Chinese is byte-identical in both files. In a line with Chinese, translate only the comment or string. `python3 scripts/twin_audit.py --sync-fences <file>` copies the Chinese-free code lines for you. Without the flag, it audits a pair.
@@ -43,7 +41,10 @@ Every note and index exists in Chinese and in English.
 - Never add a `成熟度`, `类型` or `作者` (Maturity, Type, Author) line, and never start an index entry with 🌱, 🌿 or 🌳. The checker rejects both.
 - Every number, name and date comes from the source. Check release dates against the vendor's own announcement, and run every code example before you publish it.
 - A note that carries a paper's full translation opens with `## 主要结论` / `## Key Findings`: a short summary written for the note, in which every number comes from the paper. The paper follows under `## 全文翻译` / `## Full Paper`, with each of its headings moved down one level. In the Chinese file, also translate the prose inside the paper's prompt and example blocks, line for line; keep code, JSON keys, tags, template variables and tool calls unchanged.
-- Index entries go newest first within their section, as `- [Title: subtitle](./notes/<topic>/<File>.md) · YYYY-MM-DD` followed by an indented one-line summary of the conclusion. The date is the source's publication date. Sections are sorted by their English names.
+- Put a note in the topic folder that fits it best. A new topic folder needs its own `README.md` and `README_zh.md` (title, switcher line, a link back to the home page) and a row in the home page's topic table, which is sorted by English name.
+- In a topic index, entries go newest first within their section, as `- [Title: subtitle](./<File>.md) · YYYY-MM-DD` followed by an indented summary of the conclusion. The date is the source's publication date. A topic with many notes may split them into `##` sections, sorted by their English names.
+- The home page's "Recent Updates" list keeps the three latest dates on which notes were added, newest first, as `- YYYY-MM-DD · <Topic>: [Title](./notes/<topic>/<File>.md) · ...`, with no summaries. Add the new note there too, and drop the oldest date.
+- Don't move a published note to another folder without the owner's OK: GitHub does not redirect old file URLs.
 
 ## Markdown style
 

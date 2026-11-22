@@ -1,0 +1,12 @@
+# Self-Improvement
+
+[中文](./README_zh.md) | English
+
+[← Back to home](../../README.md)
+
+- [Tracking RSI Research: New Papers from August–October 2026 and a Comparison of GitHub Paper Lists](./RSI-Recent-Papers-and-GitHub-Lists_en.md) · 2026-11-02
+  - There are now more than 30 GitHub lists of RSI papers, yet the five largest overlap pairwise by only 0.02–0.15 (Jaccard index), so no single list covers the field: use lobehub/awesome-rsi for a general map, Prism-Shadow/awesome-rsi to search by dimension, pinkbubblebubble/awesome-rsi for the newest papers with an evidence label on each, KaiWU5/Awesome-AI4AI for weekly updates and machine-readable data, and adongwanai/follow-rsi for a daily feed in Chinese. October 15–30 added 497 candidate papers, 32 of them named after RSI, without changing the previous review's conclusions: harness self-evolution still has the most method papers, audit, measurement and safety work is growing fastest, autonomous post-training by frontier agents now has measurable testbeds, and two new embodied-RSI surveys find that no study has yet isolated gains attributable to recursion.
+
+- [Recursive Self-Improvement (RSI) in AI: A Literature Review](./RSI-Literature-Review_en.md) · 2026-10-21
+  - After a systematic search of 5,784 candidate papers and a full reading of 365, the review finds plenty of bounded self-improvement in all five strands (weights, context/memory/skills, harnesses, AI-designed components and automated research), but reliable evidence of recursive, compounding self-improvement in none. Multi-round gains shrink or saturate, and the outermost layer always keeps a fixed evaluation or selection step; of 90 studies that call themselves RSI, only 22% audit two or more reruns of the full loop. The signal source sets the ceiling: loops anchored in execution or formal verification are the most stable, self-judged loops reverse or collapse within a few rounds, and the evidence that risk accumulates across generations is firmer than the evidence that capability compounds.
+  - Chapter pages: [4](./RSI-Literature-Review-Ch04_en.md) · [5](./RSI-Literature-Review-Ch05_en.md) · [6](./RSI-Literature-Review-Ch06_en.md) · [7](./RSI-Literature-Review-Ch07_en.md) · [8](./RSI-Literature-Review-Ch08_en.md) · [9](./RSI-Literature-Review-Ch09_en.md) · [10](./RSI-Literature-Review-Ch10_en.md) · [11](./RSI-Literature-Review-Ch11_en.md) · [12](./RSI-Literature-Review-Ch12_en.md) · [13](./RSI-Literature-Review-Ch13_en.md)
