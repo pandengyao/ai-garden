@@ -73,7 +73,8 @@ TransferEngine                     对外 API（TE/include/transfer_engine.h）
 | RPC 端口（RPC = Remote Procedure Call，远程过程调用） | 进程对外开的一个 TCP 端口，别的进程连上来请求服务。在 TE 里，对端连这个端口来交换建连信息。 |
 | epoll（event poll，事件轮询） | Linux 让一个线程同时盯住很多连接或设备的接口，哪个有动静就处理哪个。 |
 | asio（Asynchronous I/O，异步 I/O 库） | C++ 的异步网络库：发起读写后不阻塞，数据到了再回调处理。TE 的 TCP 后端用它。 |
-| etcd / Redis / HTTP 元数据服务（Redis = Remote Dictionary Server，远程字典服务；HTTP = HyperText Transfer Protocol，超文本传输协议） | 几种外部的键值存储。各进程把“我是谁、我的内存在哪”写进去，其他进程按名字查。例：进程 A 以自己的名字为键写入信息，进程 B 按 A 的名字读出来。etcd 的名字来自 Unix 的 `/etc` 目录加 d（distributed，分布式）。 |
+| etcd（分布式键值存储） | 专门存配置和元数据的分布式键值数据库：数据同时存在几台机器上，坏掉其中少数几台也能照常工作，所有人读到的都是同一份最新值。Kubernetes 就用它存整个集群的状态。名字来自 Unix 存配置的 `/etc` 目录加 d（distributed，分布式）。在 TE 里它可以当元数据后端。例：各进程初始化时都填 `etcd://10.0.0.1:2379`，把自己的段描述写进去，再按段名查别的进程。 |
+| Redis / HTTP 元数据服务（Redis = Remote Dictionary Server，远程字典服务；HTTP = HyperText Transfer Protocol，超文本传输协议） | 和 etcd 作用一样的另外两种元数据后端：各进程把“我是谁、我的内存在哪”写进去，其他进程按名字查。Redis 是常用的内存键值数据库，HTTP 后端是一个按网址存取数据的简单 Web 服务。例：进程 A 以自己的名字为键写入信息，进程 B 按 A 的名字读出来。 |
 | ZMQ（ZeroMQ，消息队列库） | 一个轻量的进程间消息库。例：SGLang 的 PD 分离（Prefill-Decode disaggregation，预填充与解码分离部署）里，P 传完 KV 后用 ZMQ 发一条“传完了”给 D。 |
 | IB（InfiniBand，无限带宽技术） | 专为 RDMA 设计的一整套网络，网卡、交换机、线缆都是专用的，由子网管理器 SM（Subnet Manager）统一分配地址。 |
 | RoCE（RDMA over Converged Ethernet，基于融合以太网的 RDMA）/ RoCEv2 | 在普通以太网上跑 RDMA。RoCEv2 把 RDMA 包装进 UDP（User Datagram Protocol，用户数据报协议）/IP（Internet Protocol，网际协议）包里，因此能像普通 IP 流量一样跨网段路由。数据中心多用 RoCEv2。 |
@@ -109,6 +110,7 @@ RDMA 的编程接口叫 **verbs**（动词接口），库是 libibverbs（属于
 | 术语 | 解释 |
 | --- | --- |
 | HCA / RNIC / 设备名（HCA = Host Channel Adapter，主机通道适配器；RNIC = RDMA-enabled NIC，支持 RDMA 的网卡） | 都指支持 RDMA 的网卡。IB 网络里叫 HCA，以太网里叫 RNIC。Linux 下名字形如 `mlx5_0`、`mlx5_1`。 |
+| mlx5（Mellanox 网卡驱动名） | NVIDIA（原 Mellanox）RDMA 网卡在 Linux 上的驱动名，mlx 就是 Mellanox 的缩写。ConnectX-4 及之后的型号（ConnectX-5、6、7 等）都用这个驱动，更早的 ConnectX-3 用 mlx4，所以数字 5 和网卡型号无关。驱动按顺序给网卡起名 `mlx5_0`、`mlx5_1`……，`mlx5dv_` 开头的函数是这个驱动独有的扩展接口。例：装了 8 块 ConnectX-7 的机器，通常能看到 `mlx5_0` 到 `mlx5_7`。 |
 | `ibv_context`（device context，设备上下文） | 程序“打开”一块网卡后拿到的句柄，之后在这块网卡上的操作都要带着它。类比：打开文件得到的文件句柄。 |
 | PD（Protection Domain，保护域） | 一个分组容器。内存区域和连接必须在同一个 PD 里才能配合使用，防止连接访问不属于它的内存。 |
 | MR（Memory Region，内存区域） | 告诉网卡“这段内存你可以读写”。注册时内核把页锁住，网卡记下地址对应关系，并返回两把钥匙 lkey 和 rkey。例：注册一块 1 GB 的显存后，网卡就能直接读写这 1 GB。 |
