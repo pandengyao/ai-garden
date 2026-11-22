@@ -44,6 +44,7 @@ Read Section 3 (RDMA) and Section 4 (TE's own concepts) first, then read the sou
 
 | Term | Explanation |
 | --- | --- |
+| DRAM (Dynamic Random Access Memory) | The server's main memory, the memory modules plugged into the motherboard, which the CPU reads and writes directly and which loses its data when powered off. "Host memory" in this glossary means DRAM. The GPU's own memory is VRAM (Video Random Access Memory); on data-center GPUs it is HBM (High Bandwidth Memory), much faster than DRAM but much smaller. Example: in TE, location `cpu:0` means DRAM on NUMA node 0, and `cuda:0` means the memory of GPU 0. |
 | PCIe (Peripheral Component Interconnect Express) | The bus inside a server that connects the CPU, GPUs and NICs; devices move data to each other over it. Example: when a NIC reads GPU memory, the data travels over PCIe from the GPU to the NIC, then out onto the network. |
 | PCIe distance / PCIe switch | How many hops apart two devices are in the PCIe tree. A GPU and a NIC under the same PCIe switch are closest and transfer fastest. Example: if GPU0 and mlx5_0 sit under the same switch, GPU0's data should go through mlx5_0 first. |
 | NUMA node (Non-Uniform Memory Access node) | In a multi-socket server, each CPU socket has its own bank of memory. A CPU reaches its own bank quickly and the other bank slowly, across sockets. Example: a NIC attached to node0 reads node0's memory faster than node1's. |
