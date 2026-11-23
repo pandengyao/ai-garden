@@ -47,6 +47,7 @@ TransferEngine                     对外 API（TE/include/transfer_engine.h）
 | DRAM（Dynamic Random Access Memory，动态随机存取存储器） | 服务器的主内存，就是插在主板上的内存条，CPU 直接读写，断电后数据就没了。文中说的“主机内存”就是 DRAM。GPU 自己带的内存叫显存，英文是 VRAM（Video Random Access Memory）；数据中心 GPU 的显存是 HBM（High Bandwidth Memory，高带宽内存），比 DRAM 快得多，但容量小得多。例：TE 里 location `cpu:0` 指 NUMA 节点 0 上的 DRAM，`cuda:0` 指 0 号 GPU 的显存。 |
 | PCIe（Peripheral Component Interconnect Express，高速外设组件互连） | 服务器内部连接 CPU、GPU、网卡的总线，设备之间搬数据都走它。例：网卡读 GPU 显存时，数据经 PCIe 从 GPU 到网卡，再发到网络上。 |
 | PCIe 距离 / PCIe 交换机（PCIe distance / PCIe switch） | 两个设备在 PCIe 树上隔了几跳。挂在同一个 PCIe 交换机下的 GPU 和网卡离得最近，互传最快。例：GPU0 和 mlx5_0 挂在同一个交换机下，GPU0 的数据就该优先走 mlx5_0。 |
+| NVMe（Non-Volatile Memory Express，非易失性存储器高速接口） | 固态硬盘 SSD（Solid State Drive）直接插在 PCIe 上时用的接口协议。Non-Volatile 指断电后数据还在，这一点和 DRAM 相反。它比老式硬盘接口快得多，因为一块盘可以开很多个请求队列并行处理。NVMe 盘比 DRAM 容量大得多、便宜得多，但也慢得多，适合存放内存放不下的 KV Cache。例：Linux 下 NVMe 盘的名字形如 `/dev/nvme0n1`；TE 的 `nvmeof` 后端就是直接读写这类盘上的文件。 |
 | NUMA 节点（Non-Uniform Memory Access node，非一致性内存访问节点） | 多路服务器里每个 CPU 插槽带一组内存。CPU 访问自己那组快，访问另一组要跨插槽，慢。例：插在 node0 上的网卡读 node0 的内存，比读 node1 的快。 |
 | DMA（Direct Memory Access，直接内存访问） | 设备自己读写内存，不用 CPU 一个字节一个字节地搬。类比：CPU 只负责下单，设备自己去仓库搬货。 |
 | 虚拟地址 / 物理页（virtual address / physical page） | 程序看到的是虚拟地址，数据实际放在物理内存的页上（通常每页 4 KB），由操作系统维护两者的对应关系。设备不认识虚拟地址，所以要事先告诉它这段虚拟地址对应哪些物理页。 |
