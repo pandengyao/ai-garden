@@ -24,9 +24,9 @@ Notes are grouped into topic folders. Each topic has an index page that lists al
 
 Dates are when the notes were added.
 
+- 2026-11-23 · Inference: [Mooncake Transfer Engine Study Notes: Code Structure, Call Chain, Local Testing and the HiCache Path](./notes/inference/Mooncake-Transfer-Engine-Notes_en.md)
 - 2026-11-20 · Inference: [Mooncake Transfer Engine Source Code Reading Glossary](./notes/inference/Mooncake-Transfer-Engine-Glossary_en.md)
 - 2026-11-13 · Inference: [Mooncake and SGLang: An Architecture Walkthrough Centered on KVCache](./notes/inference/Mooncake-SGLang-KVCache-Architecture_en.md) · [Mooncake: Trading Storage for Computation (FAST 2025 Full Paper Translation)](./notes/inference/Mooncake-KVCache-Centric-Serving_en.md)
-- 2026-11-09 · Scaling Laws: [Kaplan: Scaling Laws for Neural Language Models](./notes/scaling_laws/Kaplan-Scaling-Laws-for-Neural-Language-Models_en.md) · [Chinchilla: Allocating Models and Data Under the Same Compute Budget](./notes/scaling_laws/Chinchilla-Compute-Optimal-Training_en.md) · [Finetuning Scaling Laws: Data, Models, and Methods](./notes/scaling_laws/LLM-Finetuning-Scaling-Laws_en.md) · [Distillation Scaling Laws: Teachers, Students, and Compute Budgets](./notes/scaling_laws/Distillation-Scaling-Laws_en.md); Training Data: [OpenThoughts: Reasoning Data Recipes and Scaling Effects](./notes/training_data/OpenThoughts-Reasoning-Data-Scaling_en.md)
 
 ## License
 

@@ -24,9 +24,9 @@
 
 日期为收录日期。
 
+- 2026-11-23 · 推理优化：[Mooncake Transfer Engine 学习笔记：代码结构、调用链、本机测试与 HiCache 链路](./notes/inference/Mooncake-Transfer-Engine-Notes.md)
 - 2026-11-20 · 推理优化：[Mooncake Transfer Engine 源码阅读术语手册](./notes/inference/Mooncake-Transfer-Engine-Glossary.md)
 - 2026-11-13 · 推理优化：[Mooncake 与 SGLang：围绕 KVCache 的架构梳理](./notes/inference/Mooncake-SGLang-KVCache-Architecture.md) · [Mooncake：以更多存储换取更少计算（FAST 2025 论文全文翻译）](./notes/inference/Mooncake-KVCache-Centric-Serving.md)
-- 2026-11-09 · 缩放规律：[Kaplan：语言模型缩放定律](./notes/scaling_laws/Kaplan-Scaling-Laws-for-Neural-Language-Models.md) · [Chinchilla：同样算力如何分配模型与数据](./notes/scaling_laws/Chinchilla-Compute-Optimal-Training.md) · [微调缩放规律：数据、模型与方法](./notes/scaling_laws/LLM-Finetuning-Scaling-Laws.md) · [蒸馏缩放规律：教师、学生与计算预算](./notes/scaling_laws/Distillation-Scaling-Laws.md)；训练数据：[OpenThoughts：推理数据配方与规模效应](./notes/training_data/OpenThoughts-Reasoning-Data-Scaling.md)
 
 ## License
 

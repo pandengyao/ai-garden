@@ -4,6 +4,9 @@
 
 [← 返回首页](../../README_zh.md)
 
+- [Mooncake Transfer Engine 学习笔记：代码结构、调用链、本机测试与 HiCache 链路](./Mooncake-Transfer-Engine-Notes.md) · 2026-11-23
+  - 按“一次 write 从 Python 到网卡再回到 COMPLETED”的顺序读经典 TE：数据结构、数据面主链、控制面握手，并对照 TENT 的取舍。本机单卡回环实测显存和 DRAM 的 RDMA 读写都约 50 GB/s，即 400Gb/s 网卡线速；最后梳理 SGLang HiCache 经 Mooncake Store 用 TE 读写 L3 的链路和 key 格式。所有说法按 Mooncake `30126135`、SGLang `f5149f367b` 核对过。
+
 - [Mooncake Transfer Engine 源码阅读术语手册](./Mooncake-Transfer-Engine-Glossary.md) · 2026-11-20
   - 读 Transfer Engine 源码前要懂的硬件、网络、RDMA verbs 和 TE 自身术语，每个配通俗解释和例子。关键一点：TE 的 RDMA 数据面是单边 WRITE/READ，接收端 CPU 全程不参与，“数据到了”要靠另一条消息通知。附一次 RDMA WRITE 从 `submitTransfer` 经 `ibv_post_send` 到 CQ 完成的调用链。
 

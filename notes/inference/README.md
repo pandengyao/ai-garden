@@ -4,6 +4,9 @@
 
 [← Back to home](../../README.md)
 
+- [Mooncake Transfer Engine Study Notes: Code Structure, Call Chain, Local Testing and the HiCache Path](./Mooncake-Transfer-Engine-Notes_en.md) · 2026-11-23
+  - Reads classic TE in the order of one write going from Python to the NIC and back to COMPLETED: data structures, the data-path main chain, the control-path handshake, and how TENT differs. On one machine with a single NIC in loopback, RDMA reads and writes to both GPU memory and DRAM reach about 50 GB/s, the line rate of the 400Gb/s NIC. It ends with how SGLang HiCache reads and writes L3 through Mooncake Store and TE, and the L3 key format. Every claim was checked against Mooncake `30126135` and SGLang `f5149f367b`.
+
 - [Mooncake Transfer Engine Source Code Reading Glossary](./Mooncake-Transfer-Engine-Glossary_en.md) · 2026-11-20
   - The hardware, networking, RDMA verbs and TE-specific terms you need before reading the Transfer Engine source, each with a plain explanation and an example. The key point: TE's RDMA data path is one-sided WRITE/READ, the receiver's CPU never takes part, and "the data has arrived" has to come in a separate message. Includes the call chain of one RDMA WRITE from `submitTransfer` through `ibv_post_send` to the CQ completion.
 
