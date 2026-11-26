@@ -4,6 +4,9 @@
 
 [← Back to home](../../README.md)
 
+- [SGLang PD Disaggregation Study Notes (Mooncake Backend): Code Structure, Request Flow, Transfer Layer, Fault Tolerance and Local Testing](./SGLang-PD-Disaggregation-Mooncake-Notes_en.md) · 2026-11-26
+  - Reads SGLang PD disaggregation in the order of one request splitting at the router and reaching D's first decode token: HTTP handles scheduling and discovery, ZMQ carries control messages, and P uses Mooncake TE to RDMA-WRITE the KV pages and first token into GPU memory that D allocated in advance, with no work from D's CPU. On one machine, KV transfer speed depends mostly on the number of blocks: with page_size=1 and scattered free pages bandwidth drops to 0.5~1.7 GB/s, and page_size ≥16 brings it back to 25~41 GB/s; with different TP on P and D, TTFT for 16384 tokens is 43 times that with matching TP. Every claim was checked against SGLang `f5149f367b` and Mooncake `30126135`.
+
 - [Mooncake Transfer Engine Study Notes: Code Structure, Call Chain, Local Testing and the HiCache Path](./Mooncake-Transfer-Engine-Notes_en.md) · 2026-11-23
   - Reads classic TE in the order of one write going from Python to the NIC and back to COMPLETED: data structures, the data-path main chain, the control-path handshake, and how TENT differs. On one machine with a single NIC in loopback, RDMA reads and writes to both GPU memory and DRAM reach about 50 GB/s, the line rate of the 400Gb/s NIC. It ends with how SGLang HiCache reads and writes L3 through Mooncake Store and TE, and the L3 key format. Every claim was checked against Mooncake `30126135` and SGLang `f5149f367b`.
 

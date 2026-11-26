@@ -4,6 +4,9 @@
 
 [← 返回首页](../../README_zh.md)
 
+- [SGLang PD 分离学习笔记（Mooncake 后端）：代码结构、请求流程、传输层、容错与本机测试](./SGLang-PD-Disaggregation-Mooncake-Notes.md) · 2026-11-26
+  - 按“一个请求从 router 分成两路，到 D 输出第一个 decode token”的顺序读 SGLang 的 PD 分离：HTTP 做调度与发现，ZMQ 传控制消息，P 用 Mooncake TE 把 KV 页和首 token 经 RDMA WRITE 写进 D 预先分配的显存，D 的 CPU 不参与写入。本机实测 KV 传输快慢主要看块数：page_size=1 且空闲页分散时带宽只剩 0.5~1.7 GB/s，page_size ≥16 回到 25~41 GB/s；P、D 的 TP 不同时 16384 token 的 TTFT 是 TP 相同时的 43 倍。所有说法按 SGLang `f5149f367b`、Mooncake `30126135` 核对过。
+
 - [Mooncake Transfer Engine 学习笔记：代码结构、调用链、本机测试与 HiCache 链路](./Mooncake-Transfer-Engine-Notes.md) · 2026-11-23
   - 按“一次 write 从 Python 到网卡再回到 COMPLETED”的顺序读经典 TE：数据结构、数据面主链、控制面握手，并对照 TENT 的取舍。本机单卡回环实测显存和 DRAM 的 RDMA 读写都约 50 GB/s，即 400Gb/s 网卡线速；最后梳理 SGLang HiCache 经 Mooncake Store 用 TE 读写 L3 的链路和 key 格式。所有说法按 Mooncake `30126135`、SGLang `f5149f367b` 核对过。
 
