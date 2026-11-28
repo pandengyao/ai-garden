@@ -24,9 +24,9 @@ Notes are grouped into topic folders. Each topic has an index page that lists al
 
 Dates are when the notes were added.
 
+- 2026-11-28 · Inference: [KV Cache Mechanisms in SGLang and Mooncake: Storage Tiers, Data Movement, Eviction, Transfer and Scheduling](./notes/inference/SGLang-Mooncake-KVCache-Mechanisms_en.md)
 - 2026-11-26 · Inference: [SGLang PD Disaggregation Study Notes (Mooncake Backend): Code Structure, Request Flow, Transfer Layer, Fault Tolerance and Local Testing](./notes/inference/SGLang-PD-Disaggregation-Mooncake-Notes_en.md)
 - 2026-11-23 · Inference: [Mooncake Transfer Engine Study Notes: Code Structure, Call Chain, Local Testing and the HiCache Path](./notes/inference/Mooncake-Transfer-Engine-Notes_en.md)
-- 2026-11-20 · Inference: [Mooncake Transfer Engine Source Code Reading Glossary](./notes/inference/Mooncake-Transfer-Engine-Glossary_en.md)
 
 ## License
 

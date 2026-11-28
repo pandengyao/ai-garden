@@ -24,9 +24,9 @@
 
 日期为收录日期。
 
+- 2026-11-28 · 推理优化：[SGLang 和 Mooncake 的 KV Cache 机制：存储层级、数据流转、淘汰、传输与调度](./notes/inference/SGLang-Mooncake-KVCache-Mechanisms.md)
 - 2026-11-26 · 推理优化：[SGLang PD 分离学习笔记（Mooncake 后端）：代码结构、请求流程、传输层、容错与本机测试](./notes/inference/SGLang-PD-Disaggregation-Mooncake-Notes.md)
 - 2026-11-23 · 推理优化：[Mooncake Transfer Engine 学习笔记：代码结构、调用链、本机测试与 HiCache 链路](./notes/inference/Mooncake-Transfer-Engine-Notes.md)
-- 2026-11-20 · 推理优化：[Mooncake Transfer Engine 源码阅读术语手册](./notes/inference/Mooncake-Transfer-Engine-Glossary.md)
 
 ## License
 

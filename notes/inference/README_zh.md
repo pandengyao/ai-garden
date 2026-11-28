@@ -4,6 +4,9 @@
 
 [← 返回首页](../../README_zh.md)
 
+- [SGLang 和 Mooncake 的 KV Cache 机制：存储层级、数据流转、淘汰、传输与调度](./SGLang-Mooncake-KVCache-Mechanisms.md) · 2026-11-28
+  - SGLang HiCache 加 Mooncake 端到端共 4 级：GPU 显存、本机 Host 内存、Mooncake 分布式内存池、Mooncake 盘层；SGLang 只认 3 层，盘层属于 L3 内部。笔记按 KV 的一生梳理容量估算、前缀树、L3 的 key 与跨实例共享、各级之间何时搬和怎么搬、淘汰、计算与传输的重叠，以及调度、部署和监控。关键结论：默认 key 只带 TP rank、不带 TP 大小，MHA 模型 TP 不同的实例共用 L3 可能读到错误的 KV；权重更新后旧 KV 也会被命中。所有说法按 SGLang `0d311f2508`、Mooncake `ab259557` 核对过。
+
 - [SGLang PD 分离学习笔记（Mooncake 后端）：代码结构、请求流程、传输层、容错与本机测试](./SGLang-PD-Disaggregation-Mooncake-Notes.md) · 2026-11-26
   - 按“一个请求从 router 分成两路，到 D 输出第一个 decode token”的顺序读 SGLang 的 PD 分离：HTTP 做调度与发现，ZMQ 传控制消息，P 用 Mooncake TE 把 KV 页和首 token 经 RDMA WRITE 写进 D 预先分配的显存，D 的 CPU 不参与写入。本机实测 KV 传输快慢主要看块数：page_size=1 且空闲页分散时带宽只剩 0.5~1.7 GB/s，page_size ≥16 回到 25~41 GB/s；P、D 的 TP 不同时 16384 token 的 TTFT 是 TP 相同时的 43 倍。所有说法按 SGLang `f5149f367b`、Mooncake `30126135` 核对过。
 

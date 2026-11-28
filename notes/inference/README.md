@@ -4,6 +4,9 @@
 
 [← Back to home](../../README.md)
 
+- [KV Cache Mechanisms in SGLang and Mooncake: Storage Tiers, Data Movement, Eviction, Transfer and Scheduling](./SGLang-Mooncake-KVCache-Mechanisms_en.md) · 2026-11-28
+  - SGLang HiCache plus Mooncake gives 4 tiers end to end: GPU memory, local host memory, the Mooncake distributed memory pool and the Mooncake disk tier; SGLang itself sees only 3, with the disk tier inside L3. The note follows a KV entry through capacity sizing, the radix tree, L3 keys and cross-instance sharing, when and how data moves between tiers, eviction, compute-transfer overlap, and scheduling, deployment and monitoring. Key findings: the default key carries the TP rank but not the TP size, so MHA instances with different TP sharing one L3 can read wrong KV, and stale KV is still hit after a weight update. Every claim was checked against SGLang `0d311f2508` and Mooncake `ab259557`.
+
 - [SGLang PD Disaggregation Study Notes (Mooncake Backend): Code Structure, Request Flow, Transfer Layer, Fault Tolerance and Local Testing](./SGLang-PD-Disaggregation-Mooncake-Notes_en.md) · 2026-11-26
   - Reads SGLang PD disaggregation in the order of one request splitting at the router and reaching D's first decode token: HTTP handles scheduling and discovery, ZMQ carries control messages, and P uses Mooncake TE to RDMA-WRITE the KV pages and first token into GPU memory that D allocated in advance, with no work from D's CPU. On one machine, KV transfer speed depends mostly on the number of blocks: with page_size=1 and scattered free pages bandwidth drops to 0.5~1.7 GB/s, and page_size ≥16 brings it back to 25~41 GB/s; with different TP on P and D, TTFT for 16384 tokens is 43 times that with matching TP. Every claim was checked against SGLang `f5149f367b` and Mooncake `30126135`.
 
